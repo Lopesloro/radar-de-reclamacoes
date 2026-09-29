@@ -20,7 +20,7 @@ PROJETO = {
     "instituicao": "PUC-Campinas",
     "semestre": "2º semestre de 2026",
     "orientadora": "Profa. Sílvia C. de Matos Soares",
-    "repositorio": "https://github.com/Lopesloro/TESTANDOP",
+    "repositorio": "https://github.com/Lopesloro/radar-de-reclamacoes",
 }
 
 INTEGRANTES = (
