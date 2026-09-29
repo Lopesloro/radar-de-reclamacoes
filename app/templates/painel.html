@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}Painel — {{ projeto.nome }}{% endblock %}
+
+{% block conteudo %}
+{{ m.aviso_demo() }}
+<section class="secao secao--topo">
+  <div class="container">
+    {{ m.cabeca("Painel dos comércios parceiros",
+                "Cada linha mostra a categoria que mais apareceu no mês fechado e a que o modelo prevê em alta para o próximo.") }}
+
+    <ul class="resumo">
+      <li class="resumo__item">
+        <span class="resumo__rotulo">Avaliações lidas</span>
+        <strong class="resumo__valor">{{ total_avaliacoes | inteiro }}</strong>
+        <span class="resumo__nota">em {{ mes | mes_longo }}, somando os três comércios</span>
+      </li>
+      <li class="resumo__item">
+        <span class="resumo__rotulo">Reclamações classificadas</span>
+        <strong class="resumo__valor">{{ total_reclamacoes | inteiro }}</strong>
+        <span class="resumo__nota">o resto é elogio, texto ausente ou confiança baixa</span>
+      </li>
+      <li class="resumo__item">
+        <span class="resumo__rotulo">Alertas abertos</span>
+        <strong class="resumo__valor">{{ abertos | length }}</strong>
+        <span class="resumo__nota">{{ criticos | length }} com alta prevista acima da faixa</span>
+      </li>
+      <li class="resumo__item">
+        <span class="resumo__rotulo">Etapas pendentes</span>
+        <strong class="resumo__valor">{{ etapas_pendentes }}</strong>
+        <span class="resumo__nota"><a href="/etapas">o que falta em cada parceiro</a></span>
+      </li>
+    </ul>
+
+    <table class="tabela">
+      <thead>
+        <tr>
+          <th scope="col">Comércio</th>
+          <th scope="col">Estado</th>
+          <th scope="col">Mais reclamada</th>
+          <th scope="col" class="num">No mês</th>
+          <th scope="col">Tendência</th>
+          <th scope="col">Em alta prevista</th>
+          <th scope="col" class="num">Previsto</th>
+          <th scope="col" class="num">Etapas</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for linha in linhas %}
+        {% set c = linha.comercio %}
+        <tr>
+          <th scope="row"><a href="/comercio/{{ c.id }}">{{ c.nome }}</a>
+            <span class="sub">{{ c.ramo }} · {{ c.cidade }}</span></th>
+          <td>{{ m.estado(c.estado) }}</td>
+          <td>{{ c.dominante.categoria }}</td>
+          <td class="num">{{ c.dominante.ultimo | inteiro }}</td>
+          <td>{{ linha.grafico }}</td>
+          <td><a href="/previsao/{{ c.id }}?categoria={{ c.em_alta.categoria }}">{{ c.em_alta.categoria }}</a></td>
+          <td class="num">{{ c.em_alta.ultimo | inteiro }} → {{ c.em_alta.prevista | inteiro }}</td>
+          <td class="num"><a href="/etapas">{{ linha.prontidao }}/7</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <p class="nota">
+      A coluna “Previsto” compara o último mês fechado com a mediana da previsão do
+      mês seguinte. A faixa de incerteza aparece na tela de
+      <a href="/previsao">Previsão</a>.
+    </p>
+  </div>
+</section>
+{% endblock %}

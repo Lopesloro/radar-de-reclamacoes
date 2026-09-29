@@ -1,0 +1,9 @@
+[project]
+name = "radar-de-campanha"
+version = "0.1.0"
+description = "Previsão de CPA/ROAS e alerta de anomalia em campanhas Meta Ads"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

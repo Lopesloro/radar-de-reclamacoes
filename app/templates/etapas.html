@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}Etapas — {{ projeto.nome }}{% endblock %}
+
+{% block conteudo %}
+{{ m.aviso_demo() }}
+<section class="secao secao--topo">
+  <div class="container">
+    {{ m.cabeca("O que já existe e o que ainda falta",
+                "Duas leituras: o que falta no produto como um todo, e o que falta em cada comércio parceiro para o sistema valer para ele.") }}
+
+    <ul class="resumo">
+      <li class="resumo__item">
+        <span class="resumo__rotulo">Etapas do produto</span>
+        <strong class="resumo__valor">{{ entregues }} de {{ total_etapas }}</strong>
+        <span class="resumo__nota">concluídas e verificáveis na tela</span>
+      </li>
+      <li class="resumo__item">
+        <span class="resumo__rotulo">Comércios acompanhados</span>
+        <strong class="resumo__valor">{{ por_comercio | length }}</strong>
+        <span class="resumo__nota">todos fictícios nesta demonstração</span>
+      </li>
+      <li class="resumo__item">
+        <span class="resumo__rotulo">Etapas dos parceiros</span>
+        <strong class="resumo__valor">{{ por_comercio | sum(attribute='prontidao') | int }} de {{ por_comercio | length * 7 }}</strong>
+        <span class="resumo__nota">concluídas, somando os três comércios</span>
+      </li>
+      <li class="resumo__item">
+        <span class="resumo__rotulo">Bloqueio principal</span>
+        <strong class="resumo__valor">Coleta</strong>
+        <span class="resumo__nota">nada real entra sem termo assinado</span>
+      </li>
+    </ul>
+
+    {% if senha_demo %}
+    <p class="aviso aviso--atencao">
+      Antes de colocar dado real: esta instalação ainda usa a credencial de
+      demonstração. Trocar <code>RADAR_USUARIO</code> e <code>RADAR_SENHA</code> é
+      a primeira coisa a fazer.
+    </p>
+    {% endif %}
+
+    <h2 class="titulo titulo--secao">O produto, fase a fase</h2>
+    <span class="regua" aria-hidden="true"></span>
+
+    {% for fase in fases %}
+    <div class="fase">
+      <h3 class="fase__nome">{{ fase }}</h3>
+      <ul class="trilha">
+        {% for etapa in etapas_projeto if etapa.fase == fase %}
+        <li class="trilha__item trilha__item--{{ etapa.estado }}">
+          <div class="trilha__cabeca">
+            {{ m.marcador(etapa.estado) }}
+            <h4 class="trilha__titulo">{{ etapa.titulo }}</h4>
+          </div>
+          <p class="trilha__texto">{{ etapa.texto }}</p>
+          {% if etapa.falta %}<p class="trilha__falta"><span class="trilha__rotulo">Falta</span> {{ etapa.falta }}</p>{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endfor %}
+
+    <h2 class="titulo titulo--secao">Cada comércio, etapa a etapa</h2>
+    <span class="regua" aria-hidden="true"></span>
+    <p class="nota">
+      As sete etapas entre o aperto de mão e o alerta chegando ao empresário. O
+      que está concluído está concluído porque o dado existe, não porque alguém
+      marcou uma caixa.
+    </p>
+
+    {% for bloco in por_comercio %}
+    <article class="prontidao">
+      <header class="prontidao__cabeca">
+        <h3 class="prontidao__nome"><a href="/comercio/{{ bloco.comercio.id }}">{{ bloco.comercio.nome }}</a></h3>
+        <p class="prontidao__meta">{{ bloco.comercio.ramo }} · {{ bloco.comercio.cidade }}</p>
+        <p class="prontidao__contagem">{{ bloco.prontidao }} de 7 etapas concluídas</p>
+      </header>
+      <ol class="trilha trilha--numerada">
+        {% for etapa in bloco.etapas %}
+        <li class="trilha__item trilha__item--{{ etapa.estado }}">
+          <div class="trilha__cabeca">
+            {{ m.marcador(etapa.estado) }}
+            <h4 class="trilha__titulo">{{ etapa.numero }}. {{ etapa.titulo }}</h4>
+          </div>
+          <p class="trilha__texto">{{ etapa.detalhe }}</p>
+          {% if etapa.falta %}<p class="trilha__falta"><span class="trilha__rotulo">Falta</span> {{ etapa.falta }}</p>{% endif %}
+        </li>
+        {% endfor %}
+      </ol>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

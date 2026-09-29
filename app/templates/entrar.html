@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block titulo %}Entrar — {{ projeto.nome }}{% endblock %}
+
+{% block conteudo %}
+<section class="entrada">
+  <div class="container entrada__grade">
+    <div class="entrada__texto">
+      <p class="eyebrow">Acesso restrito</p>
+      <h1 class="titulo">O dado do parceiro fica atrás da porta</h1>
+      <span class="regua" aria-hidden="true"></span>
+      <p class="lead">
+        A avaliação é pública, mas o painel que reúne, classifica e projeta o
+        comportamento de um comércio é dele. Por isso o painel exige entrada.
+      </p>
+      <ul class="entrada__lista">
+        <li>Sessão assinada em cookie <code>HttpOnly</code>, que expira em oito horas</li>
+        <li>Senha guardada como hash, nunca em texto puro</li>
+        <li>Token contra CSRF em todo formulário</li>
+        <li>Oito tentativas por origem a cada cinco minutos</li>
+      </ul>
+    </div>
+
+    <div class="entrada__caixa">
+      <h2 class="entrada__titulo">Entrar no painel</h2>
+
+      {% if erro == "credencial" %}
+      <p class="aviso aviso--erro" role="alert">Usuário ou senha não confere.</p>
+      {% elif erro == "bloqueado" %}
+      <p class="aviso aviso--erro" role="alert">Tentativas demais. Espere alguns minutos e tente de novo.</p>
+      {% elif erro == "sessao" %}
+      <p class="aviso aviso--erro" role="alert">A sessão expirou antes do envio. Tente outra vez.</p>
+      {% endif %}
+
+      <form method="post" action="/entrar" class="formulario">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <input type="hidden" name="proximo" value="{{ proximo }}">
+        <label class="campo">
+          <span class="campo__rotulo">Usuário</span>
+          <input class="campo__entrada" type="text" name="usuario" autocomplete="username"
+                 required autofocus value="{{ usuario_demo if senha_demo else '' }}">
+        </label>
+        <label class="campo">
+          <span class="campo__rotulo">Senha</span>
+          <input class="campo__entrada" type="password" name="senha" autocomplete="current-password" required>
+        </label>
+        <button class="botao botao--solido botao--largo">Entrar</button>
+      </form>
+
+      {% if senha_demo %}
+      <p class="aviso aviso--atencao">
+        Esta instalação está com a credencial de demonstração
+        <strong>{{ usuario_demo }} / admin</strong>. Serve para a banca abrir o
+        sistema; antes de qualquer dado real, a senha precisa vir das variáveis
+        <code>RADAR_USUARIO</code> e <code>RADAR_SENHA</code>.
+      </p>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

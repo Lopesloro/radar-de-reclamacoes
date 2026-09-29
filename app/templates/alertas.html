@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}Alertas — {{ projeto.nome }}{% endblock %}
+
+{% block conteudo %}
+{{ m.aviso_demo() }}
+<section class="secao secao--topo">
+  <div class="container">
+    {{ m.cabeca("Alertas de alta prevista",
+                "O alerta sai quando a previsão do próximo mês supera o último mês fechado com folga. Crítico é quando nem o piso da faixa devolve a categoria ao normal.") }}
+
+    {% if abertos %}
+    <ul class="alertas">
+      {% for a in abertos %}
+      <li class="alerta alerta--{{ a.gravidade }}">
+        <div class="alerta__cabeca">
+          {{ m.estado(a.gravidade) }}
+          <h2 class="alerta__titulo">
+            <a href="/previsao/{{ a.comercio_id }}?categoria={{ a.categoria }}">{{ a.comercio_nome }} · {{ a.categoria }}</a>
+          </h2>
+        </div>
+        <p class="alerta__texto">{{ a.frase() }}</p>
+        <p class="alerta__meta">Gerado em {{ a.gerado_em | data_longa }}.</p>
+        <form class="alerta__acoes" method="post" action="/alertas/{{ a.id }}">
+          <button class="botao botao--solido" name="acao" value="confirmar">Confirmar</button>
+          <button class="botao botao--texto" name="acao" value="descartar">Descartar</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="lead">Nenhum alerta aberto. Nada a fazer agora.</p>
+    {% endif %}
+
+    {% if fechados %}
+    <h2 class="titulo titulo--secao">Já tratados</h2>
+    <span class="regua" aria-hidden="true"></span>
+    <p class="nota">
+      Confirmar e descartar não são só arquivamento: é essa resposta que recalibra
+      o limiar de disparo e reduz o falso alarme ao longo das semanas.
+    </p>
+    <table class="tabela">
+      <thead>
+        <tr>
+          <th scope="col">Comércio</th>
+          <th scope="col">Categoria</th>
+          <th scope="col">Resposta</th>
+          <th scope="col"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in fechados %}
+        <tr>
+          <th scope="row">{{ a.comercio_nome }}</th>
+          <td>{{ a.categoria }}</td>
+          <td>{{ "confirmado pela equipe" if a.estado == "confirmado" else "descartado" }}</td>
+          <td>
+            <form method="post" action="/alertas/{{ a.id }}">
+              <button class="botao botao--texto" name="acao" value="reabrir">Reabrir</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

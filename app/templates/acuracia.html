@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}Acurácia — {{ projeto.nome }}{% endblock %}
+
+{% block conteudo %}
+{{ m.aviso_demo() }}
+<section class="secao secao--topo">
+  <div class="container">
+    {{ m.cabeca("Acurácia dos dois modelos",
+                "Nenhum resultado aparece sozinho: cada número fica ao lado da régua que ele precisa superar.") }}
+
+    <h2 class="titulo titulo--secao">Modelo 1 — classificação do texto</h2>
+    <span class="regua" aria-hidden="true"></span>
+    <figure class="grafico">
+      <figcaption class="grafico__titulo">F1 por categoria</figcaption>
+      {{ grafico_f1 }}
+      <p class="grafico__nota">
+        A régua responde sempre “{{ classificacao.categoria_regua }}”, a categoria
+        mais comum da amostra de {{ classificacao.amostra | inteiro }} avaliações.
+        Ela acerta muito numa categoria e zera nas outras quatro, e é por isso que
+        o F1 macro dela fica baixo.
+      </p>
+    </figure>
+
+    <table class="tabela">
+      <thead>
+        <tr>
+          <th scope="col">Categoria</th>
+          <th scope="col" class="num">Precisão</th>
+          <th scope="col" class="num">Recall</th>
+          <th scope="col" class="num">F1</th>
+          <th scope="col" class="num">Avaliações na amostra</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for linha in classificacao.linhas %}
+        <tr>
+          <th scope="row">{{ linha.categoria }}</th>
+          <td class="num">{{ linha.precisao | decimal(2) }}</td>
+          <td class="num">{{ linha.recall | decimal(2) }}</td>
+          <td class="num">{{ linha.f1 | decimal(2) }}</td>
+          <td class="num">{{ linha.apoio | inteiro }}</td>
+        </tr>
+        {% endfor %}
+        <tr class="linha--total">
+          <th scope="row">F1 macro do modelo</th>
+          <td class="num" colspan="3">{{ classificacao.macro | decimal(2) }}</td>
+          <td class="num">régua: {{ classificacao.macro_regua | decimal(2) }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2 class="titulo titulo--secao">Modelo 2 — previsão da contagem</h2>
+    <span class="regua" aria-hidden="true"></span>
+    <ul class="resumo">
+      <li class="resumo__item">
+        <span class="resumo__rotulo">Erro médio do modelo</span>
+        <strong class="resumo__valor">{{ previsao.mae | decimal(2) }}</strong>
+        <span class="resumo__nota">reclamações por mês, em média</span>
+      </li>
+      <li class="resumo__item">
+        <span class="resumo__rotulo">Erro médio da régua</span>
+        <strong class="resumo__valor">{{ previsao.mae_regua | decimal(2) }}</strong>
+        <span class="resumo__nota">repetir o mês anterior</span>
+      </li>
+      <li class="resumo__item">
+        <span class="resumo__rotulo">Ganho sobre a régua</span>
+        <strong class="resumo__valor">{{ ganho | pct }}</strong>
+        <span class="resumo__nota">redução do erro médio</span>
+      </li>
+      <li class="resumo__item">
+        <span class="resumo__rotulo">Cobertura da faixa</span>
+        <strong class="resumo__valor">{{ previsao.cobertura | pct(0, false) }}</strong>
+        <span class="resumo__nota">a faixa P10–P90 promete 80%</span>
+      </li>
+    </ul>
+
+    <figure class="grafico">
+      <figcaption class="grafico__titulo">Previsto um mês antes contra o realizado</figcaption>
+      {{ grafico_previsao }}
+      <p class="grafico__nota">
+        Validação com origem móvel: para cada mês, o modelo só viu o que existia
+        até o mês anterior. São {{ previsao.janelas | inteiro }} janelas ao todo,
+        somando as cinco categorias dos três comércios.
+      </p>
+    </figure>
+
+    <p class="nota">
+      O modelo parte da régua e só se afasta dela quando a inclinação dos últimos
+      seis meses supera o próprio erro padrão. Onde não há tendência distinguível
+      de ruído, ele devolve a régua — de propósito.
+    </p>
+  </div>
+</section>
+{% endblock %}

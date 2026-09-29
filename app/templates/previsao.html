@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}Previsão — {{ comercio.nome }}{% endblock %}
+
+{% block conteudo %}
+{{ m.aviso_demo() }}
+<section class="secao secao--topo">
+  <div class="container">
+    {{ m.seletor_comercio(comercios, comercio.id, "/previsao") }}
+    {{ m.cabeca("Previsão de " ~ escolhida,
+                "O que a série de " ~ escolhida ~ " em " ~ comercio.nome ~ " indica para os próximos " ~ horizonte ~ " meses.") }}
+
+    <nav class="abas" aria-label="Categoria">
+      {% for c in categorias %}
+      <a href="/previsao/{{ comercio.id }}?categoria={{ c }}"{% if c == escolhida %} aria-current="true"{% endif %}>{{ c }}</a>
+      {% endfor %}
+    </nav>
+
+    <figure class="grafico">
+      <figcaption class="grafico__titulo">Histórico, mês em andamento e faixa prevista</figcaption>
+      {{ grafico }}
+      <p class="grafico__nota">
+        A previsão parte do último mês fechado. O mês em andamento aparece em
+        cinza porque ainda vai receber avaliação, e por isso não alimenta o modelo.
+        A faixa vai de P10 a P90: a cada mês à frente ela abre, porque a incerteza cresce.
+      </p>
+    </figure>
+
+    <ul class="resumo">
+      <li class="resumo__item">
+        <span class="resumo__rotulo">Último mês fechado</span>
+        <strong class="resumo__valor">{{ serie.ultimo | inteiro }}</strong>
+        <span class="resumo__nota">é também a régua de comparação</span>
+      </li>
+      <li class="resumo__item">
+        <span class="resumo__rotulo">Previsto para o próximo mês</span>
+        <strong class="resumo__valor">{{ serie.prevista | inteiro }}</strong>
+        <span class="resumo__nota">faixa de {{ serie.previsao[0].p10 | inteiro }} a {{ serie.previsao[0].p90 | inteiro }}</span>
+      </li>
+      <li class="resumo__item">
+        <span class="resumo__rotulo">Diferença para a régua</span>
+        <strong class="resumo__valor">{{ serie.crescimento_previsto | round | int | contagem }}</strong>
+        <span class="resumo__nota">em número de reclamações</span>
+      </li>
+      <li class="resumo__item">
+        <span class="resumo__rotulo">Meses fechados usados</span>
+        <strong class="resumo__valor">{{ serie.pontos | length }}</strong>
+        <span class="resumo__nota">a janela do ajuste é de seis</span>
+      </li>
+    </ul>
+
+    <p class="lead">{{ serie.frase() }}</p>
+
+    <h2 class="titulo titulo--secao">Mês a mês</h2>
+    <span class="regua" aria-hidden="true"></span>
+    <table class="tabela">
+      <thead>
+        <tr>
+          <th scope="col">Mês</th>
+          <th scope="col" class="num">Reclamações</th>
+          <th scope="col">Situação</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for mes, valor in serie.pontos[-6:] %}
+        <tr><th scope="row">{{ mes | mes_longo }}</th><td class="num">{{ valor | inteiro }}</td><td>fechado</td></tr>
+        {% endfor %}
+        <tr class="linha--parcial">
+          <th scope="row">{{ serie.parcial[0] | mes_longo }}</th>
+          <td class="num">{{ serie.parcial[1] | inteiro }}</td>
+          <td>em andamento, não entra no ajuste</td>
+        </tr>
+        {% for p in serie.previsao %}
+        <tr class="linha--prevista">
+          <th scope="row">{{ p.mes | mes_longo }}</th>
+          <td class="num">{{ p.p50 | inteiro }}</td>
+          <td>previsto, faixa de {{ p.p10 | inteiro }} a {{ p.p90 | inteiro }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

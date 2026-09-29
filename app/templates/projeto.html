@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}{{ projeto.nome }} — {{ projeto.disciplina }}{% endblock %}
+{% block topo_classe %}topo--sobre-hero{% endblock %}
+
+{% block conteudo %}
+<section class="hero">
+  <div class="container hero__caixa">
+    <p class="hero__sobrelinha">{{ projeto.disciplina }} · {{ projeto.instituicao }}</p>
+    <h1 class="hero__titulo">Por que as pessoas estão reclamando</h1>
+    <p class="hero__texto">{{ projeto.resumo }}</p>
+    <a class="botao botao--vazado" href="/painel">Ver o painel</a>
+  </div>
+</section>
+
+<section class="secao" data-revelar>
+  <div class="container">
+    <p class="eyebrow">A ideia</p>
+    <h2 class="titulo">O dono do comércio não lê trezentas avaliações. Lê as três últimas.</h2>
+    <span class="regua" aria-hidden="true"></span>
+    <p class="lead">
+      A nota média resume e não explica. O motivo da reclamação está no texto, e é
+      ele que dá para consertar. O Radar de Reclamações lê esse texto, agrupa o que
+      se repete e mostra o que tende a piorar antes que piore.
+    </p>
+
+    <ol class="movimentos">
+      {% for mov in movimentos %}
+      <li class="movimento">
+        <span class="movimento__numero">{{ mov.numero }}</span>
+        <div>
+          <h3 class="movimento__titulo">{{ mov.titulo }}</h3>
+          <p class="movimento__texto">{{ mov.texto }}</p>
+        </div>
+      </li>
+      {% endfor %}
+    </ol>
+  </div>
+</section>
+
+<section class="secao secao--alt" data-revelar>
+  <div class="container">
+    <p class="eyebrow">Os dois modelos</p>
+    <h2 class="titulo">Um modelo diz o motivo. O outro diz o que vem depois.</h2>
+    <span class="regua" aria-hidden="true"></span>
+    <div class="modelos">
+      {% for modelo in modelos %}
+      <article class="modelo">
+        <p class="modelo__rotulo">{{ modelo.rotulo }}</p>
+        <h3 class="modelo__titulo">{{ modelo.titulo }}</h3>
+        <p class="modelo__pergunta">“{{ modelo.pergunta }}”</p>
+        <dl class="ficha">
+          <dt>Métrica</dt><dd>{{ modelo.metrica }}</dd>
+          <dt>Régua de comparação</dt><dd>{{ modelo.regua }}</dd>
+        </dl>
+      </article>
+      {% endfor %}
+    </div>
+    <p class="nota">
+      Nenhum dos dois vai para a tela sem superar a régua. O resultado medido fica
+      aberto em <a href="/acuracia">Acurácia</a>.
+    </p>
+  </div>
+</section>
+
+<section class="secao" data-revelar>
+  <div class="container">
+    <p class="eyebrow">Equipe</p>
+    <h2 class="titulo">Quem faz</h2>
+    <span class="regua" aria-hidden="true"></span>
+    <ul class="equipe">
+      {% for pessoa in integrantes %}
+      <li class="equipe__item">
+        <p class="equipe__nome">{{ pessoa }}</p>
+        <p class="equipe__papel">{{ projeto.curso }}</p>
+      </li>
+      {% endfor %}
+    </ul>
+    <p class="nota">Orientação de {{ projeto.orientadora }}.</p>
+  </div>
+</section>
+
+<section class="secao secao--alt" data-revelar>
+  <div class="container">
+    <p class="eyebrow">Tecnologias e extensões</p>
+    <h2 class="titulo">O que entra na construção</h2>
+    <span class="regua" aria-hidden="true"></span>
+    <div class="tecnologias">
+      {% for grupo in tecnologias %}
+      <div class="tecnologia">
+        <h3 class="tecnologia__titulo">{{ grupo.grupo }}</h3>
+        <ul class="tecnologia__lista">
+          {% for item in grupo.itens %}<li>{{ item }}</li>{% endfor %}
+        </ul>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="secao" data-revelar>
+  <div class="container">
+    <p class="eyebrow">Robustez</p>
+    <h2 class="titulo">O que o sistema faz quando o dado falha</h2>
+    <span class="regua" aria-hidden="true"></span>
+    <table class="tabela tabela--pares">
+      <thead>
+        <tr><th scope="col">Situação não prevista</th><th scope="col">Tratamento</th></tr>
+      </thead>
+      <tbody>
+        {% for situacao, tratamento in robustez %}
+        <tr><th scope="row">{{ situacao }}</th><td>{{ tratamento }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="secao secao--alt" data-revelar>
+  <div class="container">
+    <p class="eyebrow">Acesso</p>
+    <h2 class="titulo">O painel fica atrás de usuário e senha</h2>
+    <span class="regua" aria-hidden="true"></span>
+    <p class="lead">
+      A avaliação que alimenta o sistema é pública, mas o painel que reúne,
+      classifica e projeta o comportamento de um comércio é dele. São
+      {{ total_parceiros }} comércios acompanhados nesta demonstração, todos
+      fictícios, com as categorias {{ categorias | join(", ") }}.
+    </p>
+    <a class="botao botao--solido" href="/entrar">Entrar no painel</a>
+    <p class="nota">
+      Quando a confiança do classificador fica abaixo do limite, o sistema
+      responde “sem categoria” em vez de chutar — e isso aparece na tela, contado.
+    </p>
+  </div>
+</section>
+{% endblock %}
