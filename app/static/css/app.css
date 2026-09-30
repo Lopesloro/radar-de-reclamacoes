@@ -1,8 +1,8 @@
 /*
   Radar de Reclamações
   Estrutura do Dialeto A (Autoridade) do padrão de sites, adaptada para painel:
-  a assinatura da marca continua — serifa no título, régua de 140×6px, filete no
-  lugar de sombra, uma só cor de ação — e a anatomia de página de venda sai.
+  a assinatura da marca continua, serifa no título, régua de 140×6px, filete no
+  lugar de sombra, uma só cor de ação, e a anatomia de página de venda sai.
   Número e tabela em sans, com algarismos tabulares.
 */
 
@@ -117,7 +117,7 @@ img, svg { max-width: 100%; }
 .topo--sobre-hero:not(.solido) .menu a[aria-current="page"] { color: inherit; }
 
 /* ---------- Hero: sangria de cor, tipografia grande e o gráfico ao fundo.
-   Sem foto de banco de imagens — a textura é o próprio dado. ---------- */
+   Sem foto de banco de imagens, a textura é o próprio dado. ---------- */
 
 .hero {
   position: relative; overflow: hidden;
@@ -143,7 +143,7 @@ img, svg { max-width: 100%; }
   animation: abre-tracking 1.4s cubic-bezier(.22, .61, .36, 1) .3s both;
 }
 /* Só o espaçamento anima. Título que começa em opacidade 0 some de vez quando
-   a animação não roda — em aba oculta, em webview, em leitor dentro de app. */
+   a animação não roda, em aba oculta, em webview, em leitor dentro de app. */
 @keyframes abre-tracking {
   from { letter-spacing: .12em; }
   to   { letter-spacing: .02em; }

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% import "_macros.html" as m %}
-{% block titulo %}Previsão — {{ comercio.nome }}{% endblock %}
+{% block titulo %}Previsão, {{ comercio.nome }}{% endblock %}
 
 {% block conteudo %}
 {{ m.aviso_demo() }}
@@ -23,7 +23,7 @@
         A estimativa começa do último mês que já terminou. O mês em andamento
         aparece em cinza porque ainda vai receber avaliação: contar com ele seria
         comparar mês pela metade com mês inteiro. A área clara é o mínimo e o
-        máximo esperados, e ela vai abrindo mês a mês — quanto mais longe, menos
+        máximo esperados, e ela vai abrindo mês a mês, quanto mais longe, menos
         se sabe.
       </p>
     </figure>

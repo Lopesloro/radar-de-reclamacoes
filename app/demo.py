@@ -17,7 +17,7 @@ from functools import lru_cache
 HOJE = date(2026, 9, 29)
 MESES_FECHADOS = 12          # meses completos que alimentam o modelo
 HORIZONTE = 2                # meses previstos
-Z80 = 1.2816                 # quantil de 80% da normal, para a faixa P10–P90
+Z80 = 1.2816                 # quantil de 80% da normal, para a faixa P10-P90
 
 CATEGORIAS = ("atendimento", "demora", "preço", "qualidade", "ambiente")
 SEM_CATEGORIA = "sem categoria"
@@ -259,7 +259,7 @@ def _prever(valores: list[int], sorteio: random.Random) -> list[Previsao]:
 
     A tendência crua perde da régua em série curta e ruidosa, porque persegue o
     ruído. Por isso a inclinação só entra quando supera o próprio erro padrão, e
-    o ponto de partida é o último mês observado — a mesma régua que serve de
+    o ponto de partida é o último mês observado, a mesma régua que serve de
     comparação na tela de acurácia.
     """
     janela = valores[-6:]
@@ -278,7 +278,7 @@ def _prever(valores: list[int], sorteio: random.Random) -> list[Previsao]:
     # A faixa carrega o erro do ajuste, não só a dispersão observada.
     sigma = max(1.0, 1.35 * math.sqrt(sum(r * r for r in residuos) / max(n - 2, 1)))
 
-    # O modelo parte da régua — o último mês fechado — e só se afasta dela
+    # O modelo parte da régua, o último mês fechado, e só se afasta dela
     # quando a inclinação é distinguível de zero. Assim ele nunca perde para a
     # régua por capricho do ajuste: ou empata, ou ganha onde há tendência real.
     nivel = float(janela[-1])

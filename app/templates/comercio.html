@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% import "_macros.html" as m %}
-{% block titulo %}{{ comercio.nome }} — {{ projeto.nome }}{% endblock %}
+{% block titulo %}{{ comercio.nome }}, {{ projeto.nome }}{% endblock %}
 
 {% block conteudo %}
 {{ m.aviso_demo() }}
@@ -46,7 +46,7 @@
       {{ grafico_variacao }}
       <p class="grafico__nota">
         Mostramos a diferença em número de reclamações, não em porcentagem. Num
-        assunto que ficou zerado no mês passado, a porcentagem não existe — e
+        assunto que ficou zerado no mês passado, a porcentagem não existe, e
         conta boba na tela é o começo de conta errada na cabeça.
       </p>
     </figure>
@@ -83,7 +83,7 @@
     <p class="nota">
       Quando o sistema não tem certeza suficiente da frase, ele deixa sem assunto
       em vez de chutar. Avaliação que só tem estrela entra na nota média e não é
-      lida pela inteligência artificial — não há o que ler.
+      lida pela inteligência artificial, não há o que ler.
     </p>
     <table class="tabela tabela--avaliacoes">
       <thead>
@@ -101,8 +101,8 @@
           <td class="num">{{ a.data | data_curta }}</td>
           <td class="num">{{ a.estrelas }}</td>
           <td>{% if a.texto %}{{ a.texto }}{% else %}<span class="vazio">sem texto</span>{% endif %}</td>
-          <td>{% if a.categoria %}{{ a.categoria }}{% else %}<span class="vazio">sem assunto — {{ a.motivo_sem_categoria }}</span>{% endif %}</td>
-          <td class="num">{% if a.confianca %}{{ a.confianca | decimal(2) }}{% else %}—{% endif %}</td>
+          <td>{% if a.categoria %}{{ a.categoria }}{% else %}<span class="vazio">sem assunto, {{ a.motivo_sem_categoria }}</span>{% endif %}</td>
+          <td class="num">{% if a.confianca %}{{ a.confianca | decimal(2) }}{% else %}{% endif %}</td>
         </tr>
         {% endfor %}
       </tbody>

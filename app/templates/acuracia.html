@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% import "_macros.html" as m %}
-{% block titulo %}Acurácia — {{ projeto.nome }}{% endblock %}
+{% block titulo %}Acurácia, {{ projeto.nome }}{% endblock %}
 
 {% block conteudo %}
 {{ m.aviso_demo() }}
 <section class="secao secao--topo">
   <div class="container">
     {{ m.cabeca("Acurácia dos dois modelos",
-                "Aqui está a prova de que vale confiar. Cada resultado do sistema aparece ao lado do palpite mais simples que existe — e só fica na tela se ganhar dele.") }}
+                "Aqui está a prova de que vale confiar. Cada resultado do sistema aparece ao lado do palpite mais simples que existe, e só fica na tela se ganhar dele.") }}
 
     <h2 class="titulo titulo--secao">Primeira pergunta: do que estão reclamando</h2>
     <span class="regua" aria-hidden="true"></span>
@@ -19,7 +19,7 @@
         naquele assunto. O palpite simples responde sempre
         “{{ classificacao.categoria_regua }}”, o assunto mais comum das
         {{ classificacao.amostra | inteiro }} avaliações que conferimos à mão. Ele
-        acerta bem num assunto e erra tudo nos outros quatro — por isso a nota
+        acerta bem num assunto e erra tudo nos outros quatro, por isso a nota
         média dele é tão baixa. Essa nota tem nome técnico, F1.
       </p>
     </figure>

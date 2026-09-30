@@ -2,7 +2,7 @@
 
 Regras seguidas em todos eles: um eixo só, eixo rotulado com unidade explícita,
 linha de 2px, marcador com anel da cor do fundo, grade em filete de 1px, texto
-sempre em cor de texto — nunca na cor da série — e dica de valor ao passar o
+sempre em cor de texto, nunca na cor da série, e dica de valor ao passar o
 mouse em cada ponto.
 """
 
@@ -134,7 +134,7 @@ def barras_categorias(itens: list[tuple[str, int, int]], titulo: str) -> Markup:
 
 
 def leque(serie, titulo: str) -> Markup:
-    """Meses fechados, mês corrente em andamento e a faixa P10–P90 prevista."""
+    """Meses fechados, mês corrente em andamento e a faixa P10-P90 prevista."""
     largura, altura = 760, 320
     esq, dir_, topo, base = 60, 104, 30, 44
     meses = [m for m, _ in serie.pontos] + [serie.parcial[0]] + [p.mes for p in serie.previsao]

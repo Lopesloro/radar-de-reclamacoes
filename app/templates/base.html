@@ -4,32 +4,28 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block titulo %}{{ projeto.nome }}{% endblock %}</title>
-  <meta name="description" content="Classifica a avaliação pública de um comércio e prevê qual reclamação tende a crescer no próximo mês. Projeto Integrador VI, Engenharia de Software, PUC-Campinas.">
+  <meta name="description" content="Lê a avaliação pública do seu negócio, mostra do que os clientes mais reclamam e avisa qual queixa está crescendo antes de ela virar problema.">
   <meta name="theme-color" content="#0F6E7B">
   <link rel="icon" href="/static/icone.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lora:ital@0;1&family=Playfair+Display&display=swap">
-  <link rel="stylesheet" href="/static/css/app.css?v={{ versao }}">
-  <script src="/static/js/inicio.js?v={{ versao }}"></script>
+  <link rel="stylesheet" href="/static/css/app.css?v={{ impressao }}">
+  <script src="/static/js/inicio.js?v={{ impressao }}"></script>
 </head>
 <body>
   <a class="pular" href="#conteudo">Pular para o conteúdo</a>
 
   <header class="topo {% block topo_classe %}{% endblock %}" data-topo>
-    <div class="faixa">
-      <div class="container faixa__linha">
-        <span>{{ projeto.disciplina }}, {{ projeto.curso }}</span>
-        <span class="faixa__extra">{{ projeto.instituicao }}, {{ projeto.semestre }}</span>
-      </div>
-    </div>
     <div class="container topo__linha">
       <a class="marca" href="{{ '/painel' if logado else '/' }}">{{ projeto.nome }}</a>
+      {% if logado %}
       <nav class="menu" aria-label="Principal">
-        {% for item in (menu if logado else menu_publico) %}
+        {% for item in menu %}
         <a href="{{ item.href }}"{% if item.id == ativo %} aria-current="page"{% endif %}>{{ item.rotulo }}</a>
         {% endfor %}
       </nav>
+      {% endif %}
       <div class="topo__conta">
         {% if logado %}
         <span class="topo__usuario">{{ usuario }}</span>
@@ -57,28 +53,31 @@
       <div>
         <h2 class="rodape__titulo">Navegar</h2>
         <ul class="rodape__lista">
-          {% for item in (menu if logado else menu_publico) %}
+          {% if logado %}
+          {% for item in menu %}
           <li><a href="{{ item.href }}">{{ item.rotulo }}</a></li>
           {% endfor %}
+          {% else %}
+          <li><a href="/entrar">Entrar no painel</a></li>
+          {% endif %}
           <li><a href="/saude">Estado do serviço</a></li>
         </ul>
       </div>
       <div>
-        <h2 class="rodape__titulo">Projeto</h2>
+        <h2 class="rodape__titulo">Como funciona</h2>
         <ul class="rodape__lista">
-          <li>{{ projeto.disciplina }}, disciplina {{ projeto.codigo }}</li>
-          <li>{{ projeto.curso }}, {{ projeto.instituicao }}</li>
-          <li>Orientação: {{ projeto.orientadora }}</li>
-          <li><a href="{{ projeto.repositorio }}">Repositório no GitHub</a></li>
+          <li>Lê a avaliação pública do seu negócio</li>
+          <li>Separa por assunto e conta o mês</li>
+          <li>Estima o mês seguinte e avisa a alta</li>
+          <li>Sem instalar nada no seu negócio</li>
         </ul>
       </div>
     </div>
     <div class="container rodape__base">
-      <p>Integrantes: {{ integrantes[:-1] | join(", ") }} e {{ integrantes[-1] }}.</p>
       <p>Dados de demonstração. Nenhuma avaliação exibida aqui foi escrita por um cliente real.</p>
     </div>
   </footer>
 
-  <script src="/static/js/app.js?v={{ versao }}" defer></script>
+  <script src="/static/js/app.js?v={{ impressao }}" defer></script>
 </body>
 </html>

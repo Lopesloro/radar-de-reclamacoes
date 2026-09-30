@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block titulo %}{{ projeto.nome }} — saiba por que seus clientes reclamam{% endblock %}
+{% block titulo %}{{ projeto.nome }}, saiba por que seus clientes reclamam{% endblock %}
 {% block topo_classe %}topo--sobre-hero{% endblock %}
 
 {% block conteudo %}
@@ -18,10 +18,9 @@
     <h1 id="hero-titulo" class="hero__titulo">Você sabe a sua nota. Não sabe o motivo dela.</h1>
     <p class="hero__texto">
       O Radar de Reclamações lê o que seus clientes já escreveram na internet,
-      diz do que eles mais reclamam e avisa qual queixa está crescendo — antes
+      diz do que eles mais reclamam e avisa qual queixa está crescendo, antes
       de ela virar a razão de ninguém voltar.
     </p>
-    <p class="hero__atrib">{{ projeto.disciplina }} · {{ projeto.curso }} · {{ projeto.instituicao }}</p>
     <a class="botao botao--vazado-claro" href="/entrar">Entrar no painel</a>
   </div>
   <span class="chevron" aria-hidden="true"></span>
@@ -132,32 +131,6 @@
       Se o seu negócio ainda não tem esse histórico, a tela diz isso com todas as
       letras em vez de mostrar um número inventado.
     </p>
-  </div>
-</section>
-
-<section class="secao" data-revelar>
-  <div class="container">
-    <div class="dividida">
-      <div>
-        <p class="eyebrow">Quem faz</p>
-        <h2 class="titulo">Um trabalho de faculdade levado a sério</h2>
-        <span class="regua" aria-hidden="true"></span>
-        <p class="lead">
-          O Radar de Reclamações é o projeto de conclusão de três alunos de
-          {{ projeto.curso }} da {{ projeto.instituicao }}, com orientação de
-          {{ projeto.orientadora }}. O sistema é construído junto com empresas
-          reais, que participam das decisões e aprovam o resultado.
-        </p>
-      </div>
-      <ul class="equipe">
-        {% for pessoa in integrantes %}
-        <li class="equipe__item">
-          <p class="equipe__nome">{{ pessoa }}</p>
-          <p class="equipe__papel">{{ projeto.curso }}</p>
-        </li>
-        {% endfor %}
-      </ul>
-    </div>
   </div>
 </section>
 

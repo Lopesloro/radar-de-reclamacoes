@@ -11,8 +11,8 @@ VERSAO = "0.1.0"
 PROJETO = {
     "nome": "Radar de Reclamações",
     "resumo": (
-        "Lê a avaliação pública de um comércio parceiro, diz por que os clientes "
-        "reclamam hoje e qual reclamação tende a crescer no próximo mês."
+        "Lê a avaliação pública do seu negócio, mostra do que os clientes mais "
+        "reclamam e avisa qual queixa está crescendo antes de ela virar problema."
     ),
     "disciplina": "Projeto Integrador VI",
     "codigo": "12563",
@@ -38,10 +38,9 @@ MENU = (
     {"id": "etapas", "rotulo": "Etapas", "href": "/etapas"},
 )
 
-# Menu de quem ainda não entrou: só a apresentação do projeto.
-MENU_PUBLICO = (
-    {"id": "projeto", "rotulo": "O projeto", "href": "/"},
-)
+# Quem ainda não entrou não tem menu: a página pública é uma só, e a única ação
+# dela é entrar.
+MENU_PUBLICO = ()
 
 # O que o dono do negócio recebe. Linguagem dele, não a nossa.
 ENTREGAS = (
@@ -86,7 +85,7 @@ MOVIMENTOS = (
         "titulo": "Separa por assunto",
         "texto": (
             "Cada texto é encaixado num assunto. Quando a frase é vaga demais para "
-            "ter certeza, o sistema diz que não sabe — e conta isso à parte, em vez "
+            "ter certeza, o sistema diz que não sabe, e conta isso à parte, em vez "
             "de inventar um assunto para fechar a conta."
         ),
     },
@@ -187,7 +186,7 @@ ROBUSTEZ = (
 
 
 # Etapas do produto, na ordem em que precisam acontecer. É o que o empresário vê
-# para saber o que já existe e o que ainda falta — sem promessa fora do lugar.
+# para saber o que já existe e o que ainda falta, sem promessa fora do lugar.
 ETAPAS_PROJETO = (
     {
         "fase": "Entregue",
@@ -209,7 +208,7 @@ ETAPAS_PROJETO = (
         "fase": "Entregue",
         "titulo": "Dois modelos medidos contra a régua",
         "estado": "feito",
-        "texto": "Classificação com F1 por categoria e previsão com faixa P10–P90, ambas "
+        "texto": "Classificação com F1 por categoria e previsão com faixa P10-P90, ambas "
                  "comparadas com a régua na tela de acurácia.",
         "falta": None,
     },
@@ -280,7 +279,7 @@ IA_NO_SISTEMA = (
         "onde": "Estimar o mês seguinte",
         "faz": "Olha os meses anteriores de cada assunto e calcula quantas "
                "reclamações devem aparecer no próximo, com mínimo e máximo.",
-        "confere": "Comparamos com o palpite mais simples que existe — repetir o mês "
+        "confere": "Comparamos com o palpite mais simples que existe, repetir o mês "
                    "passado. Se a máquina não ganhar dele, ela não vai para a tela.",
         "melhorar": "Levar em conta feriado, férias e promoção, que mexem no "
                     "movimento e hoje o sistema não enxerga.",
@@ -298,7 +297,7 @@ IA_NO_SISTEMA = (
         "onde": "Explicar o aviso em português",
         "faz": "Ainda não faz. Hoje a frase do aviso é montada com os números "
                "calculados, sem a IA escrever nada.",
-        "confere": "—",
+        "confere": "",
         "melhorar": "Deixar a IA escrever a explicação, mas sempre em cima de "
                     "números que vieram do banco. Ela explica, nunca inventa número.",
     },
@@ -309,6 +308,6 @@ LIMITES_DA_IA = (
     ("Ironia", "“Adorei esperar uma hora” é elogio para a máquina e reclamação para gente."),
     ("Duas queixas na mesma frase", "Hoje ela escolhe uma só, e a outra se perde."),
     ("Gíria e erro de digitação", "Quanto mais longe do português comum, menos ela acerta."),
-    ("Negócio novo", "Sem alguns meses de histórico, não há o que estimar — e a tela diz isso."),
+    ("Negócio novo", "Sem alguns meses de histórico, não há o que estimar, e a tela diz isso."),
     ("Mês fora do normal", "Reforma, feriadão ou promoção mudam tudo, e o sistema ainda não sabe disso."),
 )

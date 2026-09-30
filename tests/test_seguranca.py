@@ -102,3 +102,16 @@ def test_senha_nunca_aparece_em_texto_no_modulo():
     assert seguranca._HASH_ESPERADO != seguranca.SENHA.encode()
     assert seguranca.senha_confere("admin", "admin") is True
     assert seguranca.senha_confere("admin", "Admin") is False
+
+
+def test_endereco_do_css_muda_quando_o_arquivo_muda(anonimo, tmp_path):
+    """Sem impressão no endereço, o navegador serve o CSS velho com a tela nova."""
+    import re
+
+    from app import web
+
+    pagina = anonimo.get("/").text
+    achado = re.search(r'app\.css\?v=([0-9a-f]{12})', pagina)
+    assert achado, "o CSS precisa sair com uma impressão no endereço"
+    assert achado.group(1) == web.IMPRESSAO
+    assert web.IMPRESSAO != web.VERSAO

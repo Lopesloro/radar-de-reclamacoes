@@ -1,7 +1,7 @@
 """Autenticação, sessão e os controles de defesa do site.
 
 O recorte de cibersegurança do projeto é **defesa**: nada aqui ataca nada. O que
-existe é o mínimo que um painel com dado de terceiro precisa ter — senha
+existe é o mínimo que um painel com dado de terceiro precisa ter, senha
 guardada como hash, sessão assinada em cookie HttpOnly, token contra CSRF em
 todo formulário, limite de tentativas de login e cabeçalhos de resposta.
 

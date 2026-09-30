@@ -2,12 +2,13 @@
 
 A home é pública e apresenta o projeto. Tudo que mostra dado de parceiro fica
 atrás de login: painel, ficha do comércio, previsão, alertas, etapas e acurácia.
-Tudo é renderizado no servidor — o conteúdo nasce no HTML e o JavaScript só
+Tudo é renderizado no servidor, o conteúdo nasce no HTML e o JavaScript só
 troca estado depois.
 """
 
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 
 from fastapi import FastAPI, Form, Request
@@ -26,6 +27,23 @@ from app.graficos import svg
 
 RAIZ = Path(__file__).resolve().parent
 ACOES_ALERTA = {"confirmar", "descartar", "reabrir"}
+
+
+def _impressao_dos_estaticos() -> str:
+    """Identificador que muda quando o CSS ou o JavaScript mudam.
+
+    Sem isso o endereço do arquivo fica igual entre versões, o navegador serve
+    o que tem em cache e a tela nova aparece com o estilo velho. Já aconteceu.
+    """
+    marcas = sorted(
+        f"{caminho.name}:{caminho.stat().st_mtime_ns}"
+        for caminho in (RAIZ / "static").rglob("*")
+        if caminho.is_file()
+    )
+    return hashlib.sha256("|".join(marcas).encode()).hexdigest()[:12]
+
+
+IMPRESSAO = _impressao_dos_estaticos()
 
 app = FastAPI(title=PROJETO["nome"], version=VERSAO, docs_url=None, redoc_url=None)
 app.add_middleware(
@@ -55,6 +73,7 @@ paginas.env.globals.update(
     menu=MENU,
     menu_publico=MENU_PUBLICO,
     versao=VERSAO,
+    impressao=IMPRESSAO,
     hoje=demo.HOJE,
 )
 

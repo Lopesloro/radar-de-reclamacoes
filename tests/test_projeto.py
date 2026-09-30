@@ -9,13 +9,27 @@ def test_home_responde_e_vende_o_resultado(anonimo):
     assert resposta.status_code == 200
     assert "Você sabe a sua nota" in resposta.text
     assert "A lista do que mais incomoda" in resposta.text
-    assert PROJETO["instituicao"] in resposta.text
 
 
-def test_home_lista_todos_os_integrantes(anonimo):
+def test_home_nao_traz_identificacao_academica(anonimo):
+    """A página pública é comercial. Disciplina, instituição e equipe vivem dentro."""
     texto = anonimo.get("/").text
+    for termo in (PROJETO["disciplina"], PROJETO["instituicao"], PROJETO["orientadora"]):
+        assert termo not in texto
     for pessoa in INTEGRANTES:
-        assert pessoa in texto
+        assert pessoa not in texto
+
+
+def test_home_nao_tem_travessao(anonimo):
+    texto = anonimo.get("/").text
+    assert "\u2014" not in texto and "\u2013" not in texto
+
+
+def test_home_so_tem_uma_acao(anonimo):
+    """Um site B2B abre com uma porta só: entrar."""
+    texto = anonimo.get("/").text
+    assert "O projeto" not in texto
+    assert texto.count('href="/entrar"') >= 1
 
 
 def test_home_nao_tem_jargao_tecnico(anonimo):
