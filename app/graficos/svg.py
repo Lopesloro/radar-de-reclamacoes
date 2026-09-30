@@ -133,96 +133,127 @@ def barras_categorias(itens: list[tuple[str, int, int]], titulo: str) -> Markup:
     return _svg(largura, int(altura), titulo, corpo)
 
 
-def leque(serie, titulo: str) -> Markup:
-    """Meses fechados, mês corrente em andamento e a faixa P10-P90 prevista."""
-    largura, altura = 760, 320
-    esq, dir_, topo, base = 60, 104, 30, 44
-    meses = [m for m, _ in serie.pontos] + [serie.parcial[0]] + [p.mes for p in serie.previsao]
-    n = len(meses)
+def previsao_mensal(serie, titulo: str) -> Markup:
+    """Uma coluna por mês: o que já aconteceu, o mês aberto e o que se espera.
 
-    def x(i: float) -> float:
-        return esq + i * (largura - esq - dir_) / (n - 1)
+    Coluna é mais fácil de ler que linha quando o valor é contagem, e o traço
+    vertical em cima da coluna estimada mostra o mínimo e o máximo sem precisar
+    de legenda numérica. Nada de P10 e P90 na tela: quem olha quer saber "quanto
+    deve dar" e "quanto pode variar".
+    """
+    largura, altura = 760, 350
+    esq, dir_, topo, base = 56, 20, 64, 64
 
-    valores = [v for _, v in serie.pontos] + [p.p90 for p in serie.previsao]
-    _, y1, ticks = _eixo(0, max(valores) * 1.1)
+    fechados = serie.pontos[-9:]
+    parcial = serie.parcial
+    previstos = list(serie.previsao)
+    colunas = len(fechados) + 1 + len(previstos)
+
+    faixa_util = largura - esq - dir_
+    vao = faixa_util / colunas
+    espessura = min(40.0, vao * 0.6)
+
+    def centro(i: int) -> float:
+        return esq + vao * (i + 0.5)
+
+    maximo = max([v for _, v in fechados] + [p.p90 for p in previstos] + [parcial[1]])
+    _, y1, ticks = _eixo(0, maximo * 1.12)
 
     def y(v: float) -> float:
         return altura - base - (v - ticks[0]) * (altura - base - topo) / ((y1 - ticks[0]) or 1)
 
     corpo: list[str] = []
+
+    # Legenda em palavras, no alto.
+    corpo.append(f'<rect x="{esq}" y="14" width="13" height="13" rx="2" fill="{MUDO}"/>')
+    corpo.append(_texto(esq + 19, 25, "meses que já fecharam", cor=TINTA))
+    corpo.append(
+        f'<rect x="{esq + 190}" y="14" width="13" height="13" rx="2" fill="none" '
+        f'stroke="{MUDO}" stroke-width="1.5" stroke-dasharray="3 2"/>'
+    )
+    corpo.append(_texto(esq + 209, 25, "mês ainda em andamento", cor=TINTA))
+    corpo.append(f'<rect x="{esq + 400}" y="14" width="13" height="13" rx="2" fill="{ACENTO}"/>')
+    corpo.append(_texto(esq + 419, 25, "estimativa, com mínimo e máximo", cor=TINTA))
+
     for t in ticks:
         corpo.append(
             f'<line x1="{esq}" x2="{largura - dir_}" y1="{y(t):.1f}" y2="{y(t):.1f}" '
             f'stroke="{GRADE}" stroke-width="1"/>'
         )
         corpo.append(_texto(esq - 10, y(t) + 4, f"{t:.0f}", ancora="end", tamanho=11))
-    corpo.append(_texto(esq - 10, topo - 12, "reclamações por mês", tamanho=12))
+    corpo.append(_texto(esq - 10, topo - 14, "reclamações no mês", tamanho=12))
 
-    i_fechado = len(serie.pontos) - 1
-    i_parcial = i_fechado + 1
-    meio = (x(1) - x(0)) / 2
+    base_y = y(ticks[0])
+    indice = 0
+
+    for mes, valor in fechados:
+        x = centro(indice) - espessura / 2
+        corpo.append(
+            f'<rect x="{x:.1f}" y="{y(valor):.1f}" width="{espessura:.1f}" '
+            f'height="{max(base_y - y(valor), 1):.1f}" rx="3" fill="{MUDO}">'
+            f"<title>{escape(f'{mes_curto(mes)}: {valor} reclamações')}</title></rect>"
+        )
+        corpo.append(_rotulo_mes(centro(indice), altura - base, mes, indice == 0))
+        indice += 1
+
+    mes_aberto, valor_aberto = parcial
+    x = centro(indice) - espessura / 2
     corpo.append(
-        f'<rect x="{x(i_parcial) - meio:.1f}" y="{topo}" width="{meio * 2:.1f}" '
-        f'height="{altura - base - topo}" fill="{LAVADO}"/>'
+        f'<rect x="{x:.1f}" y="{y(valor_aberto):.1f}" width="{espessura:.1f}" '
+        f'height="{max(base_y - y(valor_aberto), 1):.1f}" rx="3" fill="none" '
+        f'stroke="{MUDO}" stroke-width="1.5" stroke-dasharray="4 3">'
+        f"<title>{escape(f'{mes_curto(mes_aberto)}: {valor_aberto} até agora, o mês ainda não terminou')}</title>"
+        f"</rect>"
     )
-    corpo.append(_texto(x(i_parcial), topo + 14, "mês em andamento", ancora="middle", tamanho=11))
+    corpo.append(_texto(centro(indice), y(valor_aberto) - 9, "parcial", ancora="middle", tamanho=10))
+    corpo.append(_rotulo_mes(centro(indice), altura - base, mes_aberto, False))
+    indice += 1
 
-    ancora = (x(i_fechado), y(serie.ultimo))
-    superior = [ancora] + [(x(i_parcial + 1 + k), y(p.p90)) for k, p in enumerate(serie.previsao)]
-    inferior = [(x(i_parcial + 1 + k), y(p.p10)) for k, p in enumerate(serie.previsao)][::-1]
-    faixa = " ".join(f"{px:.1f},{py:.1f}" for px, py in superior + inferior + [ancora])
-    corpo.append(f'<polygon points="{faixa}" fill="{ACENTO}" fill-opacity=".13"/>')
+    for ponto in previstos:
+        cx = centro(indice)
+        x = cx - espessura / 2
+        corpo.append(
+            f'<rect x="{x:.1f}" y="{y(ponto.p50):.1f}" width="{espessura:.1f}" '
+            f'height="{max(base_y - y(ponto.p50), 1):.1f}" rx="3" fill="{ACENTO}">'
+            f"<title>{escape(f'{mes_curto(ponto.mes)}: estimativa de {ponto.p50:.0f}, entre {ponto.p10:.0f} e {ponto.p90:.0f}')}</title>"
+            f"</rect>"
+        )
+        # Traço do mínimo ao máximo, com as pontas marcadas.
+        corpo.append(
+            f'<line x1="{cx:.1f}" x2="{cx:.1f}" y1="{y(ponto.p90):.1f}" y2="{y(ponto.p10):.1f}" '
+            f'stroke="{TINTA}" stroke-width="1.5"/>'
+        )
+        for valor in (ponto.p10, ponto.p90):
+            corpo.append(
+                f'<line x1="{cx - 8:.1f}" x2="{cx + 8:.1f}" y1="{y(valor):.1f}" '
+                f'y2="{y(valor):.1f}" stroke="{TINTA}" stroke-width="1.5"/>'
+            )
+        corpo.append(_texto(cx, y(ponto.p90) - 10, f"{ponto.p50:.0f}", ancora="middle",
+                            tamanho=13, cor=TINTA, peso=600))
+        corpo.append(_rotulo_mes(cx, altura - base, ponto.mes, False))
+        indice += 1
 
-    fechados = " ".join(f"{x(i):.1f},{y(v):.1f}" for i, (_, v) in enumerate(serie.pontos))
+    # Onde o passado acaba e a estimativa começa.
+    corte = esq + vao * len(fechados)
     corpo.append(
-        f'<polyline points="{fechados}" fill="none" stroke="{ACENTO}" stroke-width="2" '
-        f'stroke-linejoin="round" stroke-linecap="round"/>'
+        f'<line x1="{corte:.1f}" x2="{corte:.1f}" y1="{topo - 6}" y2="{base_y + 10:.1f}" '
+        f'stroke="{TENDENCIA}" stroke-width="1" stroke-dasharray="4 4"/>'
     )
+    corpo.append(_texto(corte + 6, topo + 4, "daqui para a frente é estimativa",
+                        tamanho=11, cor=MUDO))
     corpo.append(
-        f'<polyline points="{x(i_fechado):.1f},{y(serie.ultimo):.1f} '
-        f'{x(i_parcial):.1f},{y(serie.parcial[1]):.1f}" fill="none" stroke="{TENDENCIA}" '
-        f'stroke-width="2" stroke-linecap="round"/>'
+        f'<line x1="{esq}" x2="{largura - dir_}" y1="{base_y:.1f}" y2="{base_y:.1f}" '
+        f'stroke="{TINTA}" stroke-width="1"/>'
     )
-    mediana = [ancora] + [(x(i_parcial + 1 + k), y(p.p50)) for k, p in enumerate(serie.previsao)]
-    corpo.append(
-        f'<polyline points="{" ".join(f"{px:.1f},{py:.1f}" for px, py in mediana)}" fill="none" '
-        f'stroke="{ACENTO}" stroke-width="2" stroke-dasharray="6 5" stroke-linecap="round"/>'
-    )
-    corpo.append(
-        f'<circle cx="{ancora[0]:.1f}" cy="{ancora[1]:.1f}" r="4.5" fill="{ACENTO}" '
-        f'stroke="{FUNDO}" stroke-width="2"/>'
-    )
-
-    # Faixa estreita empilha os três rótulos no mesmo lugar: afasta um do outro.
-    fim = serie.previsao[-1]
-    xf = largura - dir_ + 10
-    rotulos = [
-        [y(fim.p90), f"P90 {fim.p90:.0f}", 11, MUDO, 400],
-        [y(fim.p50), f"P50 {fim.p50:.0f}", 13, TINTA, 600],
-        [y(fim.p10), f"P10 {fim.p10:.0f}", 11, MUDO, 400],
-    ]
-    minimo = 15.0
-    for i in range(1, len(rotulos)):
-        if rotulos[i][0] - rotulos[i - 1][0] < minimo:
-            rotulos[i][0] = rotulos[i - 1][0] + minimo
-    deslocamento = max(0.0, rotulos[-1][0] - (altura - base))
-    for pos, texto, tamanho, cor, peso in rotulos:
-        corpo.append(_texto(xf, pos - deslocamento + 4, texto, tamanho=tamanho, cor=cor, peso=peso))
-
-    for i, mes in enumerate(meses):
-        if (n - 1 - i) % 2 == 0:
-            corpo.append(_texto(x(i), altura - base + 20, mes_curto(mes), ancora="middle", tamanho=11))
-
-    for i, (mes, valor) in enumerate(serie.pontos):
-        corpo.append(_alvo(x(i), y(valor), f"{mes_curto(mes)}: {valor} reclamações"))
-    corpo.append(_alvo(x(i_parcial), y(serie.parcial[1]),
-                       f"{mes_curto(serie.parcial[0])}: {serie.parcial[1]} até agora, mês aberto"))
-    for k, p in enumerate(serie.previsao):
-        corpo.append(_alvo(
-            x(i_parcial + 1 + k), y(p.p50),
-            f"{mes_curto(p.mes)}: previsto {p.p50:.0f} (faixa {p.p10:.0f} a {p.p90:.0f})",
-        ))
     return _svg(largura, altura, titulo, corpo)
+
+
+def _rotulo_mes(x: float, y_base: float, mes: date, com_ano: bool) -> str:
+    """Mês em três letras; o ano só aparece quando vira."""
+    saida = _texto(x, y_base + 20, MESES_CURTOS[mes.month - 1], ancora="middle", tamanho=11)
+    if com_ano or mes.month == 1:
+        saida += _texto(x, y_base + 36, str(mes.year), ancora="middle", tamanho=10)
+    return saida
 
 
 def variacao(itens: list[tuple[str, int]], titulo: str) -> Markup:

@@ -598,3 +598,13 @@ img, svg { max-width: 100%; }
 @media (max-width: 680px) {
   .entregas, .modelos, .equipe, .parceiros, .tecnologias { grid-template-columns: 1fr; }
 }
+
+/* ---------- Autoria, na área interna ---------- */
+
+.autoria { list-style: none; margin: 32px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+.autor { border-top: 2px solid var(--ink); padding-top: 20px; }
+.autor__nome { margin: 0 0 6px; font: 400 21px/1.3 var(--serif); }
+.autor__frente { margin: 0 0 10px; font: 600 12px/1.4 var(--ui); letter-spacing: .1em; text-transform: uppercase; color: var(--acao); }
+.autor__feito { margin: 0; font: 400 15px/1.65 var(--ui); color: var(--texto-2); }
+
+@media (max-width: 860px) { .autoria { grid-template-columns: 1fr; } }

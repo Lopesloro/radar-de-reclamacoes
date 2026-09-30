@@ -19,7 +19,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app import demo, formatos, seguranca
 from app.conteudo import (
-    DISPENSADO, ENTREGAS, ETAPAS_PROJETO, IA_NO_SISTEMA, INTEGRANTES,
+    AUTORIA, DISPENSADO, ENTREGAS, ETAPAS_PROJETO, IA_NO_SISTEMA, INTEGRANTES,
     LIMITES_DA_IA, MENU, MENU_PUBLICO, MODELOS, MOVIMENTOS, PROJETO, ROBUSTEZ,
     TECNOLOGIAS, VERSAO,
 )
@@ -34,13 +34,18 @@ def _impressao_dos_estaticos() -> str:
 
     Sem isso o endereço do arquivo fica igual entre versões, o navegador serve
     o que tem em cache e a tela nova aparece com o estilo velho. Já aconteceu.
+
+    A conta é sobre o conteúdo do arquivo, não sobre a data dele: o servidor
+    baixa o repositório a cada publicação e todas as datas mudam, o que trocaria
+    o endereço sem nenhum motivo e jogaria fora o cache de quem já tinha o
+    arquivo certo.
     """
-    marcas = sorted(
-        f"{caminho.name}:{caminho.stat().st_mtime_ns}"
-        for caminho in (RAIZ / "static").rglob("*")
-        if caminho.is_file()
-    )
-    return hashlib.sha256("|".join(marcas).encode()).hexdigest()[:12]
+    resumo = hashlib.sha256()
+    for caminho in sorted((RAIZ / "static").rglob("*")):
+        if caminho.is_file():
+            resumo.update(caminho.name.encode())
+            resumo.update(caminho.read_bytes())
+    return resumo.hexdigest()[:12]
 
 
 IMPRESSAO = _impressao_dos_estaticos()
@@ -269,7 +274,7 @@ def previsao(request: Request, identificador: str, categoria: str | None = None)
         serie=serie,
         categorias=demo.CATEGORIAS,
         escolhida=escolhida,
-        grafico=svg.leque(serie, f"Previsão de {escolhida} em {alvo.nome}"),
+        grafico=svg.previsao_mensal(serie, f"Reclamações de {escolhida} por mês em {alvo.nome}"),
         horizonte=demo.HORIZONTE,
     )
 
@@ -314,6 +319,7 @@ def etapas(request: Request):
         total_etapas=len(ETAPAS_PROJETO),
         senha_demo=seguranca.SENHA_E_DEMONSTRACAO,
         ia=IA_NO_SISTEMA,
+        autoria=AUTORIA,
         limites=LIMITES_DA_IA,
         tecnologias=TECNOLOGIAS,
         robustez=ROBUSTEZ,

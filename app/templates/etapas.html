@@ -39,6 +39,26 @@
     </p>
     {% endif %}
 
+    <h2 class="titulo titulo--secao">Quem construiu</h2>
+    <span class="regua" aria-hidden="true"></span>
+    <p class="nota">
+      O Radar de Reclamações foi escrito do zero por três alunos de
+      {{ projeto.curso }} da {{ projeto.instituicao }}, como trabalho de
+      {{ projeto.disciplina }}, sob orientação de {{ projeto.orientadora }}.
+      Nada aqui foi comprado pronto: o código está aberto em
+      <a href="{{ projeto.repositorio }}">{{ projeto.repositorio | replace("https://github.com/", "") }}</a>,
+      com o histórico de cada mudança.
+    </p>
+    <ul class="autoria">
+      {% for pessoa in autoria %}
+      <li class="autor">
+        <p class="autor__nome">{{ pessoa.nome }}</p>
+        <p class="autor__frente">{{ pessoa.frente }}</p>
+        <p class="autor__feito">{{ pessoa.feito }}</p>
+      </li>
+      {% endfor %}
+    </ul>
+
     <h2 class="titulo titulo--secao">O sistema, parte por parte</h2>
     <span class="regua" aria-hidden="true"></span>
     <p class="nota">

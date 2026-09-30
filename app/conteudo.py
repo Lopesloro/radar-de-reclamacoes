@@ -311,3 +311,28 @@ LIMITES_DA_IA = (
     ("Negócio novo", "Sem alguns meses de histórico, não há o que estimar, e a tela diz isso."),
     ("Mês fora do normal", "Reforma, feriadão ou promoção mudam tudo, e o sistema ainda não sabe disso."),
 )
+
+
+# Quem construiu, e o que cada um fez. Fica na área interna: a página pública é
+# comercial, mas a autoria do trabalho precisa estar escrita em algum lugar do
+# próprio sistema, não só no relatório.
+AUTORIA = (
+    {
+        "nome": "Gabriel Lopes Londe Rodrigues",
+        "frente": "Programa em Python, banco de dados e os dois modelos",
+        "feito": "Escreveu a aplicação, a geração dos dados, a conta da previsão, "
+                 "a avaliação dos modelos e os gráficos desenhados no servidor.",
+    },
+    {
+        "nome": "Matheus Rocafa Moraes",
+        "frente": "Segurança e proteção dos dados",
+        "feito": "Montou a entrada com usuário e senha, a guarda da senha, a proteção "
+                 "dos formulários, o limite de tentativas e os cabeçalhos de defesa.",
+    },
+    {
+        "nome": "Nicolas Marques Linares",
+        "frente": "Telas, textos, testes e parceiros",
+        "feito": "Desenhou e escreveu as telas, cuidou da leitura em celular e "
+                 "computador, dos testes de uso e do contato com as empresas parceiras.",
+    },
+)

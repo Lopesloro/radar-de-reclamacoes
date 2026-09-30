@@ -136,3 +136,20 @@ def test_avaliacao_classificada_supera_o_limite_de_confianca(cliente):
         for avaliacao in c.avaliacoes:
             if avaliacao.categoria is not None:
                 assert avaliacao.confianca >= demo.LIMITE_CONFIANCA
+
+
+def test_etapas_registra_quem_construiu(cliente):
+    """A autoria do trabalho precisa estar escrita dentro do próprio sistema."""
+    texto = cliente.get("/etapas").text
+    assert "Quem construiu" in texto
+    assert "Nada aqui foi comprado pronto" in texto
+    for pessoa in ("Gabriel Lopes Londe Rodrigues", "Nicolas Marques Linares",
+                   "Matheus Rocafa Moraes"):
+        assert pessoa in texto
+
+
+def test_entrada_nao_despeja_termo_tecnico_no_cliente(anonimo):
+    """Quem só quer entrar não precisa ler sobre cookie, hash e CSRF."""
+    texto = anonimo.get("/entrar").text
+    for jargao in ("HttpOnly", "hash", "CSRF", "tentativas por origem"):
+        assert jargao not in texto
