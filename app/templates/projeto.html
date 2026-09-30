@@ -3,17 +3,28 @@
 {% block topo_classe %}topo--sobre-hero{% endblock %}
 
 {% block conteudo %}
-<section class="hero">
+<section class="hero" aria-labelledby="hero-titulo">
+  <svg class="hero__grafico" viewBox="0 0 1440 400" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+    <polygon points="900,246 1440,132 1440,336" fill="#fff" fill-opacity=".10"/>
+    <path d="M0,330 C140,322 210,306 320,292 S540,268 680,272 S820,250 900,246"
+          fill="none" stroke="#fff" stroke-width="2" vector-effect="non-scaling-stroke"/>
+    <path d="M900,246 L1440,198" fill="none" stroke="#fff" stroke-width="2"
+          stroke-dasharray="10 8" vector-effect="non-scaling-stroke"/>
+    <line x1="900" y1="52" x2="900" y2="400" stroke="#fff" stroke-width="1"
+          vector-effect="non-scaling-stroke"/>
+  </svg>
   <div class="container hero__caixa">
     <p class="hero__sobrelinha">Para quem vive de cliente que volta</p>
-    <h1 class="hero__titulo">Você sabe a sua nota. Não sabe o motivo dela.</h1>
+    <h1 id="hero-titulo" class="hero__titulo">Você sabe a sua nota. Não sabe o motivo dela.</h1>
     <p class="hero__texto">
       O Radar de Reclamações lê o que seus clientes já escreveram na internet,
       diz do que eles mais reclamam e avisa qual queixa está crescendo — antes
       de ela virar a razão de ninguém voltar.
     </p>
-    <a class="botao botao--vazado" href="/entrar">Entrar no painel</a>
+    <p class="hero__atrib">{{ projeto.disciplina }} · {{ projeto.curso }} · {{ projeto.instituicao }}</p>
+    <a class="botao botao--vazado-claro" href="/entrar">Entrar no painel</a>
   </div>
+  <span class="chevron" aria-hidden="true"></span>
 </section>
 
 <section class="secao" data-revelar>
@@ -51,7 +62,7 @@
   </div>
 </section>
 
-<section class="secao" data-revelar>
+<section class="secao secao--painel" data-revelar>
   <div class="container">
     <div class="dividida">
       <div>
@@ -72,7 +83,7 @@
   </div>
 </section>
 
-<section class="secao secao--alt" data-revelar>
+<section class="secao" data-revelar>
   <div class="container">
     <p class="eyebrow">Em que acreditar</p>
     <h2 class="titulo">Todo número da tela tem a conta do lado</h2>
@@ -98,7 +109,7 @@
   </div>
 </section>
 
-<section class="secao" data-revelar>
+<section class="secao secao--alt" data-revelar>
   <div class="container">
     <p class="eyebrow">Quando começa a valer</p>
     <h2 class="titulo">Do primeiro dia você já vê. Em seis meses ele passa a prever.</h2>
@@ -124,7 +135,7 @@
   </div>
 </section>
 
-<section class="secao secao--alt" data-revelar>
+<section class="secao" data-revelar>
   <div class="container">
     <div class="dividida">
       <div>

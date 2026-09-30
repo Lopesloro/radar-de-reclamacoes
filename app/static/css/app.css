@@ -8,6 +8,7 @@
 
 :root {
   --acao: #0F6E7B;
+  --painel-escuro: #10242A;
   --acao-escuro: #0B545E;
   --acao-claro: #E7F1F2;
   --contra: #B4531F;          /* segunda série de gráfico, nunca botão */
@@ -115,22 +116,29 @@ img, svg { max-width: 100%; }
 .topo--sobre-hero :focus-visible { outline-color: currentColor; }
 .topo--sobre-hero:not(.solido) .menu a[aria-current="page"] { color: inherit; }
 
-/* ---------- Hero: só tipografia e cor. Sem foto de banco de imagens. ---------- */
+/* ---------- Hero: sangria de cor, tipografia grande e o gráfico ao fundo.
+   Sem foto de banco de imagens — a textura é o próprio dado. ---------- */
 
 .hero {
+  position: relative; overflow: hidden;
   min-height: 100vh; min-height: 100svh;
   display: flex; align-items: center;
-  background: var(--ink-fundo); color: #fff;
-  padding: 172px 0 112px;
+  background: var(--acao); color: #fff;
+  padding: 172px 0 128px;
 }
-.hero__caixa { max-width: 980px; }
+.hero__grafico {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  width: 100%; height: 56%;
+  opacity: .22; pointer-events: none;
+}
+.hero__caixa { position: relative; max-width: 1000px; margin: 0 auto; text-align: center; }
 .hero__sobrelinha {
-  margin: 0 0 24px; font: 600 13px/1 var(--ui);
-  letter-spacing: .16em; text-transform: uppercase; color: rgba(255, 255, 255, .66);
+  margin: 0 0 26px; font: 600 13px/1 var(--ui);
+  letter-spacing: .18em; text-transform: uppercase; color: rgba(255, 255, 255, .72);
 }
 .hero__titulo {
-  margin: 0; max-width: 16ch;
-  font: 400 clamp(38px, 5.6vw, 76px)/1.06 var(--serif);
+  margin: 0 auto; max-width: 17ch;
+  font: 400 clamp(38px, 5.9vw, 82px)/1.05 var(--serif);
   letter-spacing: .02em; text-transform: uppercase;
   animation: abre-tracking 1.4s cubic-bezier(.22, .61, .36, 1) .3s both;
 }
@@ -141,11 +149,28 @@ img, svg { max-width: 100%; }
   to   { letter-spacing: .02em; }
 }
 .hero__texto {
-  margin: 34px 0 0; max-width: 52ch;
-  font: italic 400 clamp(18px, 1.8vw, 22px)/1.6 var(--leitura);
-  color: rgba(255, 255, 255, .9);
+  margin: 32px auto 0; max-width: 54ch;
+  font: italic 400 clamp(18px, 1.9vw, 23px)/1.6 var(--leitura);
+  color: rgba(255, 255, 255, .92);
 }
-.hero .botao { margin-top: 44px; }
+.hero__atrib {
+  margin: 22px 0 0; font: 500 13.5px/1.5 var(--ui); color: rgba(255, 255, 255, .78);
+}
+.hero .botao { margin-top: 42px; }
+
+/* Seta de rolagem: a única animação que se repete no site. */
+.chevron {
+  position: absolute; left: 50%; bottom: 40px;
+  width: 14px; height: 14px;
+  border-right: 1.5px solid rgba(255, 255, 255, .8);
+  border-bottom: 1.5px solid rgba(255, 255, 255, .8);
+  transform: translate(-50%, 0) rotate(45deg);
+  animation: chevron 2.2s ease-in-out infinite;
+}
+@keyframes chevron {
+  0%, 100% { transform: translate(-50%, 0) rotate(45deg); }
+  50%      { transform: translate(-50%, 10px) rotate(45deg); }
+}
 
 /* ---------- Botões: uma só cor de ação ---------- */
 
@@ -172,6 +197,9 @@ img, svg { max-width: 100%; }
 .secao { padding: 112px 0; }
 .secao--topo { padding-top: 64px; }
 .secao--alt { background: var(--papel-alt); }
+
+/* Duas colunas: texto à esquerda, lista ou ficha à direita. */
+.dividida { display: grid; grid-template-columns: 1.05fr .95fr; gap: 64px; align-items: start; }
 
 .eyebrow {
   margin: 0 0 20px; font: 600 13px/1 var(--ui);
@@ -356,6 +384,7 @@ img, svg { max-width: 100%; }
 /* ---------- Responsivo ---------- */
 
 @media (max-width: 1080px) {
+  .dividida { grid-template-columns: 1fr; gap: 40px; }
   .modelos, .equipe, .parceiros, .tecnologias { grid-template-columns: 1fr 1fr; }
   .resumo { grid-template-columns: 1fr 1fr; }
   .resumo__item:nth-child(3) { border-left: 0; padding-left: 0; }
@@ -496,9 +525,15 @@ img, svg { max-width: 100%; }
   width: 22px; height: 2px; background: var(--acao);
 }
 
-.linha-tempo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin-top: 44px; border-top: 1px solid var(--filete); }
-.momento { padding: 28px 32px 28px 0; }
-.momento + .momento { border-left: 1px solid var(--filete); padding-left: 32px; }
+.linha-tempo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin-top: 52px; }
+.momento { position: relative; padding: 30px 24px 0 0; border-top: 2px solid var(--filete); }
+.momento::before {
+  content: ""; position: absolute; left: 0; top: -7px;
+  width: 12px; height: 12px; border-radius: 99px;
+  background: var(--fundo-claro, #FFFFFF); border: 2px solid var(--regua);
+}
+.momento--marco { border-top-color: var(--acao); }
+.momento--marco::before { background: var(--acao); border-color: var(--acao); }
 .momento__quando {
   margin: 0 0 12px; font: 600 12px/1 var(--ui);
   letter-spacing: .14em; text-transform: uppercase; color: var(--texto-3);
@@ -508,7 +543,19 @@ img, svg { max-width: 100%; }
 
 .modelo__simples { margin: 0 0 20px; font: 400 16px/1.7 var(--leitura); color: var(--texto-2); }
 
-.fechamento { background: var(--ink-fundo); color: #fff; padding: 104px 0; }
+.secao--painel { background: var(--painel-escuro); color: #fff; }
+.secao--painel .titulo, .secao--painel .fase__nome { color: #fff; }
+.secao--painel .eyebrow { color: rgba(255, 255, 255, .62); }
+.secao--painel .regua { background: rgba(255, 255, 255, .34); }
+.secao--painel .lead { color: rgba(255, 255, 255, .86); }
+.secao--painel .dispensado { border-top-color: rgba(255, 255, 255, .22); }
+.secao--painel .dispensado__item {
+  color: rgba(255, 255, 255, .9); border-bottom-color: rgba(255, 255, 255, .18);
+}
+.secao--painel .dispensado__item::before { background: #fff; }
+
+.fechamento { background: var(--acao); color: #fff; padding: 112px 0; text-align: center; }
+.fechamento__caixa { margin: 0 auto; }
 .fechamento__caixa { max-width: 60ch; }
 .fechamento__titulo { margin: 0 0 18px; font: 400 clamp(30px, 3.6vw, 46px)/1.15 var(--serif); }
 .fechamento__texto { margin: 0 0 36px; font: 400 18px/1.7 var(--leitura); color: rgba(255, 255, 255, .84); }
