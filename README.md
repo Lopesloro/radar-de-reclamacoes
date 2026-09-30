@@ -1,61 +1,29 @@
 # Radar de Reclamações
 
-Projeto Integrador VI · Engenharia de Software · PUC-Campinas · 2º semestre de 2026
+Lê o que os clientes de um comércio escreveram na internet, separa por assunto
+— atendimento, demora, preço, qualidade, ambiente — e estima quantas
+reclamações de cada assunto devem aparecer no mês seguinte.
 
-Site que lê a avaliação pública de um comércio parceiro, diz **por que** os
-clientes reclamam hoje e **qual reclamação tende a crescer** no próximo mês.
-
-Integrantes: Gabriel Lopes Londe Rodrigues, Nicolas Marques Linares e
-Matheus Rocafa Moraes. Orientação da Profa. Sílvia C. de Matos Soares.
-
-## Os dois modelos
-
-| | Pergunta | Métrica | Régua |
-|---|---|---|---|
-| **Classificação** | Por que este cliente reclamou? | F1 por categoria e F1 macro | responder sempre a categoria mais comum |
-| **Previsão** | Quantas reclamações desta categoria no mês que vem? | erro médio absoluto e cobertura da faixa | repetir o mês anterior |
-
-Nenhum dos dois vai para a tela sem superar a régua. O resultado medido fica
-aberto na tela **Acurácia**, e há teste que falha quando o modelo perde.
-
-O previsor parte da régua — o último mês fechado — e só se afasta dela quando a
-inclinação dos últimos seis meses supera o próprio erro padrão. Onde não há
-tendência distinguível de ruído, ele devolve a régua, de propósito.
-
-## Telas
-
-| Rota | O que mostra |
-|---|---|
-| `/` | Público: a ideia, os dois modelos, a equipe, as tecnologias e o tratamento de situações não previstas |
-| `/entrar` | Entrada com usuário e senha |
-| `/painel` | Os comércios parceiros, a categoria mais reclamada e a que está em alta prevista |
-| `/comercio/{id}` | Distribuição por categoria, variação sobre o mês anterior e as avaliações lidas |
-| `/previsao/{id}` | Histórico, mês em andamento e a faixa P10–P90 prevista, categoria a categoria |
-| `/alertas` | Fila de alta prevista, com confirmar e descartar |
-| `/acuracia` | F1 por categoria e previsto contra realizado, sempre ao lado da régua |
-| `/etapas` | O que já existe e o que falta, no produto e em cada comércio parceiro |
-| `/saude` | Estado do serviço em JSON, público |
+Projeto Integrador VI · Engenharia de Software · PUC-Campinas · 2026.2
+Gabriel Lopes Londe Rodrigues, Nicolas Marques Linares e Matheus Rocafa Moraes.
+Orientação da Profa. Sílvia C. de Matos Soares.
 
 ## No ar
 
-<https://radar-de-reclamacoes.onrender.com>
+<https://radar-de-reclamacoes.onrender.com> — entra com **admin / admin**.
 
-O painel exige entrada. A credencial de demonstração é **admin / admin** — ela
-existe para a banca abrir o sistema sem pedir acesso a ninguém, e a própria tela
-de entrada avisa que é de demonstração. Antes de qualquer dado real, defina
-`RADAR_USUARIO` e `RADAR_SENHA` no painel do Render.
-
-Duas variáveis a acrescentar no Render quando o uso deixar de ser demonstração:
+A senha é de demonstração e a tela de entrada avisa isso. Para usar com dado
+real, defina no painel do Render:
 
 | Variável | Para quê |
 |---|---|
-| `RADAR_CHAVE` | Assina o cookie de sessão. Sem ela a chave é sorteada a cada início, e quem estava dentro é deslogado quando o serviço reinicia — no plano free isso acontece toda vez que ele acorda. |
-| `RADAR_SENHA` | Substitui a senha de demonstração. |
+| `RADAR_USUARIO` e `RADAR_SENHA` | Substituem a credencial de demonstração |
+| `RADAR_CHAVE` | Assina o cookie de sessão. Sem ela a chave muda a cada reinício, e quem estava logado cai quando o serviço acorda |
 
-Plano free: o serviço dorme depois de quinze minutos sem acesso, e o primeiro
-carregamento depois disso leva algumas dezenas de segundos.
+O plano é gratuito: depois de quinze minutos parado o serviço dorme, e o
+primeiro acesso seguinte demora alguns segundos.
 
-## Como abrir
+## Rodar na sua máquina
 
 ```bash
 python3 -m venv .venv && ./.venv/bin/pip install -r requirements.txt
@@ -65,56 +33,75 @@ python3 -m venv .venv && ./.venv/bin/pip install -r requirements.txt
 ./.venv/bin/uvicorn app.web:app --reload --port 8000
 ```
 
-Depois abra <http://localhost:8000>.
-
-Testes:
+Abre em <http://localhost:8000>. Para rodar os testes:
 
 ```bash
-./.venv/bin/python -m pytest -q -ra
+./.venv/bin/python -m pytest -q
 ```
 
-## Dados
+## Telas
 
-Os números das telas são **de demonstração** (`app/demo.py`): comércios,
-avaliações e contagens fictícias, geradas no servidor de forma determinística.
-Nenhuma avaliação exibida foi escrita por um cliente real. A coleta real começa
-quando os termos de autorização dos parceiros estiverem assinados — é a primeira
-tarefa da sprint de dados, e sem ela nada é coletado.
+| Endereço | O que mostra |
+|---|---|
+| `/` | Página pública: o que o sistema faz, para quem e o que ele não pede |
+| `/entrar` | Usuário e senha |
+| `/painel` | Um resumo por negócio: o assunto mais reclamado e o que deve crescer |
+| `/comercio/{id}` | Os assuntos do mês, a variação e as últimas avaliações lidas |
+| `/previsao/{id}` | Histórico e estimativa do mês seguinte, com mínimo e máximo |
+| `/alertas` | Avisos de alta, com confirmar e descartar |
+| `/acuracia` | O quanto o sistema acerta, sempre ao lado do palpite simples |
+| `/etapas` | O que já funciona, o que falta e onde a IA entra |
+| `/saude` | Estado do serviço, em JSON |
 
-Quando a coleta começar: a avaliação é pública, o autor dela não entra no
-projeto. Nome, foto e qualquer tentativa de identificar quem escreveu ficam fora,
-e a citação no relatório é anonimizada.
+## Como ele decide
+
+São duas perguntas, e cada uma é comparada com um palpite bobo de propósito:
+
+| Pergunta | O palpite bobo | Só entra na tela se |
+|---|---|---|
+| De que assunto fala esta avaliação? | responder sempre o assunto mais comum | acertar mais que ele |
+| Quantas reclamações no mês que vem? | repetir o número do mês passado | errar menos que ele |
+
+A estimativa começa no número do mês passado e só se afasta dele quando os seis
+últimos meses mostram uma tendência forte o bastante para não ser oscilação
+normal. Há teste que quebra a build se o sistema perder do palpite bobo.
 
 ## Segurança
 
-Recorte declarado: **defesa**. Nada aqui ataca nada.
+Só defesa. Nada aqui ataca nada.
 
-- Sessão assinada em cookie `HttpOnly`, `SameSite=Lax`, com validade de oito horas
-- Senha guardada como hash `scrypt`, comparada em tempo constante
-- Token contra CSRF em todo formulário, inclusive o de sair
+- Sessão assinada em cookie `HttpOnly`, `SameSite=Lax`, oito horas
+- Senha guardada como hash `scrypt` e comparada em tempo constante
+- Token contra CSRF em todo formulário
 - Oito tentativas de entrada por origem a cada cinco minutos
-- `Content-Security-Policy` sem `unsafe-inline`, mais HSTS, `X-Frame-Options`,
+- `Content-Security-Policy` sem `unsafe-inline`, HSTS, `X-Frame-Options`,
   `X-Content-Type-Options` e `Referrer-Policy` em toda resposta
-- Destino de redirecionamento após o login só aceita caminho interno
+- Depois do login, só redireciona para endereço interno
 
-Onze testes cobrem esses controles, incluindo o que falha se a política de
-segurança voltar a permitir `unsafe-inline`.
+Onze testes cobrem isso, incluindo um que falha se a política de segurança
+voltar a aceitar `unsafe-inline`.
 
-## Estrutura
+## Dados
+
+Os números das telas são **de demonstração**: negócios, avaliações e contagens
+inventadas, geradas pelo próprio servidor e sempre iguais. Nenhuma avaliação
+exibida foi escrita por um cliente real.
+
+Quando a coleta real começar, a avaliação é pública mas o autor dela não entra
+no projeto: nome, foto e qualquer tentativa de identificar quem escreveu ficam
+de fora, e citação em relatório vai anonimizada.
+
+## Pastas
 
 ```
 app/
-  web.py            rotas FastAPI
-  conteudo.py       texto institucional: projeto, equipe, tecnologias, robustez
-  demo.py           dados de demonstração, previsão e avaliação dos modelos
-  seguranca.py      hash da senha, sessão, CSRF, limite de tentativas e cabeçalhos
-  formatos.py       números e datas no padrão brasileiro
-  graficos/svg.py   gráficos gerados no servidor
-  templates/        Jinja2, um arquivo por tela
-  static/           CSS e JS próprios, sem framework
-tests/              pytest sobre o cliente de teste do Starlette
+  web.py            os endereços do site
+  conteudo.py       os textos fixos
+  demo.py           os dados de demonstração e as contas dos dois modelos
+  seguranca.py      senha, sessão, CSRF e cabeçalhos
+  formatos.py       número e data no jeito brasileiro
+  graficos/svg.py   os gráficos, desenhados no servidor
+  templates/        uma tela por arquivo
+  static/           CSS e JavaScript próprios
+tests/              48 testes
 ```
-
-O visual segue o Dialeto A (Autoridade) do padrão de sites, adaptado para
-painel: serifa no título, régua de 140×6px, filete no lugar de sombra, uma só
-cor de ação, e número sempre em sans com algarismos tabulares.

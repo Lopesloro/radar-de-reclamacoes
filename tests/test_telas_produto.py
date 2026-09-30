@@ -20,7 +20,7 @@ def test_comercio_mostra_categorias_e_avaliacoes(cliente):
     texto = cliente.get("/comercio/bella-massa").text
     for categoria in demo.CATEGORIAS:
         assert categoria in texto
-    assert "sem categoria" in texto
+    assert "sem assunto" in texto
     assert "sem texto" in texto
 
 
@@ -44,7 +44,7 @@ def test_previsao_aceita_categoria_e_ignora_invalida(cliente):
 
 def test_previsao_marca_o_mes_em_andamento(cliente):
     texto = cliente.get("/previsao/bella-massa").text
-    assert "em andamento, não entra no ajuste" in texto
+    assert "ainda em andamento, não entra na conta" in texto
 
 
 def test_faixa_prevista_contem_a_mediana(cliente):
@@ -100,6 +100,20 @@ def test_etapas_mostra_o_que_falta(cliente):
     assert "Canal de alerta combinado" in texto
     assert "Falta" in texto
     assert "Coleta real das avaliações" in texto
+
+
+def test_etapas_explica_onde_a_ia_entra_e_onde_erra(cliente):
+    texto = cliente.get("/etapas").text
+    assert "Onde a inteligência artificial entra" in texto
+    assert "Onde melhorar" in texto
+    assert "Ironia" in texto
+
+
+def test_jargao_tecnico_fica_na_area_interna(cliente):
+    """O que sumiu da home precisa continuar existindo para a banca ler."""
+    texto = cliente.get("/etapas").text
+    assert "FastAPI" in texto and "scikit-learn" in texto
+    assert "O que pode dar errado" in texto
 
 
 def test_prontidao_conta_so_etapa_concluida(cliente):

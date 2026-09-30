@@ -134,9 +134,11 @@ img, svg { max-width: 100%; }
   letter-spacing: .02em; text-transform: uppercase;
   animation: abre-tracking 1.4s cubic-bezier(.22, .61, .36, 1) .3s both;
 }
+/* Só o espaçamento anima. Título que começa em opacidade 0 some de vez quando
+   a animação não roda — em aba oculta, em webview, em leitor dentro de app. */
 @keyframes abre-tracking {
-  from { letter-spacing: .12em; opacity: 0; }
-  to   { letter-spacing: .02em; opacity: 1; }
+  from { letter-spacing: .12em; }
+  to   { letter-spacing: .02em; }
 }
 .hero__texto {
   margin: 34px 0 0; max-width: 52ch;
@@ -371,7 +373,7 @@ img, svg { max-width: 100%; }
   .topo__linha { flex-wrap: wrap; gap: 6px 16px; padding-bottom: 12px; min-height: 0; padding-top: 12px; }
   .menu { width: 100%; gap: 18px; }
   .movimento { grid-template-columns: 1fr; gap: 12px; }
-  .modelos, .equipe, .parceiros, .tecnologias, .resumo, .rodape__grade { grid-template-columns: 1fr; }
+  .resumo, .rodape__grade { grid-template-columns: 1fr; }
   .resumo__item + .resumo__item { border-left: 0; padding-left: 0; border-top: 1px solid var(--filete); }
   .titulo--secao { margin-top: 56px; }
   .tabela { display: block; overflow-x: auto; white-space: nowrap; }
@@ -473,4 +475,79 @@ img, svg { max-width: 100%; }
   .entrada__caixa { padding: 28px; }
   .prontidao { padding: 22px; }
   .topo__conta { order: 3; }
+}
+
+/* ---------- Home: o que o cliente recebe ---------- */
+
+.titulo em { font-style: italic; }
+
+.entregas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin-top: 44px; }
+.entrega { border-top: 2px solid var(--ink); padding-top: 24px; }
+.entrega__titulo { margin: 0 0 12px; font: 400 26px/1.25 var(--serif); }
+.entrega__texto { margin: 0; font: 400 17px/1.7 var(--leitura); color: var(--texto-2); }
+
+.dispensado { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--filete); }
+.dispensado__item {
+  position: relative; padding: 20px 0 20px 40px; border-bottom: 1px solid var(--filete);
+  font: 400 17px/1.6 var(--leitura); color: var(--texto-2);
+}
+.dispensado__item::before {
+  content: ""; position: absolute; left: 0; top: 30px;
+  width: 22px; height: 2px; background: var(--acao);
+}
+
+.linha-tempo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin-top: 44px; border-top: 1px solid var(--filete); }
+.momento { padding: 28px 32px 28px 0; }
+.momento + .momento { border-left: 1px solid var(--filete); padding-left: 32px; }
+.momento__quando {
+  margin: 0 0 12px; font: 600 12px/1 var(--ui);
+  letter-spacing: .14em; text-transform: uppercase; color: var(--texto-3);
+}
+.momento--marco .momento__quando { color: var(--acao); }
+.momento__texto { margin: 0; font: 400 16px/1.7 var(--leitura); color: var(--texto-2); }
+
+.modelo__simples { margin: 0 0 20px; font: 400 16px/1.7 var(--leitura); color: var(--texto-2); }
+
+.fechamento { background: var(--ink-fundo); color: #fff; padding: 104px 0; }
+.fechamento__caixa { max-width: 60ch; }
+.fechamento__titulo { margin: 0 0 18px; font: 400 clamp(30px, 3.6vw, 46px)/1.15 var(--serif); }
+.fechamento__texto { margin: 0 0 36px; font: 400 18px/1.7 var(--leitura); color: rgba(255, 255, 255, .84); }
+.botao--vazado-claro { color: #fff; border-color: rgba(255, 255, 255, .7); }
+.botao--vazado-claro:hover { background: #fff; color: var(--ink-fundo); border-color: #fff; }
+
+/* ---------- Área interna: onde a IA entra ---------- */
+
+.ia { list-style: none; margin: 36px 0 0; padding: 0; border-top: 1px solid var(--filete); }
+.ia__item { padding: 26px 0; border-bottom: 1px solid var(--filete); }
+.ia__titulo { margin: 0 0 14px; font: 600 19px/1.35 var(--ui); }
+.ia__grade { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.ia__bloco { }
+.ia__rotulo {
+  display: block; margin-bottom: 6px; font: 600 11px/1 var(--ui);
+  letter-spacing: .14em; text-transform: uppercase; color: var(--texto-3);
+}
+.ia__texto { margin: 0; font: 400 15px/1.6 var(--ui); color: var(--texto-2); }
+.ia__bloco--melhorar .ia__rotulo { color: var(--acao); }
+
+.limites { list-style: none; margin: 32px 0 0; padding: 0; display: grid; gap: 0; border-top: 1px solid var(--filete); }
+.limite { display: grid; grid-template-columns: 220px 1fr; gap: 24px; padding: 16px 0; border-bottom: 1px solid var(--filete); }
+.limite__nome { font: 600 16px/1.5 var(--ui); }
+.limite__texto { margin: 0; font: 400 16px/1.6 var(--ui); color: var(--texto-2); }
+
+@media (max-width: 1080px) {
+  .entregas { grid-template-columns: 1fr 1fr; }
+  .linha-tempo { grid-template-columns: 1fr; }
+  .momento + .momento { border-left: 0; padding-left: 0; border-top: 1px solid var(--filete); }
+  .ia__grade { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 860px) {
+  .ia__grade { grid-template-columns: 1fr; gap: 18px; }
+  .limite { grid-template-columns: 1fr; gap: 6px; }
+  .fechamento { padding: 72px 0; }
+  .dispensado__item { padding-left: 34px; }
+}
+
+/* Tablet em pé ainda comporta duas colunas; só abaixo disso vira uma. */
+@media (max-width: 680px) {
+  .entregas, .modelos, .equipe, .parceiros, .tecnologias { grid-template-columns: 1fr; }
 }

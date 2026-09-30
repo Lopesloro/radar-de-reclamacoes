@@ -1,7 +1,7 @@
 [project]
-name = "radar-de-campanha"
+name = "radar-de-reclamacoes"
 version = "0.1.0"
-description = "Previsão de CPA/ROAS e alerta de anomalia em campanhas Meta Ads"
+description = "Lê a avaliação pública de um comércio, diz do que os clientes reclamam e estima o que vai crescer"
 requires-python = ">=3.11"
 
 [tool.pytest.ini_options]

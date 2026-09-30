@@ -18,8 +18,9 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app import demo, formatos, seguranca
 from app.conteudo import (
-    ETAPAS_PROJETO, INTEGRANTES, MENU, MENU_PUBLICO, MODELOS, MOVIMENTOS,
-    PROJETO, ROBUSTEZ, TECNOLOGIAS, VERSAO,
+    DISPENSADO, ENTREGAS, ETAPAS_PROJETO, IA_NO_SISTEMA, INTEGRANTES,
+    LIMITES_DA_IA, MENU, MENU_PUBLICO, MODELOS, MOVIMENTOS, PROJETO, ROBUSTEZ,
+    TECNOLOGIAS, VERSAO,
 )
 from app.graficos import svg
 
@@ -103,11 +104,10 @@ def _origem(request: Request) -> str:
 def projeto(request: Request):
     return _pagina(
         request, "projeto.html", "projeto",
+        entregas=ENTREGAS,
         movimentos=MOVIMENTOS,
+        dispensado=DISPENSADO,
         modelos=MODELOS,
-        tecnologias=TECNOLOGIAS,
-        robustez=ROBUSTEZ,
-        categorias=demo.CATEGORIAS,
         total_parceiros=len(demo.comercios()),
     )
 
@@ -294,6 +294,10 @@ def etapas(request: Request):
         entregues=sum(1 for e in ETAPAS_PROJETO if e["estado"] == "feito"),
         total_etapas=len(ETAPAS_PROJETO),
         senha_demo=seguranca.SENHA_E_DEMONSTRACAO,
+        ia=IA_NO_SISTEMA,
+        limites=LIMITES_DA_IA,
+        tecnologias=TECNOLOGIAS,
+        robustez=ROBUSTEZ,
     )
 
 

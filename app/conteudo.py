@@ -43,55 +43,101 @@ MENU_PUBLICO = (
     {"id": "projeto", "rotulo": "O projeto", "href": "/"},
 )
 
-# A ideia, em três movimentos. Vira a seção de abertura da home.
-MOVIMENTOS = (
+# O que o dono do negócio recebe. Linguagem dele, não a nossa.
+ENTREGAS = (
     {
-        "numero": "01",
-        "titulo": "Coletar",
+        "titulo": "A lista do que mais incomoda",
         "texto": (
-            "As avaliações públicas da ficha do comércio parceiro entram com data, "
-            "texto e identificador próprio, que impede a mesma avaliação de ser "
-            "contada duas vezes."
+            "Toda avaliação que seus clientes escrevem entra numa lista separada por "
+            "assunto: atendimento, demora, preço, qualidade e ambiente. Você abre a "
+            "tela e vê, em ordem, o que mais apareceu neste mês."
         ),
     },
     {
-        "numero": "02",
-        "titulo": "Classificar",
+        "titulo": "O aviso antes de virar problema",
         "texto": (
-            "Cada texto recebe uma categoria de reclamação. Abaixo do limite de "
-            "confiança o sistema responde “sem categoria” em vez de chutar."
+            "Quando um assunto começa a crescer mês a mês, o sistema avisa antes de "
+            "ele virar o motivo de as pessoas pararem de voltar. Você age enquanto "
+            "ainda dá para consertar barato."
         ),
     },
     {
-        "numero": "03",
-        "titulo": "Prever",
+        "titulo": "A conta aberta do que foi acertado",
         "texto": (
-            "A série de cada categoria projeta o mês seguinte com faixa de "
-            "incerteza, e o alerta sai quando a alta prevista passa do limiar."
+            "Cada aviso que o sistema deu fica guardado ao lado do que aconteceu de "
+            "verdade no mês seguinte. Você confere se vale confiar, em vez de "
+            "acreditar na nossa palavra."
         ),
     },
 )
 
-MODELOS = (
+# Os três passos, sem jargão. É o que a pessoa lê antes de decidir.
+MOVIMENTOS = (
     {
-        "rotulo": "Modelo 1",
-        "titulo": "Classificação do texto",
-        "pergunta": "Por que este cliente reclamou?",
-        "metrica": "F1 por categoria e F1 macro",
-        "regua": "responder sempre a categoria mais comum",
+        "numero": "01",
+        "titulo": "A gente lê o que já está escrito",
+        "texto": (
+            "As avaliações do seu negócio são públicas: qualquer pessoa lê na "
+            "internet. O sistema lê todas, todo dia, e guarda cada uma uma única vez."
+        ),
     },
     {
-        "rotulo": "Modelo 2",
-        "titulo": "Previsão da contagem",
-        "pergunta": "Quantas reclamações desta categoria no mês que vem?",
-        "metrica": "erro médio absoluto e cobertura da faixa",
+        "numero": "02",
+        "titulo": "Separa por assunto",
+        "texto": (
+            "Cada texto é encaixado num assunto. Quando a frase é vaga demais para "
+            "ter certeza, o sistema diz que não sabe — e conta isso à parte, em vez "
+            "de inventar um assunto para fechar a conta."
+        ),
+    },
+    {
+        "numero": "03",
+        "titulo": "Olha para a frente",
+        "texto": (
+            "Com os meses anteriores na mão, ele estima quantas reclamações de cada "
+            "assunto devem aparecer no mês que vem, e mostra uma faixa de mínimo e "
+            "máximo em vez de fingir que sabe o número exato."
+        ),
+    },
+)
+
+# O que o parceiro NÃO precisa fazer. Diferencial real, não promessa.
+DISPENSADO = (
+    "Instalar programa, aplicativo ou aparelho no seu negócio.",
+    "Dar acesso ao seu sistema de caixa, agenda ou financeiro.",
+    "Pedir para o seu cliente responder pesquisa ou preencher formulário.",
+    "Contratar alguém para ler avaliação uma por uma.",
+)
+
+MODELOS = (
+    {
+        "rotulo": "A primeira pergunta",
+        "titulo": "Do que estão reclamando",
+        "pergunta": "Por que este cliente reclamou?",
+        "simples": (
+            "O sistema lê a frase e diz de que assunto ela trata. Para saber se ele "
+            "acerta, separamos avaliações à mão e conferimos uma a uma."
+        ),
+        "metrica": "acerto por assunto e acerto médio",
+        "regua": "chutar sempre o assunto mais comum",
+    },
+    {
+        "rotulo": "A segunda pergunta",
+        "titulo": "O que vem no mês que vem",
+        "pergunta": "Quantas reclamações desse assunto vão aparecer?",
+        "simples": (
+            "Com o histórico dos meses anteriores, ele estima o próximo. Para saber "
+            "se vale, comparamos com o palpite mais simples que existe: repetir o "
+            "número do mês passado."
+        ),
+        "metrica": "erro médio e acerto da faixa",
         "regua": "repetir o mês anterior",
     },
 )
 
 TECNOLOGIAS = (
     {
-        "grupo": "Aplicação",
+        "grupo": "O site que você abre",
         "itens": (
             "Python 3.12 com FastAPI e Uvicorn",
             "Jinja2 para a renderização no servidor",
@@ -100,7 +146,7 @@ TECNOLOGIAS = (
         ),
     },
     {
-        "grupo": "Dados e modelos",
+        "grupo": "Onde os dados ficam e como a IA pensa",
         "itens": (
             "PostgreSQL com SQLAlchemy e Alembic",
             "pandas e NumPy no pré-processamento",
@@ -109,7 +155,7 @@ TECNOLOGIAS = (
         ),
     },
     {
-        "grupo": "Qualidade e segurança",
+        "grupo": "O que impede o sistema de quebrar",
         "itens": (
             "pytest com o cliente de teste do Starlette",
             "Playwright nos testes de ponta a ponta",
@@ -206,4 +252,63 @@ ETAPAS_PROJETO = (
                  "saída guardada como evidência.",
         "falta": "Playwright nas telas em 390px e 1280px, e a coleta automática das evidências.",
     },
+)
+
+
+# Onde a inteligência artificial realmente entra, o que ela faz e como a gente
+# confere. Escrito para quem nunca programou: nenhuma sigla sem tradução.
+IA_NO_SISTEMA = (
+    {
+        "onde": "Separar cada avaliação por assunto",
+        "faz": "Lê a frase escrita pelo cliente e decide se ela fala de atendimento, "
+               "demora, preço, qualidade ou ambiente.",
+        "confere": "Separamos um monte de avaliações e marcamos o assunto à mão. "
+                   "Depois comparamos o que a máquina disse com o que a gente marcou.",
+        "melhorar": "Ensinar o sistema a entender quando uma frase fala de dois "
+                    "assuntos ao mesmo tempo e contar nos dois.",
+    },
+    {
+        "onde": "Admitir que não sabe",
+        "faz": "Quando a frase é vaga, curta ou confusa, o sistema responde "
+               "“não sei” em vez de escolher um assunto qualquer.",
+        "confere": "Contamos quantas ficaram sem assunto. Se esse número dispara, "
+                   "é sinal de que o modelo precisa de mais exemplos.",
+        "melhorar": "Mostrar essas frases numa fila para alguém marcar à mão, e o "
+                    "sistema aprender com a correção.",
+    },
+    {
+        "onde": "Estimar o mês seguinte",
+        "faz": "Olha os meses anteriores de cada assunto e calcula quantas "
+               "reclamações devem aparecer no próximo, com mínimo e máximo.",
+        "confere": "Comparamos com o palpite mais simples que existe — repetir o mês "
+                   "passado. Se a máquina não ganhar dele, ela não vai para a tela.",
+        "melhorar": "Levar em conta feriado, férias e promoção, que mexem no "
+                    "movimento e hoje o sistema não enxerga.",
+    },
+    {
+        "onde": "Decidir quando avisar",
+        "faz": "Dispara o aviso quando a alta estimada é grande o bastante para não "
+               "ser apenas variação normal do mês.",
+        "confere": "Todo aviso fica guardado. Quando você confirma ou descarta, "
+                   "o sistema ajusta o quanto precisa subir para avisar de novo.",
+        "melhorar": "Aprender o limite de cada negócio separadamente, em vez de usar "
+                    "o mesmo limite para todos.",
+    },
+    {
+        "onde": "Explicar o aviso em português",
+        "faz": "Ainda não faz. Hoje a frase do aviso é montada com os números "
+               "calculados, sem a IA escrever nada.",
+        "confere": "—",
+        "melhorar": "Deixar a IA escrever a explicação, mas sempre em cima de "
+                    "números que vieram do banco. Ela explica, nunca inventa número.",
+    },
+)
+
+# O que a IA ainda erra. Dito na tela, porque banca e cliente vão perguntar.
+LIMITES_DA_IA = (
+    ("Ironia", "“Adorei esperar uma hora” é elogio para a máquina e reclamação para gente."),
+    ("Duas queixas na mesma frase", "Hoje ela escolhe uma só, e a outra se perde."),
+    ("Gíria e erro de digitação", "Quanto mais longe do português comum, menos ela acerta."),
+    ("Negócio novo", "Sem alguns meses de histórico, não há o que estimar — e a tela diz isso."),
+    ("Mês fora do normal", "Reforma, feriadão ou promoção mudam tudo, e o sistema ainda não sabe disso."),
 )

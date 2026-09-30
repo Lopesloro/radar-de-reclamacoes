@@ -1,29 +1,42 @@
 {% extends "base.html" %}
-{% import "_macros.html" as m %}
-{% block titulo %}{{ projeto.nome }} — {{ projeto.disciplina }}{% endblock %}
+{% block titulo %}{{ projeto.nome }} — saiba por que seus clientes reclamam{% endblock %}
 {% block topo_classe %}topo--sobre-hero{% endblock %}
 
 {% block conteudo %}
 <section class="hero">
   <div class="container hero__caixa">
-    <p class="hero__sobrelinha">{{ projeto.disciplina }} · {{ projeto.instituicao }}</p>
-    <h1 class="hero__titulo">Por que as pessoas estão reclamando</h1>
-    <p class="hero__texto">{{ projeto.resumo }}</p>
-    <a class="botao botao--vazado" href="/painel">Ver o painel</a>
+    <p class="hero__sobrelinha">Para quem vive de cliente que volta</p>
+    <h1 class="hero__titulo">Você sabe a sua nota. Não sabe o motivo dela.</h1>
+    <p class="hero__texto">
+      O Radar de Reclamações lê o que seus clientes já escreveram na internet,
+      diz do que eles mais reclamam e avisa qual queixa está crescendo — antes
+      de ela virar a razão de ninguém voltar.
+    </p>
+    <a class="botao botao--vazado" href="/entrar">Entrar no painel</a>
   </div>
 </section>
 
 <section class="secao" data-revelar>
   <div class="container">
-    <p class="eyebrow">A ideia</p>
-    <h2 class="titulo">O dono do comércio não lê trezentas avaliações. Lê as três últimas.</h2>
+    <p class="eyebrow">O que você recebe</p>
+    <h2 class="titulo">Três coisas prontas, sem você mexer em nada</h2>
     <span class="regua" aria-hidden="true"></span>
-    <p class="lead">
-      A nota média resume e não explica. O motivo da reclamação está no texto, e é
-      ele que dá para consertar. O Radar de Reclamações lê esse texto, agrupa o que
-      se repete e mostra o que tende a piorar antes que piore.
-    </p>
+    <div class="entregas">
+      {% for entrega in entregas %}
+      <article class="entrega">
+        <h3 class="entrega__titulo">{{ entrega.titulo }}</h3>
+        <p class="entrega__texto">{{ entrega.texto }}</p>
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
 
+<section class="secao secao--alt" data-revelar>
+  <div class="container">
+    <p class="eyebrow">Como funciona</p>
+    <h2 class="titulo">Três passos, e nenhum deles é seu</h2>
+    <span class="regua" aria-hidden="true"></span>
     <ol class="movimentos">
       {% for mov in movimentos %}
       <li class="movimento">
@@ -38,100 +51,113 @@
   </div>
 </section>
 
+<section class="secao" data-revelar>
+  <div class="container">
+    <div class="dividida">
+      <div>
+        <p class="eyebrow">O que fica de fora</p>
+        <h2 class="titulo">O que você <em>não</em> vai precisar fazer</h2>
+        <span class="regua" aria-hidden="true"></span>
+        <p class="lead">
+          O sistema trabalha com o que já está publicado sobre o seu negócio.
+          Nada entra no seu caixa, na sua agenda ou no seu celular.
+        </p>
+      </div>
+      <ul class="dispensado">
+        {% for item in dispensado %}
+        <li class="dispensado__item">{{ item }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</section>
+
 <section class="secao secao--alt" data-revelar>
   <div class="container">
-    <p class="eyebrow">Os dois modelos</p>
-    <h2 class="titulo">Um modelo diz o motivo. O outro diz o que vem depois.</h2>
+    <p class="eyebrow">Em que acreditar</p>
+    <h2 class="titulo">Todo número da tela tem a conta do lado</h2>
     <span class="regua" aria-hidden="true"></span>
+    <p class="lead">
+      Sistema que adivinha o futuro é fácil de vender e difícil de provar. Aqui
+      cada resposta é comparada com o palpite mais bobo possível. Se o sistema
+      não ganhar desse palpite, ele não aparece na sua tela.
+    </p>
     <div class="modelos">
       {% for modelo in modelos %}
       <article class="modelo">
         <p class="modelo__rotulo">{{ modelo.rotulo }}</p>
         <h3 class="modelo__titulo">{{ modelo.titulo }}</h3>
         <p class="modelo__pergunta">“{{ modelo.pergunta }}”</p>
+        <p class="modelo__simples">{{ modelo.simples }}</p>
         <dl class="ficha">
-          <dt>Métrica</dt><dd>{{ modelo.metrica }}</dd>
-          <dt>Régua de comparação</dt><dd>{{ modelo.regua }}</dd>
+          <dt>Comparado com</dt><dd>{{ modelo.regua }}</dd>
         </dl>
       </article>
       {% endfor %}
     </div>
-    <p class="nota">
-      Nenhum dos dois vai para a tela sem superar a régua. O resultado medido fica
-      aberto em <a href="/acuracia">Acurácia</a>.
-    </p>
   </div>
 </section>
 
 <section class="secao" data-revelar>
   <div class="container">
-    <p class="eyebrow">Equipe</p>
-    <h2 class="titulo">Quem faz</h2>
+    <p class="eyebrow">Quando começa a valer</p>
+    <h2 class="titulo">Do primeiro dia você já vê. Em seis meses ele passa a prever.</h2>
     <span class="regua" aria-hidden="true"></span>
-    <ul class="equipe">
-      {% for pessoa in integrantes %}
-      <li class="equipe__item">
-        <p class="equipe__nome">{{ pessoa }}</p>
-        <p class="equipe__papel">{{ projeto.curso }}</p>
-      </li>
-      {% endfor %}
-    </ul>
-    <p class="nota">Orientação de {{ projeto.orientadora }}.</p>
+    <div class="linha-tempo">
+      <div class="momento">
+        <p class="momento__quando">Primeira semana</p>
+        <p class="momento__texto">As avaliações que já existem entram e viram a lista de assuntos. Você já enxerga o que mais incomoda.</p>
+      </div>
+      <div class="momento">
+        <p class="momento__quando">Primeiro mês</p>
+        <p class="momento__texto">Você vê o mês atual comparado com o anterior, assunto por assunto, em número de reclamações.</p>
+      </div>
+      <div class="momento momento--marco">
+        <p class="momento__quando">Seis meses</p>
+        <p class="momento__texto">Com meio ano de histórico, o sistema passa a estimar o mês seguinte e a mandar aviso de alta.</p>
+      </div>
+    </div>
+    <p class="nota">
+      Se o seu negócio ainda não tem esse histórico, a tela diz isso com todas as
+      letras em vez de mostrar um número inventado.
+    </p>
   </div>
 </section>
 
 <section class="secao secao--alt" data-revelar>
   <div class="container">
-    <p class="eyebrow">Tecnologias e extensões</p>
-    <h2 class="titulo">O que entra na construção</h2>
-    <span class="regua" aria-hidden="true"></span>
-    <div class="tecnologias">
-      {% for grupo in tecnologias %}
-      <div class="tecnologia">
-        <h3 class="tecnologia__titulo">{{ grupo.grupo }}</h3>
-        <ul class="tecnologia__lista">
-          {% for item in grupo.itens %}<li>{{ item }}</li>{% endfor %}
-        </ul>
+    <div class="dividida">
+      <div>
+        <p class="eyebrow">Quem faz</p>
+        <h2 class="titulo">Um trabalho de faculdade levado a sério</h2>
+        <span class="regua" aria-hidden="true"></span>
+        <p class="lead">
+          O Radar de Reclamações é o projeto de conclusão de três alunos de
+          {{ projeto.curso }} da {{ projeto.instituicao }}, com orientação de
+          {{ projeto.orientadora }}. O sistema é construído junto com empresas
+          reais, que participam das decisões e aprovam o resultado.
+        </p>
       </div>
-      {% endfor %}
+      <ul class="equipe">
+        {% for pessoa in integrantes %}
+        <li class="equipe__item">
+          <p class="equipe__nome">{{ pessoa }}</p>
+          <p class="equipe__papel">{{ projeto.curso }}</p>
+        </li>
+        {% endfor %}
+      </ul>
     </div>
   </div>
 </section>
 
-<section class="secao" data-revelar>
-  <div class="container">
-    <p class="eyebrow">Robustez</p>
-    <h2 class="titulo">O que o sistema faz quando o dado falha</h2>
-    <span class="regua" aria-hidden="true"></span>
-    <table class="tabela tabela--pares">
-      <thead>
-        <tr><th scope="col">Situação não prevista</th><th scope="col">Tratamento</th></tr>
-      </thead>
-      <tbody>
-        {% for situacao, tratamento in robustez %}
-        <tr><th scope="row">{{ situacao }}</th><td>{{ tratamento }}</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</section>
-
-<section class="secao secao--alt" data-revelar>
-  <div class="container">
-    <p class="eyebrow">Acesso</p>
-    <h2 class="titulo">O painel fica atrás de usuário e senha</h2>
-    <span class="regua" aria-hidden="true"></span>
-    <p class="lead">
-      A avaliação que alimenta o sistema é pública, mas o painel que reúne,
-      classifica e projeta o comportamento de um comércio é dele. São
-      {{ total_parceiros }} comércios acompanhados nesta demonstração, todos
-      fictícios, com as categorias {{ categorias | join(", ") }}.
+<section class="fechamento" data-revelar>
+  <div class="container fechamento__caixa">
+    <h2 class="fechamento__titulo">Veja o painel funcionando</h2>
+    <p class="fechamento__texto">
+      São {{ total_parceiros }} negócios de demonstração, com avaliações
+      fictícias, para você andar pelas telas antes de conectar o seu.
     </p>
-    <a class="botao botao--solido" href="/entrar">Entrar no painel</a>
-    <p class="nota">
-      Quando a confiança do classificador fica abaixo do limite, o sistema
-      responde “sem categoria” em vez de chutar — e isso aparece na tela, contado.
-    </p>
+    <a class="botao botao--vazado-claro" href="/entrar">Entrar no painel</a>
   </div>
 </section>
 {% endblock %}

@@ -7,28 +7,28 @@
 <section class="secao secao--topo">
   <div class="container">
     {{ m.cabeca("Painel dos comércios parceiros",
-                "Cada linha mostra a categoria que mais apareceu no mês fechado e a que o modelo prevê em alta para o próximo.") }}
+                "Uma linha por negócio. Do que mais reclamaram no último mês fechado, e qual assunto deve crescer no próximo.") }}
 
     <ul class="resumo">
       <li class="resumo__item">
         <span class="resumo__rotulo">Avaliações lidas</span>
         <strong class="resumo__valor">{{ total_avaliacoes | inteiro }}</strong>
-        <span class="resumo__nota">em {{ mes | mes_longo }}, somando os três comércios</span>
+        <span class="resumo__nota">em {{ mes | mes_longo }}, somando os três negócios</span>
       </li>
       <li class="resumo__item">
-        <span class="resumo__rotulo">Reclamações classificadas</span>
+        <span class="resumo__rotulo">Viraram reclamação</span>
         <strong class="resumo__valor">{{ total_reclamacoes | inteiro }}</strong>
-        <span class="resumo__nota">o resto é elogio, texto ausente ou confiança baixa</span>
+        <span class="resumo__nota">o resto é elogio, avaliação sem texto ou frase vaga demais</span>
       </li>
       <li class="resumo__item">
         <span class="resumo__rotulo">Alertas abertos</span>
         <strong class="resumo__valor">{{ abertos | length }}</strong>
-        <span class="resumo__nota">{{ criticos | length }} com alta prevista acima da faixa</span>
+        <span class="resumo__nota">{{ criticos | length }} em que nem o cenário otimista melhora</span>
       </li>
       <li class="resumo__item">
-        <span class="resumo__rotulo">Etapas pendentes</span>
+        <span class="resumo__rotulo">Passos que faltam</span>
         <strong class="resumo__valor">{{ etapas_pendentes }}</strong>
-        <span class="resumo__nota"><a href="/etapas">o que falta em cada parceiro</a></span>
+        <span class="resumo__nota"><a href="/etapas">veja o que falta em cada negócio</a></span>
       </li>
     </ul>
 
@@ -37,12 +37,12 @@
         <tr>
           <th scope="col">Comércio</th>
           <th scope="col">Estado</th>
-          <th scope="col">Mais reclamada</th>
+          <th scope="col">Assunto que mais apareceu</th>
           <th scope="col" class="num">No mês</th>
           <th scope="col">Tendência</th>
-          <th scope="col">Em alta prevista</th>
-          <th scope="col" class="num">Previsto</th>
-          <th scope="col" class="num">Etapas</th>
+          <th scope="col">Assunto que deve crescer</th>
+          <th scope="col" class="num">Hoje → mês que vem</th>
+          <th scope="col" class="num">Passos</th>
         </tr>
       </thead>
       <tbody>
@@ -64,8 +64,8 @@
     </table>
 
     <p class="nota">
-      A coluna “Previsto” compara o último mês fechado com a mediana da previsão do
-      mês seguinte. A faixa de incerteza aparece na tela de
+      A última coluna compara o mês fechado com a estimativa do mês seguinte. O
+      mínimo e o máximo dessa estimativa ficam na tela de
       <a href="/previsao">Previsão</a>.
     </p>
   </div>

@@ -6,42 +6,45 @@
 {{ m.aviso_demo() }}
 <section class="secao secao--topo">
   <div class="container">
-    {{ m.cabeca("O que já existe e o que ainda falta",
-                "Duas leituras: o que falta no produto como um todo, e o que falta em cada comércio parceiro para o sistema valer para ele.") }}
+    {{ m.cabeca("O que já está pronto e o que ainda falta",
+                "Esta tela existe para ninguém precisar perguntar. Tudo o que o sistema já faz, tudo o que ele ainda não faz, e o que falta para cada negócio parceiro.") }}
 
     <ul class="resumo">
       <li class="resumo__item">
-        <span class="resumo__rotulo">Etapas do produto</span>
+        <span class="resumo__rotulo">Partes do sistema</span>
         <strong class="resumo__valor">{{ entregues }} de {{ total_etapas }}</strong>
-        <span class="resumo__nota">concluídas e verificáveis na tela</span>
+        <span class="resumo__nota">prontas e funcionando nesta tela</span>
       </li>
       <li class="resumo__item">
-        <span class="resumo__rotulo">Comércios acompanhados</span>
+        <span class="resumo__rotulo">Negócios acompanhados</span>
         <strong class="resumo__valor">{{ por_comercio | length }}</strong>
-        <span class="resumo__nota">todos fictícios nesta demonstração</span>
+        <span class="resumo__nota">todos de mentirinha, só para demonstrar</span>
       </li>
       <li class="resumo__item">
         <span class="resumo__rotulo">Etapas dos parceiros</span>
         <strong class="resumo__valor">{{ por_comercio | sum(attribute='prontidao') | int }} de {{ por_comercio | length * 7 }}</strong>
-        <span class="resumo__nota">concluídas, somando os três comércios</span>
+        <span class="resumo__nota">concluídas, somando os três negócios</span>
       </li>
       <li class="resumo__item">
-        <span class="resumo__rotulo">Bloqueio principal</span>
-        <strong class="resumo__valor">Coleta</strong>
-        <span class="resumo__nota">nada real entra sem termo assinado</span>
+        <span class="resumo__rotulo">O que trava tudo</span>
+        <strong class="resumo__valor">Papel</strong>
+        <span class="resumo__nota">sem a autorização assinada, nada real entra</span>
       </li>
     </ul>
 
     {% if senha_demo %}
     <p class="aviso aviso--atencao">
-      Antes de colocar dado real: esta instalação ainda usa a credencial de
-      demonstração. Trocar <code>RADAR_USUARIO</code> e <code>RADAR_SENHA</code> é
-      a primeira coisa a fazer.
+      Atenção antes de usar com dado de verdade: este site ainda está com a senha
+      de demonstração. Trocar a senha é a primeira coisa a fazer.
     </p>
     {% endif %}
 
-    <h2 class="titulo titulo--secao">O produto, fase a fase</h2>
+    <h2 class="titulo titulo--secao">O sistema, parte por parte</h2>
     <span class="regua" aria-hidden="true"></span>
+    <p class="nota">
+      Dividido em três grupos: o que já funciona, o que estamos fazendo agora e o
+      que fica para depois.
+    </p>
 
     {% for fase in fases %}
     <div class="fase">
@@ -61,12 +64,54 @@
     </div>
     {% endfor %}
 
-    <h2 class="titulo titulo--secao">Cada comércio, etapa a etapa</h2>
+    <h2 class="titulo titulo--secao">Onde a inteligência artificial entra</h2>
     <span class="regua" aria-hidden="true"></span>
     <p class="nota">
-      As sete etapas entre o aperto de mão e o alerta chegando ao empresário. O
-      que está concluído está concluído porque o dado existe, não porque alguém
-      marcou uma caixa.
+      Cinco pontos. Em cada um: o que ela faz, como a gente confere se ela está
+      certa, e o que ainda dá para melhorar.
+    </p>
+    <ul class="ia">
+      {% for ponto in ia %}
+      <li class="ia__item">
+        <h3 class="ia__titulo">{{ ponto.onde }}</h3>
+        <div class="ia__grade">
+          <div class="ia__bloco">
+            <span class="ia__rotulo">O que faz</span>
+            <p class="ia__texto">{{ ponto.faz }}</p>
+          </div>
+          <div class="ia__bloco">
+            <span class="ia__rotulo">Como conferimos</span>
+            <p class="ia__texto">{{ ponto.confere }}</p>
+          </div>
+          <div class="ia__bloco ia__bloco--melhorar">
+            <span class="ia__rotulo">Onde melhorar</span>
+            <p class="ia__texto">{{ ponto.melhorar }}</p>
+          </div>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+
+    <h2 class="titulo titulo--secao">Onde ela ainda erra</h2>
+    <span class="regua" aria-hidden="true"></span>
+    <p class="nota">
+      Está escrito aqui porque é melhor você saber por nós do que descobrir sozinho.
+    </p>
+    <ul class="limites">
+      {% for nome, texto in limites %}
+      <li class="limite">
+        <span class="limite__nome">{{ nome }}</span>
+        <p class="limite__texto">{{ texto }}</p>
+      </li>
+      {% endfor %}
+    </ul>
+
+    <h2 class="titulo titulo--secao">Cada negócio, passo a passo</h2>
+    <span class="regua" aria-hidden="true"></span>
+    <p class="nota">
+      São sete passos entre o combinado e o aviso chegando até você. O que está
+      marcado como concluído está concluído porque o sistema conferiu, não porque
+      alguém marcou na mão.
     </p>
 
     {% for bloco in por_comercio %}
@@ -74,7 +119,7 @@
       <header class="prontidao__cabeca">
         <h3 class="prontidao__nome"><a href="/comercio/{{ bloco.comercio.id }}">{{ bloco.comercio.nome }}</a></h3>
         <p class="prontidao__meta">{{ bloco.comercio.ramo }} · {{ bloco.comercio.cidade }}</p>
-        <p class="prontidao__contagem">{{ bloco.prontidao }} de 7 etapas concluídas</p>
+        <p class="prontidao__contagem">{{ bloco.prontidao }} de 7 passos concluídos</p>
       </header>
       <ol class="trilha trilha--numerada">
         {% for etapa in bloco.etapas %}
@@ -90,6 +135,36 @@
       </ol>
     </article>
     {% endfor %}
+
+    <h2 class="titulo titulo--secao">Quando o dado falha</h2>
+    <span class="regua" aria-hidden="true"></span>
+    <p class="nota">
+      Sistema que só funciona quando tudo dá certo não serve. Estas são as coisas
+      que dão errado no dia a dia e o que o sistema faz em cada uma.
+    </p>
+    <table class="tabela tabela--pares">
+      <thead>
+        <tr><th scope="col">O que pode dar errado</th><th scope="col">O que o sistema faz</th></tr>
+      </thead>
+      <tbody>
+        {% for situacao, tratamento in robustez %}
+        <tr><th scope="row">{{ situacao }}</th><td>{{ tratamento }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <h2 class="titulo titulo--secao">Com o que ele é feito</h2>
+    <span class="regua" aria-hidden="true"></span>
+    <div class="tecnologias">
+      {% for grupo in tecnologias %}
+      <div class="tecnologia">
+        <h3 class="tecnologia__titulo">{{ grupo.grupo }}</h3>
+        <ul class="tecnologia__lista">
+          {% for item in grupo.itens %}<li>{{ item }}</li>{% endfor %}
+        </ul>
+      </div>
+      {% endfor %}
+    </div>
   </div>
 </section>
 {% endblock %}

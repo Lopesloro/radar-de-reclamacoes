@@ -7,13 +7,13 @@
 <section class="secao secao--topo">
   <div class="container">
     {{ m.seletor_comercio(comercios, comercio.id, "/comercio") }}
-    {{ m.cabeca(comercio.nome, "Por que reclamaram em " ~ (mes | mes_longo) ~ ", categoria por categoria.") }}
+    {{ m.cabeca(comercio.nome, "Do que reclamaram em " ~ (mes | mes_longo) ~ ", assunto por assunto.") }}
 
     <ul class="resumo">
       <li class="resumo__item">
         <span class="resumo__rotulo">Avaliações lidas</span>
         <strong class="resumo__valor">{{ comercio.total_avaliacoes | inteiro }}</strong>
-        <span class="resumo__nota">no mês fechado, com e sem texto</span>
+        <span class="resumo__nota">no último mês fechado, com e sem texto escrito</span>
       </li>
       <li class="resumo__item">
         <span class="resumo__rotulo">Nota média</span>
@@ -21,23 +21,23 @@
         <span class="resumo__nota">inclui quem avaliou só com estrela</span>
       </li>
       <li class="resumo__item">
-        <span class="resumo__rotulo">Reclamações classificadas</span>
+        <span class="resumo__rotulo">Viraram reclamação</span>
         <strong class="resumo__valor">{{ comercio.total_reclamacoes | inteiro }}</strong>
-        <span class="resumo__nota">somando as cinco categorias</span>
+        <span class="resumo__nota">somando os cinco assuntos</span>
       </li>
       <li class="resumo__item">
-        <span class="resumo__rotulo">Sem categoria</span>
+        <span class="resumo__rotulo">Sem assunto definido</span>
         <strong class="resumo__valor">{{ comercio.sem_categoria | inteiro }}</strong>
-        <span class="resumo__nota">elogio, texto ausente ou confiança baixa</span>
+        <span class="resumo__nota">elogio, avaliação sem texto ou frase vaga demais</span>
       </li>
     </ul>
 
     <figure class="grafico">
-      <figcaption class="grafico__titulo">Onde dói: reclamações por categoria</figcaption>
+      <figcaption class="grafico__titulo">Onde dói: reclamações por assunto</figcaption>
       {{ grafico_categorias }}
       <p class="grafico__nota">
-        O número à direita da barra é a contagem do mês; o sinal ao lado é a
-        variação em relação ao mês anterior, em reclamações.
+        O número ao lado da barra é quantas reclamações apareceram no mês. O
+        sinal ao lado dele mostra quantas a mais ou a menos que no mês anterior.
       </p>
     </figure>
 
@@ -45,22 +45,23 @@
       <figcaption class="grafico__titulo">O que mudou em relação ao mês anterior</figcaption>
       {{ grafico_variacao }}
       <p class="grafico__nota">
-        A variação aparece em contagem, nunca em porcentagem: numa categoria que
-        zerou no mês anterior, a porcentagem dividiria por zero.
+        Mostramos a diferença em número de reclamações, não em porcentagem. Num
+        assunto que ficou zerado no mês passado, a porcentagem não existe — e
+        conta boba na tela é o começo de conta errada na cabeça.
       </p>
     </figure>
 
-    <h2 class="titulo titulo--secao">Categoria por categoria</h2>
+    <h2 class="titulo titulo--secao">Assunto por assunto</h2>
     <span class="regua" aria-hidden="true"></span>
     <table class="tabela">
       <thead>
         <tr>
-          <th scope="col">Categoria</th>
+          <th scope="col">Assunto</th>
           <th scope="col" class="num">Mês fechado</th>
           <th scope="col" class="num">Mês anterior</th>
           <th scope="col" class="num">Variação</th>
-          <th scope="col" class="num">Previsto</th>
-          <th scope="col">Leitura</th>
+          <th scope="col" class="num">Mês que vem</th>
+          <th scope="col">O que isso quer dizer</th>
         </tr>
       </thead>
       <tbody>
@@ -80,8 +81,9 @@
     <h2 class="titulo titulo--secao">Últimas avaliações lidas</h2>
     <span class="regua" aria-hidden="true"></span>
     <p class="nota">
-      Abaixo de {{ limite | decimal(2) }} de confiança o classificador não atribui
-      categoria. Avaliação sem texto entra na nota média e não vai para o modelo.
+      Quando o sistema não tem certeza suficiente da frase, ele deixa sem assunto
+      em vez de chutar. Avaliação que só tem estrela entra na nota média e não é
+      lida pela inteligência artificial — não há o que ler.
     </p>
     <table class="tabela tabela--avaliacoes">
       <thead>
@@ -89,8 +91,8 @@
           <th scope="col">Data</th>
           <th scope="col" class="num">Estrelas</th>
           <th scope="col">Texto</th>
-          <th scope="col">Categoria</th>
-          <th scope="col" class="num">Confiança</th>
+          <th scope="col">Assunto</th>
+          <th scope="col" class="num">Certeza</th>
         </tr>
       </thead>
       <tbody>
@@ -99,7 +101,7 @@
           <td class="num">{{ a.data | data_curta }}</td>
           <td class="num">{{ a.estrelas }}</td>
           <td>{% if a.texto %}{{ a.texto }}{% else %}<span class="vazio">sem texto</span>{% endif %}</td>
-          <td>{% if a.categoria %}{{ a.categoria }}{% else %}<span class="vazio">sem categoria — {{ a.motivo_sem_categoria }}</span>{% endif %}</td>
+          <td>{% if a.categoria %}{{ a.categoria }}{% else %}<span class="vazio">sem assunto — {{ a.motivo_sem_categoria }}</span>{% endif %}</td>
           <td class="num">{% if a.confianca %}{{ a.confianca | decimal(2) }}{% else %}—{% endif %}</td>
         </tr>
         {% endfor %}

@@ -7,29 +7,31 @@
 <section class="secao secao--topo">
   <div class="container">
     {{ m.cabeca("Acurácia dos dois modelos",
-                "Nenhum resultado aparece sozinho: cada número fica ao lado da régua que ele precisa superar.") }}
+                "Aqui está a prova de que vale confiar. Cada resultado do sistema aparece ao lado do palpite mais simples que existe — e só fica na tela se ganhar dele.") }}
 
-    <h2 class="titulo titulo--secao">Modelo 1 — classificação do texto</h2>
+    <h2 class="titulo titulo--secao">Primeira pergunta: do que estão reclamando</h2>
     <span class="regua" aria-hidden="true"></span>
     <figure class="grafico">
-      <figcaption class="grafico__titulo">F1 por categoria</figcaption>
+      <figcaption class="grafico__titulo">Quanto o sistema acerta em cada assunto</figcaption>
       {{ grafico_f1 }}
       <p class="grafico__nota">
-        A régua responde sempre “{{ classificacao.categoria_regua }}”, a categoria
-        mais comum da amostra de {{ classificacao.amostra | inteiro }} avaliações.
-        Ela acerta muito numa categoria e zera nas outras quatro, e é por isso que
-        o F1 macro dela fica baixo.
+        A barra vai de 0 a 1: quanto mais perto de 1, mais o sistema acerta
+        naquele assunto. O palpite simples responde sempre
+        “{{ classificacao.categoria_regua }}”, o assunto mais comum das
+        {{ classificacao.amostra | inteiro }} avaliações que conferimos à mão. Ele
+        acerta bem num assunto e erra tudo nos outros quatro — por isso a nota
+        média dele é tão baixa. Essa nota tem nome técnico, F1.
       </p>
     </figure>
 
     <table class="tabela">
       <thead>
         <tr>
-          <th scope="col">Categoria</th>
-          <th scope="col" class="num">Precisão</th>
-          <th scope="col" class="num">Recall</th>
-          <th scope="col" class="num">F1</th>
-          <th scope="col" class="num">Avaliações na amostra</th>
+          <th scope="col">Assunto</th>
+          <th scope="col" class="num">Quando diz, acerta</th>
+          <th scope="col" class="num">Do que existe, encontra</th>
+          <th scope="col" class="num">Nota do assunto</th>
+          <th scope="col" class="num">Avaliações conferidas</th>
         </tr>
       </thead>
       <tbody>
@@ -43,52 +45,55 @@
         </tr>
         {% endfor %}
         <tr class="linha--total">
-          <th scope="row">F1 macro do modelo</th>
+          <th scope="row">Nota média do sistema</th>
           <td class="num" colspan="3">{{ classificacao.macro | decimal(2) }}</td>
-          <td class="num">régua: {{ classificacao.macro_regua | decimal(2) }}</td>
+          <td class="num">palpite simples: {{ classificacao.macro_regua | decimal(2) }}</td>
         </tr>
       </tbody>
     </table>
 
-    <h2 class="titulo titulo--secao">Modelo 2 — previsão da contagem</h2>
+    <h2 class="titulo titulo--secao">Segunda pergunta: quantas virão no mês que vem</h2>
     <span class="regua" aria-hidden="true"></span>
     <ul class="resumo">
       <li class="resumo__item">
-        <span class="resumo__rotulo">Erro médio do modelo</span>
+        <span class="resumo__rotulo">Erro médio do sistema</span>
         <strong class="resumo__valor">{{ previsao.mae | decimal(2) }}</strong>
-        <span class="resumo__nota">reclamações por mês, em média</span>
+        <span class="resumo__nota">quanto ele erra, em reclamações por mês</span>
       </li>
       <li class="resumo__item">
-        <span class="resumo__rotulo">Erro médio da régua</span>
+        <span class="resumo__rotulo">Erro do palpite simples</span>
         <strong class="resumo__valor">{{ previsao.mae_regua | decimal(2) }}</strong>
-        <span class="resumo__nota">repetir o mês anterior</span>
+        <span class="resumo__nota">chutar o mesmo número do mês passado</span>
       </li>
       <li class="resumo__item">
-        <span class="resumo__rotulo">Ganho sobre a régua</span>
+        <span class="resumo__rotulo">Quanto ele é melhor</span>
         <strong class="resumo__valor">{{ ganho | pct }}</strong>
-        <span class="resumo__nota">redução do erro médio</span>
+        <span class="resumo__nota">de erro a menos que o palpite simples</span>
       </li>
       <li class="resumo__item">
-        <span class="resumo__rotulo">Cobertura da faixa</span>
+        <span class="resumo__rotulo">Acerto do mínimo e máximo</span>
         <strong class="resumo__valor">{{ previsao.cobertura | pct(0, false) }}</strong>
-        <span class="resumo__nota">a faixa P10–P90 promete 80%</span>
+        <span class="resumo__nota">quantas vezes o real caiu dentro do esperado</span>
       </li>
     </ul>
 
     <figure class="grafico">
-      <figcaption class="grafico__titulo">Previsto um mês antes contra o realizado</figcaption>
+      <figcaption class="grafico__titulo">O que o sistema disse, e o que aconteceu</figcaption>
       {{ grafico_previsao }}
       <p class="grafico__nota">
-        Validação com origem móvel: para cada mês, o modelo só viu o que existia
-        até o mês anterior. São {{ previsao.janelas | inteiro }} janelas ao todo,
-        somando as cinco categorias dos três comércios.
+        Para não haver truque: em cada mês do gráfico, o sistema só enxergou o que
+        existia até o mês anterior. Ele nunca viu a resposta antes de responder.
+        Foram {{ previsao.janelas | inteiro }} tentativas ao todo, somando os cinco
+        assuntos dos três negócios.
       </p>
     </figure>
 
     <p class="nota">
-      O modelo parte da régua e só se afasta dela quando a inclinação dos últimos
-      seis meses supera o próprio erro padrão. Onde não há tendência distinguível
-      de ruído, ele devolve a régua — de propósito.
+      Como ele faz isso: começa pelo número do mês passado e só se afasta dele
+      quando os seis últimos meses mostram uma subida ou uma queda forte o
+      bastante para não ser só oscilação normal. Quando não há tendência clara, ele
+      devolve o número do mês passado. Isso é de propósito: chutar diferente sem
+      motivo é o jeito mais rápido de errar mais que o chute simples.
     </p>
   </div>
 </section>

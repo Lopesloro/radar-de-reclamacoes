@@ -8,7 +8,7 @@
   <div class="container">
     {{ m.seletor_comercio(comercios, comercio.id, "/previsao") }}
     {{ m.cabeca("Previsão de " ~ escolhida,
-                "O que a série de " ~ escolhida ~ " em " ~ comercio.nome ~ " indica para os próximos " ~ horizonte ~ " meses.") }}
+                "O que o histórico de " ~ escolhida ~ " em " ~ comercio.nome ~ " indica para os próximos " ~ horizonte ~ " meses.") }}
 
     <nav class="abas" aria-label="Categoria">
       {% for c in categorias %}
@@ -17,12 +17,14 @@
     </nav>
 
     <figure class="grafico">
-      <figcaption class="grafico__titulo">Histórico, mês em andamento e faixa prevista</figcaption>
+      <figcaption class="grafico__titulo">O que já aconteceu e o que deve acontecer</figcaption>
       {{ grafico }}
       <p class="grafico__nota">
-        A previsão parte do último mês fechado. O mês em andamento aparece em
-        cinza porque ainda vai receber avaliação, e por isso não alimenta o modelo.
-        A faixa vai de P10 a P90: a cada mês à frente ela abre, porque a incerteza cresce.
+        A estimativa começa do último mês que já terminou. O mês em andamento
+        aparece em cinza porque ainda vai receber avaliação: contar com ele seria
+        comparar mês pela metade com mês inteiro. A área clara é o mínimo e o
+        máximo esperados, e ela vai abrindo mês a mês — quanto mais longe, menos
+        se sabe.
       </p>
     </figure>
 
@@ -30,22 +32,22 @@
       <li class="resumo__item">
         <span class="resumo__rotulo">Último mês fechado</span>
         <strong class="resumo__valor">{{ serie.ultimo | inteiro }}</strong>
-        <span class="resumo__nota">é também a régua de comparação</span>
+        <span class="resumo__nota">é com este número que a estimativa é comparada</span>
       </li>
       <li class="resumo__item">
-        <span class="resumo__rotulo">Previsto para o próximo mês</span>
+        <span class="resumo__rotulo">Esperado no próximo mês</span>
         <strong class="resumo__valor">{{ serie.prevista | inteiro }}</strong>
-        <span class="resumo__nota">faixa de {{ serie.previsao[0].p10 | inteiro }} a {{ serie.previsao[0].p90 | inteiro }}</span>
+        <span class="resumo__nota">entre {{ serie.previsao[0].p10 | inteiro }} e {{ serie.previsao[0].p90 | inteiro }}, na conta do sistema</span>
       </li>
       <li class="resumo__item">
-        <span class="resumo__rotulo">Diferença para a régua</span>
+        <span class="resumo__rotulo">Diferença</span>
         <strong class="resumo__valor">{{ serie.crescimento_previsto | round | int | contagem }}</strong>
-        <span class="resumo__nota">em número de reclamações</span>
+        <span class="resumo__nota">quantas reclamações a mais ou a menos</span>
       </li>
       <li class="resumo__item">
-        <span class="resumo__rotulo">Meses fechados usados</span>
+        <span class="resumo__rotulo">Meses de histórico</span>
         <strong class="resumo__valor">{{ serie.pontos | length }}</strong>
-        <span class="resumo__nota">a janela do ajuste é de seis</span>
+        <span class="resumo__nota">os seis últimos são os que mais pesam</span>
       </li>
     </ul>
 
@@ -58,23 +60,23 @@
         <tr>
           <th scope="col">Mês</th>
           <th scope="col" class="num">Reclamações</th>
-          <th scope="col">Situação</th>
+          <th scope="col">Situação do mês</th>
         </tr>
       </thead>
       <tbody>
         {% for mes, valor in serie.pontos[-6:] %}
-        <tr><th scope="row">{{ mes | mes_longo }}</th><td class="num">{{ valor | inteiro }}</td><td>fechado</td></tr>
+        <tr><th scope="row">{{ mes | mes_longo }}</th><td class="num">{{ valor | inteiro }}</td><td>mês fechado</td></tr>
         {% endfor %}
         <tr class="linha--parcial">
           <th scope="row">{{ serie.parcial[0] | mes_longo }}</th>
           <td class="num">{{ serie.parcial[1] | inteiro }}</td>
-          <td>em andamento, não entra no ajuste</td>
+          <td>ainda em andamento, não entra na conta</td>
         </tr>
         {% for p in serie.previsao %}
         <tr class="linha--prevista">
           <th scope="row">{{ p.mes | mes_longo }}</th>
           <td class="num">{{ p.p50 | inteiro }}</td>
-          <td>previsto, faixa de {{ p.p10 | inteiro }} a {{ p.p90 | inteiro }}</td>
+          <td>estimativa, entre {{ p.p10 | inteiro }} e {{ p.p90 | inteiro }}</td>
         </tr>
         {% endfor %}
       </tbody>

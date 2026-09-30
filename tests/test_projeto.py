@@ -3,11 +3,13 @@
 from app.conteudo import INTEGRANTES, PROJETO
 
 
-def test_home_responde_e_traz_a_ideia(anonimo):
+def test_home_responde_e_vende_o_resultado(anonimo):
+    """A home fala do que o dono do negócio ganha, não de como o modelo funciona."""
     resposta = anonimo.get("/")
     assert resposta.status_code == 200
-    assert "Por que as pessoas estão reclamando" in resposta.text
-    assert PROJETO["disciplina"] in resposta.text
+    assert "Você sabe a sua nota" in resposta.text
+    assert "A lista do que mais incomoda" in resposta.text
+    assert PROJETO["instituicao"] in resposta.text
 
 
 def test_home_lista_todos_os_integrantes(anonimo):
@@ -16,17 +18,23 @@ def test_home_lista_todos_os_integrantes(anonimo):
         assert pessoa in texto
 
 
-def test_home_mostra_as_tecnologias_e_a_robustez(anonimo):
+def test_home_nao_tem_jargao_tecnico(anonimo):
+    """Nome de biblioteca e sigla de métrica vivem na área interna, não na home."""
     texto = anonimo.get("/").text
-    assert "FastAPI" in texto and "scikit-learn" in texto
-    assert "Situação não prevista" in texto
-    assert "sem categoria abaixo do limite de confiança" in texto
+    for jargao in ("FastAPI", "scikit-learn", "PostgreSQL", "F1", "P10", "CSRF"):
+        assert jargao not in texto
 
 
-def test_home_declara_os_dois_modelos_com_regua(anonimo):
+def test_home_diz_o_que_o_cliente_nao_precisa_fazer(anonimo):
     texto = anonimo.get("/").text
-    assert "F1 por categoria e F1 macro" in texto
-    assert "repetir o mês anterior" in texto
+    assert "vai precisar fazer" in texto
+    assert "Instalar programa" in texto
+
+
+def test_home_mostra_a_comparacao_com_o_palpite_simples(anonimo):
+    texto = anonimo.get("/").text
+    assert "repetir o número do mês passado" in texto
+    assert "chutar sempre o assunto mais comum" in texto
 
 
 def test_saude_responde_json(anonimo):

@@ -7,7 +7,7 @@
 <section class="secao secao--topo">
   <div class="container">
     {{ m.cabeca("Alertas de alta prevista",
-                "O alerta sai quando a previsão do próximo mês supera o último mês fechado com folga. Crítico é quando nem o piso da faixa devolve a categoria ao normal.") }}
+                "O aviso aparece quando um assunto deve crescer bem acima do mês passado. Vira alta prevista quando nem o cenário mais otimista traz o número de volta ao normal.") }}
 
     {% if abertos %}
     <ul class="alertas">
@@ -36,14 +36,14 @@
     <h2 class="titulo titulo--secao">Já tratados</h2>
     <span class="regua" aria-hidden="true"></span>
     <p class="nota">
-      Confirmar e descartar não são só arquivamento: é essa resposta que recalibra
-      o limiar de disparo e reduz o falso alarme ao longo das semanas.
+      Confirmar e descartar não servem só para tirar o aviso da tela. É essa
+      resposta que ensina o sistema a avisar menos quando não precisa.
     </p>
     <table class="tabela">
       <thead>
         <tr>
           <th scope="col">Comércio</th>
-          <th scope="col">Categoria</th>
+          <th scope="col">Assunto</th>
           <th scope="col">Resposta</th>
           <th scope="col"></th>
         </tr>
@@ -53,7 +53,7 @@
         <tr>
           <th scope="row">{{ a.comercio_nome }}</th>
           <td>{{ a.categoria }}</td>
-          <td>{{ "confirmado pela equipe" if a.estado == "confirmado" else "descartado" }}</td>
+          <td>{{ "confirmado, o problema existe" if a.estado == "confirmado" else "descartado, não era nada" }}</td>
           <td>
             <form method="post" action="/alertas/{{ a.id }}">
               <button class="botao botao--texto" name="acao" value="reabrir">Reabrir</button>
