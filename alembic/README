@@ -1,0 +1,7 @@
+Migrações do banco (Gabriel).
+
+    DATABASE_URL=... .venv/bin/alembic upgrade head
+
+A revisão nova sai de `alembic revision --autogenerate -m "o que muda"`. O teste
+`tests/test_banco.py::test_a_migracao_cria_o_mesmo_esquema_das_entidades` quebra
+se a entidade mudar e a migração ficar para trás.
