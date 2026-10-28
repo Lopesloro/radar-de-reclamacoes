@@ -1,0 +1,96 @@
+name: Segurança
+
+# Roda a cada push e a cada pull request. A saída de cada ferramenta fica guardada como artefato da
+# execução (aba "Artifacts"), mesmo quando a ferramenta reprova: é a evidência para a banca.
+#   Bandit    procura falhas no código (senha fixa, SQL montado na mão, etc.).
+#   pip-audit procura vulnerabilidade conhecida nas bibliotecas de requirements.txt.
+#   Gitleaks  procura segredo (chave, token, senha) no código e em todo o histórico do git.
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash        # `bash` explícito liga o pipefail: `| tee` não esconde a falha da ferramenta
+
+env:
+  EVIDENCIAS: evidencias-seguranca
+
+jobs:
+  bandit:
+    name: Bandit (falhas no código)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar o Bandit
+        run: pip install bandit==1.9.4
+      - name: Relatório completo (todas as gravidades)
+        run: |
+          mkdir -p "$EVIDENCIAS"
+          bandit -r app -f txt -o "$EVIDENCIAS/bandit-completo.txt" || true
+          bandit -r app -f json -o "$EVIDENCIAS/bandit-completo.json" || true
+      - name: Reprovar se houver gravidade alta
+        run: bandit -r app --severity-level high | tee "$EVIDENCIAS/bandit-gravidade-alta.txt"
+      - name: Guardar a saída como evidência
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidencia-bandit
+          path: ${{ env.EVIDENCIAS }}/
+          if-no-files-found: error
+
+  pip-audit:
+    name: pip-audit (bibliotecas com falha conhecida)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar o pip-audit
+        run: pip install pip-audit==2.10.1
+      - name: Relatório em JSON
+        # Tudo em requirements.txt está com versão exata: dispensa resolver dependências para auditar.
+        run: |
+          mkdir -p "$EVIDENCIAS"
+          pip-audit -r requirements.txt --no-deps --disable-pip --progress-spinner off -f json -o "$EVIDENCIAS/pip-audit.json" || true
+      - name: Reprovar se houver falha conhecida
+        run: pip-audit -r requirements.txt --no-deps --disable-pip --progress-spinner off | tee "$EVIDENCIAS/pip-audit.txt"
+      - name: Guardar a saída como evidência
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidencia-pip-audit
+          path: ${{ env.EVIDENCIAS }}/
+          if-no-files-found: error
+
+  gitleaks:
+    name: Gitleaks (segredos no código e no histórico)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0     # o histórico inteiro: segredo apagado de um commit antigo continua vazado
+      - name: Baixar o Gitleaks 8.30.1 e conferir o hash
+        run: |
+          curl -sSfL -o gitleaks.tar.gz "https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz"
+          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  gitleaks.tar.gz" | sha256sum --check --strict
+          tar -xzf gitleaks.tar.gz gitleaks
+      - name: Procurar segredos
+        # --redact: o relatório diz onde está o segredo sem copiá-lo para a evidência.
+        run: |
+          mkdir -p "$EVIDENCIAS"
+          ./gitleaks git . --redact --no-banner --report-format json --report-path "$EVIDENCIAS/gitleaks.json" 2>&1 | tee "$EVIDENCIAS/gitleaks.txt"
+      - name: Guardar a saída como evidência
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidencia-gitleaks
+          path: ${{ env.EVIDENCIAS }}/
+          if-no-files-found: error

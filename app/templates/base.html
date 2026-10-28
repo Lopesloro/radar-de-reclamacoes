@@ -38,6 +38,12 @@
           </li>
         </ul>
       </nav>
+      {% if usuario %}
+      <form class="topo__sair" method="post" action="/sair">
+        <input type="hidden" name="csrf" value="{{ request.state.csrf }}">
+        <button class="botao botao--mini" type="submit">Sair</button>
+      </form>
+      {% endif %}
 
       <details class="menu-movel" data-fecha-fora>
         <summary class="menu-movel__botao">Menu</summary>

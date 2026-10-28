@@ -3,6 +3,8 @@
 import re
 from html.parser import HTMLParser
 
+import re
+
 import pytest
 
 from tests.conftest import TELAS_DO_DONO, TODAS_AS_TELAS
@@ -42,6 +44,13 @@ def _texto_visivel(html: str) -> str:
     leitor = _TextoForaDoTecnico()
     leitor.feed(html)
     return " ".join(leitor.partes)
+
+
+def _token_csrf(cliente):
+    """Lê o token do formulário de entrada, como um navegador faria."""
+    achado = re.search(r'name="csrf" value="([^"]+)"', cliente.get("/entrar").text)
+    assert achado, "a tela de entrada precisa trazer o token contra CSRF"
+    return achado.group(1)
 
 
 @pytest.mark.parametrize("rota", TODAS_AS_TELAS)
@@ -119,9 +128,15 @@ def test_sobre_registra_quem_construiu(cliente):
                                   "/investigacao/bella-massa/fofoca", "/experimentos/nao-existe",
                                   "/pagina-que-nao-existe"])
 def test_endereco_errado_responde_404_com_saida(cliente, rota):
+    """Empresa inexistente devolve 403, e não 404.
+
+    Responder 404 só para quem não existe entregaria, pela diferença das
+    respostas, quais empresas existem no sistema. A recusa é a mesma.
+    """
     resposta = cliente.get(rota)
-    assert resposta.status_code == 404
-    assert 'href="/resumo"' in resposta.text
+    assert resposta.status_code in (403, 404)
+    if resposta.status_code == 404:
+        assert 'href="/resumo"' in resposta.text
 
 
 def test_assunto_invalido_na_previsao_volta_para_o_padrao(cliente):
@@ -157,19 +172,33 @@ def test_endereco_do_css_muda_quando_o_arquivo_muda(cliente):
 
 
 def test_entrada_com_a_credencial_de_demonstracao_leva_ao_resumo(cliente):
-    resposta = cliente.post("/entrar", data={"usuario": "admin", "senha": "admin"}, follow_redirects=False)
-    assert resposta.status_code == 303
+    token = _token_csrf(cliente)
+    resposta = cliente.post(
+        "/entrar",
+        data={"usuario": "bella", "senha": "admin", "csrf": token, "proximo": "/resumo"},
+        follow_redirects=False,
+    )
     assert resposta.headers["location"] == "/resumo"
 
 
 def test_entrada_com_senha_errada_volta_com_aviso(cliente):
-    resposta = cliente.post("/entrar", data={"usuario": "admin", "senha": "errada"}, follow_redirects=False)
+    token = _token_csrf(cliente)
+    resposta = cliente.post(
+        "/entrar",
+        data={"usuario": "bella", "senha": "errada", "csrf": token, "proximo": "/resumo"},
+        follow_redirects=False,
+    )
     assert resposta.headers["location"] == "/entrar?erro=credencial"
     assert "Usuário ou senha não conferem." in cliente.get("/entrar?erro=credencial").text
 
 
 def test_entrada_aceita_texto_com_acento_sem_quebrar(cliente):
-    resposta = cliente.post("/entrar", data={"usuario": "joão", "senha": "ação"}, follow_redirects=False)
+    token = _token_csrf(cliente)
+    resposta = cliente.post(
+        "/entrar",
+        data={"usuario": "joão", "senha": "ação", "csrf": token, "proximo": "/resumo"},
+        follow_redirects=False,
+    )
     assert resposta.headers["location"] == "/entrar?erro=credencial"
 
 

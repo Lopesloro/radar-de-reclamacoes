@@ -5,8 +5,17 @@
 # Pular num caso justificado:  git commit --no-verify
 # Se você está pulando com frequência, o problema é o teste, não o gate.
 
-PY=".venv/bin/python"
+# 1. interpretador declarado, 2. venv do projeto, 3. o do sistema
+PY="${RADAR_PYTHON:-}"
+[ -n "$PY" ] && [ -x "$PY" ] || PY=".venv/bin/python"
 [ -x "$PY" ] || PY="python3"
+
+if ! "$PY" -c "import pytest" 2>/dev/null; then
+  echo "COMMIT BLOQUEADO: $PY não tem pytest."
+  echo "Crie o ambiente (python3 -m venv .venv && .venv/bin/pip install -r requirements.txt -r requirements-dev.txt)"
+  echo "ou aponte RADAR_PYTHON para um interpretador que tenha."
+  exit 1
+fi
 
 echo "pre-commit: rodando a bateria..."
 if ! "$PY" -m pytest -q --ignore=tests/e2e >/tmp/pre-commit-radar.log 2>&1; then

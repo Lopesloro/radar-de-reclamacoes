@@ -14,9 +14,14 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.conteudo import PROJETO, VERSAO
 from app.rotas import experimentos, investigacao, paginas, painel, publico, simulador
 from app.rotas._telas import RAIZ, tela
+from app.seguranca import instalar
 
 app = FastAPI(title=PROJETO["nome"], version=VERSAO, docs_url=None, redoc_url=None, openapi_url=None)
 app.mount("/static", StaticFiles(directory=RAIZ / "static"), name="static")
+
+# Antes do include_router: com este FastAPI a trava de empresa é fixada no
+# registro da rota. Depois, ela levanta na partida em vez de falhar calada.
+instalar(app)
 
 for modulo in (publico, painel, investigacao, simulador, experimentos, paginas):
     app.include_router(modulo.rotas)

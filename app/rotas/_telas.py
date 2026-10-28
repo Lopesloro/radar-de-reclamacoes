@@ -11,7 +11,7 @@ from fastapi.templating import Jinja2Templates
 
 from app import conteudo, formatos, servicos
 from app.graficos import frases
-from app.rotas.acesso_provisorio import usuario_atual
+from app.seguranca import usuario_atual
 
 RAIZ = Path(__file__).resolve().parent.parent
 

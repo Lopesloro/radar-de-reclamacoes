@@ -27,6 +27,8 @@
 
       {# PROVISÓRIO: o token contra CSRF e a sessão entram aqui na Fase 0 do Matheus. #}
       <form method="post" action="/entrar" class="formulario">
+        <input type="hidden" name="csrf" value="{{ request.state.csrf }}">
+        <input type="hidden" name="proximo" value="{{ proximo | default('/resumo') }}">
         <label class="campo-classico">
           <span class="campo-classico__rotulo">Usuário</span>
           <input class="campo-classico__entrada" type="text" name="usuario" autocomplete="username"
