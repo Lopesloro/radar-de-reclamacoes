@@ -1,112 +1,57 @@
 {% extends "base.html" %}
 {% import "_macros.html" as m %}
-{% block titulo %}{{ comercio.nome }}, {{ projeto.nome }}{% endblock %}
+{% block titulo %}{{ negocio.nome }}, {{ projeto.nome }}{% endblock %}
 
 {% block conteudo %}
-{{ m.aviso_demo() }}
 <section class="secao secao--topo">
   <div class="container">
-    {{ m.seletor_comercio(comercios, comercio.id, "/comercio") }}
-    {{ m.cabeca(comercio.nome, "Do que reclamaram em " ~ (mes | mes_longo) ~ ", assunto por assunto.") }}
+    {{ m.seletor(negocios, negocio.empresa_id, "/comercio") }}
+    {{ m.cabeca(negocio.nome, "Do que os clientes reclamaram em " ~ (negocio.mes_referencia | mes_longo) ~ ", assunto por assunto.") }}
 
-    <ul class="resumo">
-      <li class="resumo__item">
-        <span class="resumo__rotulo">Avaliações lidas</span>
-        <strong class="resumo__valor">{{ comercio.total_avaliacoes | inteiro }}</strong>
-        <span class="resumo__nota">no último mês fechado, com e sem texto escrito</span>
+    <div class="numeros">
+      {{ m.numero("Avaliações lidas", "avaliacoes_lidas", negocio.avaliacoes_lidas | inteiro, "com e sem texto escrito") }}
+      {{ m.numero("Reclamações", "reclamacoes", negocio.reclamacoes | inteiro, "somando os cinco assuntos") }}
+      {{ m.numero("Sem assunto", "sem_assunto", negocio.sem_assunto | inteiro, "elogios, só estrelas ou frase vaga") }}
+      {{ m.numero("Nota média", "nota_media", negocio.nota_media | decimal, "de 1 a 5 estrelas") }}
+    </div>
+
+    {{ m.grafico(frase, grafico,
+        ["Cada barra é um assunto. Quanto mais comprida, mais reclamações em " ~ (negocio.mes_referencia | mes_longo) ~ ".",
+         "O número ao lado é quantas reclamações chegaram. A seta diz quantas a mais (▲) ou a menos (▼) que em " ~ mes_anterior ~ ".",
+         "Barra laranja é assunto que cresceu. Barra cinza ficou igual ou caiu."],
+        ["Assunto", negocio.mes_referencia | mes_longo, mes_anterior, "Diferença"],
+        tabela) }}
+
+    <h2 class="titulo-secao">Últimas avaliações lidas</h2>
+    <p class="nota">
+      Os nomes de pessoas aparecem como [nome]: o sistema apaga antes de guardar. Quando a
+      frase não deixa claro o assunto, ela fica sem assunto em vez de receber um chute.
+    </p>
+    <ul class="avaliacoes">
+      {% for a in avaliacoes %}
+      <li class="avaliacao">
+        <p class="avaliacao__topo">
+          <span class="avaliacao__estrelas" role="img" aria-label="{{ a.estrelas }} de 5 estrelas">{{ a.estrelas | estrelas }}</span>
+          <span class="avaliacao__data">{{ a.data | data_longa }}</span>
+        </p>
+        <p class="avaliacao__texto">{% if a.texto %}“{{ a.texto }}”{% else %}<span class="apagado">sem texto, só estrelas</span>{% endif %}</p>
+        <p class="avaliacao__assunto">
+          {% if a.categoria %}
+          <span class="pilula">{{ a.categoria | assunto }}</span>
+          <span class="apagado">certeza {{ {"alta": "alta", "media": "média", "baixa": "baixa"}[a.certeza] }}</span>
+          {% else %}
+          <span class="apagado">sem assunto: {{ a.motivo_sem_assunto }}</span>
+          {% endif %}
+        </p>
       </li>
-      <li class="resumo__item">
-        <span class="resumo__rotulo">Nota média</span>
-        <strong class="resumo__valor">{{ comercio.nota_media | decimal(1) }}</strong>
-        <span class="resumo__nota">inclui quem avaliou só com estrela</span>
-      </li>
-      <li class="resumo__item">
-        <span class="resumo__rotulo">Viraram reclamação</span>
-        <strong class="resumo__valor">{{ comercio.total_reclamacoes | inteiro }}</strong>
-        <span class="resumo__nota">somando os cinco assuntos</span>
-      </li>
-      <li class="resumo__item">
-        <span class="resumo__rotulo">Sem assunto definido</span>
-        <strong class="resumo__valor">{{ comercio.sem_categoria | inteiro }}</strong>
-        <span class="resumo__nota">elogio, avaliação sem texto ou frase vaga demais</span>
-      </li>
+      {% endfor %}
     </ul>
 
-    <figure class="grafico">
-      <figcaption class="grafico__titulo">Onde dói: reclamações por assunto</figcaption>
-      {{ grafico_categorias }}
-      <p class="grafico__nota">
-        O número ao lado da barra é quantas reclamações apareceram no mês. O
-        sinal ao lado dele mostra quantas a mais ou a menos que no mês anterior.
-      </p>
-    </figure>
-
-    <figure class="grafico">
-      <figcaption class="grafico__titulo">O que mudou em relação ao mês anterior</figcaption>
-      {{ grafico_variacao }}
-      <p class="grafico__nota">
-        Mostramos a diferença em número de reclamações, não em porcentagem. Num
-        assunto que ficou zerado no mês passado, a porcentagem não existe, e
-        conta boba na tela é o começo de conta errada na cabeça.
-      </p>
-    </figure>
-
-    <h2 class="titulo titulo--secao">Assunto por assunto</h2>
-    <span class="regua" aria-hidden="true"></span>
-    <table class="tabela">
-      <thead>
-        <tr>
-          <th scope="col">Assunto</th>
-          <th scope="col" class="num">Mês fechado</th>
-          <th scope="col" class="num">Mês anterior</th>
-          <th scope="col" class="num">Variação</th>
-          <th scope="col" class="num">Mês que vem</th>
-          <th scope="col">O que isso quer dizer</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for s in ordenadas %}
-        <tr>
-          <th scope="row"><a href="/previsao/{{ comercio.id }}?categoria={{ s.categoria }}">{{ s.categoria }}</a></th>
-          <td class="num">{{ s.ultimo | inteiro }}</td>
-          <td class="num">{{ s.anterior | inteiro }}</td>
-          <td class="num">{{ s.variacao | contagem }}</td>
-          <td class="num">{{ s.prevista | inteiro }}</td>
-          <td>{{ s.frase() }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-
-    <h2 class="titulo titulo--secao">Últimas avaliações lidas</h2>
-    <span class="regua" aria-hidden="true"></span>
-    <p class="nota">
-      Quando o sistema não tem certeza suficiente da frase, ele deixa sem assunto
-      em vez de chutar. Avaliação que só tem estrela entra na nota média e não é
-      lida pela inteligência artificial, não há o que ler.
-    </p>
-    <table class="tabela tabela--avaliacoes">
-      <thead>
-        <tr>
-          <th scope="col">Data</th>
-          <th scope="col" class="num">Estrelas</th>
-          <th scope="col">Texto</th>
-          <th scope="col">Assunto</th>
-          <th scope="col" class="num">Certeza</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for a in avaliacoes %}
-        <tr>
-          <td class="num">{{ a.data | data_curta }}</td>
-          <td class="num">{{ a.estrelas }}</td>
-          <td>{% if a.texto %}{{ a.texto }}{% else %}<span class="vazio">sem texto</span>{% endif %}</td>
-          <td>{% if a.categoria %}{{ a.categoria }}{% else %}<span class="vazio">sem assunto, {{ a.motivo_sem_categoria }}</span>{% endif %}</td>
-          <td class="num">{% if a.confianca %}{{ a.confianca | decimal(2) }}{% else %}{% endif %}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    {{ m.proximo_passo([
+      {"rotulo": "Ver o que vem por aí", "href": "/previsao/" ~ negocio.empresa_id ~ "?categoria=" ~ negocio.vai_crescer},
+      {"rotulo": "Por que " ~ (negocio.vai_crescer | com_artigo) ~ " está crescendo?", "href": "/investigacao/" ~ negocio.empresa_id ~ "/" ~ negocio.vai_crescer},
+      {"rotulo": "Voltar ao resumo", "href": "/resumo"},
+    ]) }}
   </div>
 </section>
 {% endblock %}

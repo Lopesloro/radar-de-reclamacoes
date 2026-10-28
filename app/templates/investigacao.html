@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}Por quê? {{ categoria | assunto | capitalize }}, {{ negocio.nome }}{% endblock %}
+
+{% block conteudo %}
+{% set inv = investigacao %}
+<section class="secao secao--topo">
+  <div class="container">
+    {{ m.seletor(negocios, negocio.empresa_id, "/investigacao", "/" ~ categoria) }}
+    {{ m.cabeca("Por que " ~ (categoria | com_artigo) ~ " mudou?",
+                negocio.nome ~ ": o sistema comparou o período de " ~ (inv.periodo_alta[0] | data_longa) ~ " até " ~ (inv.periodo_alta[1] | data_longa) ~ " com as semanas antes dele.") }}
+    {{ m.abas_assunto(categorias_disponiveis, categoria, "/investigacao/" ~ negocio.empresa_id ~ "/") }}
+
+    {% if inv.estado == "dados_insuficientes" %}
+    {{ m.estado_vazio(inv.motivo, {"rotulo": "Voltar ao resumo", "href": "/resumo"}) }}
+    {% else %}
+
+    <div class="aviso aviso--neutro">
+      <div class="com-ajuda">
+        <p><strong>Quem decide é a conta.</strong> A inteligência artificial só sugere ideias; cada ideia passa pelo mesmo teste que as outras.</p>
+        {{ m.ajuda("ia_sugere") }}
+      </div>
+    </div>
+
+    <p class="resposta">
+      {% if provaveis %}
+      Encontramos <strong>{{ provaveis }} {{ "provável causa" if provaveis == 1 else "prováveis causas" }}</strong> entre {{ inv.hipoteses | length }} possíveis causas testadas.
+      {% else %}
+      Nenhuma das {{ inv.hipoteses | length }} possíveis causas testadas se confirmou. Pode faltar uma mudança no diário do negócio.
+      {% endif %}
+    </p>
+
+    <ol class="hipoteses">
+      {% for item in hipoteses %}
+      {% set h = item.h %}
+      <li class="hipotese hipotese--{{ vereditos[h.veredito].classe }}">
+        <div class="hipotese__topo">
+          <div class="com-ajuda">
+            {{ m.etiqueta_veredito(h.veredito) }}
+            {{ m.ajuda({"sustentada": "provavel_causa", "inconclusiva": "ainda_nao_da", "descartada": "nao_parece"}[h.veredito]) }}
+          </div>
+          <div class="com-ajuda">{{ m.forca(h.forca) }}{{ m.ajuda("forca") }}</div>
+        </div>
+        <h2 class="hipotese__frase">{{ h.frase }}</h2>
+        <p class="hipotese__origem">{{ item.origem }}</p>
+        <div class="hipotese__corpo">
+          <figure class="hipotese__grafico">
+            {{ item.grafico }}
+            <figcaption class="visualmente-oculto">{{ item.frase_grafico }}</figcaption>
+          </figure>
+          {% if h.avaliacoes_exemplo %}
+          <details class="dobra">
+            <summary class="dobra__botao">Ver o que os clientes escreveram</summary>
+            <ul class="exemplos">
+              {% for texto in h.avaliacoes_exemplo %}<li>“{{ texto }}”</li>{% endfor %}
+            </ul>
+          </details>
+          {% endif %}
+        </div>
+      </li>
+      {% endfor %}
+    </ol>
+
+    <details class="dobra dobra--bloco">
+      <summary class="dobra__botao">O que o sistema verificou, passo a passo</summary>
+      <ol class="passos-agente">
+        {% for p in inv.passos %}
+        <li><strong>{{ p.acao | capitalize }}</strong>: {{ p.entrada_resumo }}. Resultado: {{ p.saida_resumo }}.</li>
+        {% endfor %}
+      </ol>
+    </details>
+
+    <h2 class="titulo-secao">Mudanças registradas no diário</h2>
+    {% if eventos %}
+    <div class="com-ajuda com-ajuda--linha"><p class="nota">As mudanças que você anota viram possíveis causas.</p>{{ m.ajuda("diario") }}</div>
+    <ul class="diario">
+      {% for e in eventos %}
+      <li><span class="diario__data">{{ e.data | data_longa }}</span> {{ e.descricao }}</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    {{ m.estado_vazio("Nenhuma mudança anotada ainda. Anotar quando algo muda ajuda o sistema a achar a causa.") }}
+    {% endif %}
+
+    {% call m.tecnico() %}
+    <div class="tabela-rolagem">
+      <table class="tabela">
+        <caption class="visualmente-oculto">Detalhes técnicos de cada hipótese</caption>
+        <thead><tr><th scope="col">Hipótese</th><th scope="col">Teste</th><th scope="col" class="num">Efeito por semana</th><th scope="col" class="num">Intervalo</th><th scope="col" class="num">q-valor (Benjamini-Hochberg)</th></tr></thead>
+        <tbody>
+          {% for item in hipoteses %}{% set h = item.h %}
+          <tr><th scope="row">{{ h.id }} · {{ h.origem }}</th><td>{{ h.teste }}</td><td class="num">{{ h.efeito_semana | decimal }}</td><td class="num">{{ h.efeito_min | decimal }} a {{ h.efeito_max | decimal }}</td><td class="num">{{ h.q_valor | decimal(3) }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p>Período de base: {{ inv.periodo_base[0] | data_longa }} a {{ inv.periodo_base[1] | data_longa }}. Usou IA: {{ "sim" if inv.usou_ia else "não" }}.</p>
+    {% endcall %}
+    {% endif %}
+
+    {% set botoes = [] %}
+    {% if tem_sugestao %}{% set botoes = [{"rotulo": "E se eu mudar algo?", "href": "/simulador/" ~ negocio.empresa_id ~ "?categoria=" ~ categoria}] %}{% endif %}
+    {{ m.proximo_passo(botoes + [
+      {"rotulo": "Ver a estimativa", "href": "/previsao/" ~ negocio.empresa_id ~ "?categoria=" ~ categoria},
+      {"rotulo": "Voltar ao resumo", "href": "/resumo"},
+    ]) }}
+  </div>
+</section>
+{% endblock %}

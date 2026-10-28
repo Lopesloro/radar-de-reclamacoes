@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}Avisos, {{ projeto.nome }}{% endblock %}
+
+{% block conteudo %}
+<section class="secao secao--topo">
+  <div class="container">
+    {{ m.cabeca("Avisos",
+                "Assuntos que devem crescer nas próximas semanas. Os de cima crescem mais.") }}
+
+    {% if avisos %}
+    <ul class="cartoes">
+      {% for item in avisos %}
+      {% set a = item.alerta %}
+      <li class="cartao cartao--aviso cartao--{{ estados[a.estado].classe }}">
+        <div class="cartao__cabeca">
+          <h2 class="cartao__titulo">{{ a.empresa_nome }} · {{ a.categoria | assunto }}</h2>
+          <div class="com-ajuda">{{ m.semaforo(a.estado) }}{{ m.ajuda(a.estado) }}</div>
+        </div>
+        <p class="cartao__frase">{{ item.frase }}</p>
+        <p class="cartao__meta">Aviso de {{ a.gerado_em | data_longa }}.</p>
+        <div class="cartao__acoes">
+          <a class="botao botao--primario" href="/investigacao/{{ a.empresa_id }}/{{ a.categoria }}"{% if loop.first %} data-principal{% endif %}>Por que isso está acontecendo?</a>
+          <a class="botao botao--secundario" href="/simulador/{{ a.empresa_id }}?categoria={{ a.categoria }}">E se eu mudar algo?</a>
+          <a class="botao botao--texto" href="/previsao/{{ a.empresa_id }}?categoria={{ a.categoria }}">Ver a estimativa</a>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    {{ m.estado_vazio("Nenhum assunto deve crescer agora. Nada a fazer por enquanto.", {"rotulo": "Voltar ao resumo", "href": "/resumo"}) }}
+    {% endif %}
+
+    {{ m.proximo_passo([{"rotulo": "Voltar ao resumo", "href": "/resumo"}]) }}
+  </div>
+</section>
+{% endblock %}

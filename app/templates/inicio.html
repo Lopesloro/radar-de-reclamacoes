@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block titulo %}{{ projeto.nome }}: saiba por que seus clientes reclamam{% endblock %}
+{% block corpo %}pagina-inicio{% endblock %}
+{% block topo_classe %}topo--sobre-hero{% endblock %}
+
+{% block conteudo %}
+<section class="hero" aria-labelledby="hero-titulo">
+  {# A textura do fundo é o próprio dado: o histórico de reclamações e a estimativa tracejada. #}
+  <svg class="hero__grafico" viewBox="0 0 1440 400" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+    <path d="M0,350 C160,338 260,318 380,304 C520,290 620,294 720,288 C800,282 860,272 900,262"
+          fill="none" stroke="#fff" stroke-width="2" vector-effect="non-scaling-stroke"/>
+    <path d="M900,262 L1440,206" fill="none" stroke="#fff" stroke-width="2"
+          stroke-dasharray="10 8" vector-effect="non-scaling-stroke"/>
+  </svg>
+  <div class="container hero__caixa">
+    <p class="hero__sobrelinha">Para quem vive de cliente que volta</p>
+    <h1 id="hero-titulo" class="hero__titulo">Você sabe a sua nota. Não sabe o motivo dela.</h1>
+    <p class="hero__texto">
+      O {{ projeto.nome }} lê o que seus clientes já escreveram na internet, diz do que
+      eles mais reclamam e avisa qual queixa está crescendo, antes de ela virar a razão
+      de ninguém voltar.
+    </p>
+    <a class="botao botao--vazado-claro" href="/entrar" data-principal>Entrar no painel</a>
+  </div>
+  <span class="chevron" aria-hidden="true"></span>
+</section>
+
+<section class="secao">
+  <div class="container">
+    <p class="sobrelinha">O que você recebe</p>
+    <h2 class="titulo-secao">Três respostas que nenhuma nota de estrelas dá</h2>
+    <div class="entregas">
+      {% for e in entregas %}
+      <article class="entrega">
+        <h3 class="entrega__titulo">{{ e.titulo }}</h3>
+        <p class="entrega__texto">{{ e.texto }}</p>
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="secao secao--alt">
+  <div class="container">
+    <p class="sobrelinha">Como funciona</p>
+    <h2 class="titulo-secao">Três passos, e nenhum deles é seu</h2>
+    <ol class="passos">
+      {% for numero, titulo, texto in passos %}
+      <li class="passo">
+        <span class="passo__numero" aria-hidden="true">{{ numero }}</span>
+        <div>
+          <h3 class="passo__titulo">{{ titulo }}</h3>
+          <p class="passo__texto">{{ texto }}</p>
+        </div>
+      </li>
+      {% endfor %}
+    </ol>
+  </div>
+</section>
+
+<section class="secao secao--escura">
+  <div class="container dividida">
+    <div>
+      <p class="sobrelinha">O que fica de fora</p>
+      <h2 class="titulo-secao">O que você não vai precisar fazer</h2>
+      <p class="lead">O sistema trabalha com o que já está publicado sobre o seu negócio. Nada entra no seu caixa ou no seu celular.</p>
+    </div>
+    <ul class="dispensado">
+      {% for item in dispensado %}<li>{{ item }}</li>{% endfor %}
+    </ul>
+  </div>
+</section>
+
+<section class="secao">
+  <div class="container">
+    <p class="sobrelinha">Em que acreditar</p>
+    <h2 class="titulo-secao">Toda resposta é comparada com o chute mais simples</h2>
+    <p class="lead">
+      Prever o futuro é fácil de prometer e difícil de provar. Aqui, cada resposta do
+      sistema é comparada com o palpite mais bobo possível, como repetir o número do mês
+      passado. Se o sistema não ganhar dele, ele não aparece na sua tela.
+    </p>
+  </div>
+</section>
+
+<section class="fechamento">
+  <div class="container fechamento__caixa">
+    <h2 class="fechamento__titulo">Veja funcionando</h2>
+    <p class="fechamento__texto">São {{ total_negocios }} negócios de demonstração, com avaliações de mentira, para você andar pelas telas antes de conectar o seu.</p>
+    <a class="botao botao--claro" href="/entrar">Entrar</a>
+  </div>
+</section>
+{% endblock %}

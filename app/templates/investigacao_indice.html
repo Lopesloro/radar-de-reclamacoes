@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}Por quê?, {{ projeto.nome }}{% endblock %}
+
+{% block conteudo %}
+<section class="secao secao--topo">
+  <div class="container">
+    {{ m.cabeca("Por quê?",
+                "Escolha um assunto e o sistema mostra as possíveis causas, da mais provável para a menos provável.") }}
+
+    {% if avisos %}
+    <h2 class="titulo-secao">Assuntos que devem crescer</h2>
+    <ul class="cartoes cartoes--compactos">
+      {% for item in avisos %}
+      {% set a = item.alerta %}
+      <li class="cartao">
+        <div class="cartao__cabeca">
+          <h3 class="cartao__titulo">{{ a.empresa_nome }} · {{ a.categoria | assunto }}</h3>
+          {{ m.semaforo(a.estado) }}
+        </div>
+        <p class="cartao__frase">{{ item.frase }}</p>
+        <div class="cartao__acoes">
+          <a class="botao botao--primario" href="/investigacao/{{ a.empresa_id }}/{{ a.categoria }}"{% if loop.first %} data-principal{% endif %}>Ver as possíveis causas</a>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    <h2 class="titulo-secao">Investigar outro assunto</h2>
+    <div class="escolhas">
+      {% for n in negocios %}
+      <div class="escolha">
+        <p class="escolha__nome">{{ n.nome }}</p>
+        <nav class="abas" aria-label="Assuntos de {{ n.nome }}">
+          {% for c in categorias_disponiveis %}
+          <a href="/investigacao/{{ n.empresa_id }}/{{ c }}">{{ c | assunto }}</a>
+          {% endfor %}
+        </nav>
+      </div>
+      {% endfor %}
+    </div>
+
+    {{ m.proximo_passo([{"rotulo": "Ver os avisos", "href": "/avisos"}, {"rotulo": "Voltar ao resumo", "href": "/resumo"}]) }}
+  </div>
+</section>
+{% endblock %}

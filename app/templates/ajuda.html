@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}Ajuda, {{ projeto.nome }}{% endblock %}
+
+{% block conteudo %}
+<section class="secao secao--topo">
+  <div class="container">
+    {{ m.cabeca("Ajuda", "Perguntas que todo mundo faz e o que quer dizer cada palavra do sistema.") }}
+
+    <div class="cartao cartao--destaque">
+      <h2 class="cartao__titulo">Primeira vez aqui?</h2>
+      <p>O tour mostra, em cinco passos, onde está cada coisa no resumo.</p>
+      <a class="botao botao--primario" href="/resumo?tour=1" data-principal>Fazer o tour</a>
+    </div>
+
+    <h2 class="titulo-secao">Perguntas frequentes</h2>
+    <div class="perguntas">
+      {% for pergunta, resposta in perguntas %}
+      <details class="pergunta">
+        <summary class="pergunta__titulo">{{ pergunta }}</summary>
+        <p class="pergunta__resposta">{{ resposta }}</p>
+      </details>
+      {% endfor %}
+    </div>
+
+    <h2 class="titulo-secao">O que quer dizer cada palavra</h2>
+    <dl class="glossario">
+      {% for chave, termo in termos %}
+      <div class="glossario__item" id="{{ chave }}">
+        <dt>{{ termo.rotulo }}</dt>
+        <dd>{{ termo.texto }} <span class="glossario__exemplo">Exemplo: {{ termo.exemplo }}</span></dd>
+      </div>
+      {% endfor %}
+    </dl>
+
+    {{ m.proximo_passo([{"rotulo": "Voltar ao resumo", "href": "/resumo"}]) }}
+  </div>
+</section>
+{% endblock %}

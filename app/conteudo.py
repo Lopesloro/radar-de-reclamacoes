@@ -1,7 +1,8 @@
-"""Texto fixo do site: identidade do projeto, menu, equipe e tecnologias.
+"""Textos fixos do site: identidade, menu, glossário e perguntas frequentes.
 
-Tudo o que é institucional mora aqui, fora dos templates, para que a mesma frase
-não seja reescrita em duas telas.
+Uma frase escrita uma vez só: se a explicação de "mês fechado" muda, muda aqui e
+vale para todas as telas. Regra de escrita: frases curtas, números inteiros,
+nenhuma sigla sem tradução.
 """
 
 from __future__ import annotations
@@ -11,328 +12,340 @@ VERSAO = "0.1.0"
 PROJETO = {
     "nome": "Radar de Reclamações",
     "resumo": (
-        "Lê a avaliação pública do seu negócio, mostra do que os clientes mais "
-        "reclamam e avisa qual queixa está crescendo antes de ela virar problema."
+        "Descobre por que os clientes do seu negócio reclamam, mostra o efeito de uma "
+        "mudança antes de você gastar e prova se ela funcionou."
     ),
     "disciplina": "Projeto Integrador VI",
-    "codigo": "12563",
     "curso": "Engenharia de Software",
     "instituicao": "PUC-Campinas",
     "semestre": "2º semestre de 2026",
     "orientadora": "Profa. Sílvia C. de Matos Soares",
-    "repositorio": "https://github.com/Lopesloro/radar-de-reclamacoes",
 }
 
-INTEGRANTES = (
-    "Gabriel Lopes Londe Rodrigues",
-    "Nicolas Marques Linares",
-    "Matheus Rocafa Moraes",
-)
-
-# Menu de quem está dentro do sistema.
-MENU = (
-    {"id": "painel", "rotulo": "Painel", "href": "/painel"},
-    {"id": "previsao", "rotulo": "Previsão", "href": "/previsao"},
-    {"id": "alertas", "rotulo": "Alertas", "href": "/alertas"},
-    {"id": "acuracia", "rotulo": "Acurácia", "href": "/acuracia"},
-    {"id": "etapas", "rotulo": "Etapas", "href": "/etapas"},
-)
-
-# Quem ainda não entrou não tem menu: a página pública é uma só, e a única ação
-# dela é entrar.
-MENU_PUBLICO = ()
-
-# O que o dono do negócio recebe. Linguagem dele, não a nossa.
-ENTREGAS = (
-    {
-        "titulo": "A lista do que mais incomoda",
-        "texto": (
-            "Toda avaliação que seus clientes escrevem entra numa lista separada por "
-            "assunto: atendimento, demora, preço, qualidade e ambiente. Você abre a "
-            "tela e vê, em ordem, o que mais apareceu neste mês."
-        ),
-    },
-    {
-        "titulo": "O aviso antes de virar problema",
-        "texto": (
-            "Quando um assunto começa a crescer mês a mês, o sistema avisa antes de "
-            "ele virar o motivo de as pessoas pararem de voltar. Você age enquanto "
-            "ainda dá para consertar barato."
-        ),
-    },
-    {
-        "titulo": "A conta aberta do que foi acertado",
-        "texto": (
-            "Cada aviso que o sistema deu fica guardado ao lado do que aconteceu de "
-            "verdade no mês seguinte. Você confere se vale confiar, em vez de "
-            "acreditar na nossa palavra."
-        ),
-    },
-)
-
-# Os três passos, sem jargão. É o que a pessoa lê antes de decidir.
-MOVIMENTOS = (
-    {
-        "numero": "01",
-        "titulo": "A gente lê o que já está escrito",
-        "texto": (
-            "As avaliações do seu negócio são públicas: qualquer pessoa lê na "
-            "internet. O sistema lê todas, todo dia, e guarda cada uma uma única vez."
-        ),
-    },
-    {
-        "numero": "02",
-        "titulo": "Separa por assunto",
-        "texto": (
-            "Cada texto é encaixado num assunto. Quando a frase é vaga demais para "
-            "ter certeza, o sistema diz que não sabe, e conta isso à parte, em vez "
-            "de inventar um assunto para fechar a conta."
-        ),
-    },
-    {
-        "numero": "03",
-        "titulo": "Olha para a frente",
-        "texto": (
-            "Com os meses anteriores na mão, ele estima quantas reclamações de cada "
-            "assunto devem aparecer no mês que vem, e mostra uma faixa de mínimo e "
-            "máximo em vez de fingir que sabe o número exato."
-        ),
-    },
-)
-
-# O que o parceiro NÃO precisa fazer. Diferencial real, não promessa.
-DISPENSADO = (
-    "Instalar programa, aplicativo ou aparelho no seu negócio.",
-    "Dar acesso ao seu sistema de caixa, agenda ou financeiro.",
-    "Pedir para o seu cliente responder pesquisa ou preencher formulário.",
-    "Contratar alguém para ler avaliação uma por uma.",
-)
-
-MODELOS = (
-    {
-        "rotulo": "A primeira pergunta",
-        "titulo": "Do que estão reclamando",
-        "pergunta": "Por que este cliente reclamou?",
-        "simples": (
-            "O sistema lê a frase e diz de que assunto ela trata. Para saber se ele "
-            "acerta, separamos avaliações à mão e conferimos uma a uma."
-        ),
-        "metrica": "acerto por assunto e acerto médio",
-        "regua": "chutar sempre o assunto mais comum",
-    },
-    {
-        "rotulo": "A segunda pergunta",
-        "titulo": "O que vem no mês que vem",
-        "pergunta": "Quantas reclamações desse assunto vão aparecer?",
-        "simples": (
-            "Com o histórico dos meses anteriores, ele estima o próximo. Para saber "
-            "se vale, comparamos com o palpite mais simples que existe: repetir o "
-            "número do mês passado."
-        ),
-        "metrica": "erro médio e acerto da faixa",
-        "regua": "repetir o mês anterior",
-    },
-)
-
-TECNOLOGIAS = (
-    {
-        "grupo": "O site que você abre",
-        "itens": (
-            "Python 3.12 com FastAPI e Uvicorn",
-            "Jinja2 para a renderização no servidor",
-            "HTMX para trocar pedaço de tela sem recarregar",
-            "CSS próprio, sem framework de componente",
-        ),
-    },
-    {
-        "grupo": "Onde os dados ficam e como a IA pensa",
-        "itens": (
-            "PostgreSQL com SQLAlchemy e Alembic",
-            "pandas e NumPy no pré-processamento",
-            "scikit-learn na classificação do texto",
-            "statsmodels na série temporal de cada categoria",
-        ),
-    },
-    {
-        "grupo": "O que impede o sistema de quebrar",
-        "itens": (
-            "pytest com o cliente de teste do Starlette",
-            "Playwright nos testes de ponta a ponta",
-            "Bandit, pip-audit e gitleaks no integração contínua",
-            "Ruff como analisador estático",
-        ),
-    },
-)
-
-# Seção 12 da especificação: o recorte de cibersegurança é defesa.
-ROBUSTEZ = (
-    ("Serviço de avaliações fora do ar ou cota esgotada",
-     "Nova tentativa com espera crescente. O painel mostra a data do último dado válido."),
-    ("Parceiro revoga o acesso",
-     "O comércio fica marcado como desconectado e o responsável é avisado; os demais seguem."),
-    ("Avaliação só com estrela, sem texto",
-     "Entra na nota média e não vai para o classificador."),
-    ("Texto que não cabe em nenhuma categoria",
-     "Fica sem categoria abaixo do limite de confiança, em vez de receber um chute."),
-    ("Mesma avaliação importada duas vezes",
-     "Chave única pelo identificador externo, que impede a contagem dobrada."),
-    ("Avaliação editada ou apagada na origem",
-     "Na importação seguinte o registro é atualizado ou marcado como removido."),
-    ("Histórico curto demais para prever",
-     "A previsão não aparece, e a tela diz que falta histórico."),
-    ("Categoria sem nenhuma reclamação no mês",
-     "A variação é exibida em contagem, nunca em porcentagem, para não dividir por zero."),
-)
-
-
-# Etapas do produto, na ordem em que precisam acontecer. É o que o empresário vê
-# para saber o que já existe e o que ainda falta, sem promessa fora do lugar.
-ETAPAS_PROJETO = (
-    {
-        "fase": "Entregue",
-        "titulo": "Telas, navegação e gráficos",
-        "estado": "feito",
-        "texto": "Painel, ficha do comércio, previsão com faixa, fila de alertas e tela de acurácia, "
-                 "todas renderizadas no servidor.",
-        "falta": None,
-    },
-    {
-        "fase": "Entregue",
-        "titulo": "Entrada com usuário e senha",
-        "estado": "feito",
-        "texto": "Sessão assinada em cookie HttpOnly, senha guardada como hash, token contra CSRF "
-                 "em todo formulário, limite de tentativas e cabeçalhos de segurança na resposta.",
-        "falta": "Trocar a senha de demonstração por uma real e criar um usuário por empresa.",
-    },
-    {
-        "fase": "Entregue",
-        "titulo": "Dois modelos medidos contra a régua",
-        "estado": "feito",
-        "texto": "Classificação com F1 por categoria e previsão com faixa P10-P90, ambas "
-                 "comparadas com a régua na tela de acurácia.",
-        "falta": None,
-    },
-    {
-        "fase": "Próxima",
-        "titulo": "Coleta real das avaliações",
-        "estado": "andamento",
-        "texto": "Leitura diária da ficha pública de cada parceiro, com identificador único por "
-                 "avaliação e registro de cada carga.",
-        "falta": "Termo assinado de cada parceiro e a via de leitura definida.",
-    },
-    {
-        "fase": "Próxima",
-        "titulo": "Banco de dados e histórico que sobrevive ao reinício",
-        "estado": "pendente",
-        "texto": "Hoje os dados são gerados a cada execução. O histórico real precisa de PostgreSQL "
-                 "com migração versionada.",
-        "falta": "Modelo de dados com a chave da empresa em toda tabela, e a migração inicial.",
-    },
-    {
-        "fase": "Próxima",
-        "titulo": "Alerta que sai da tela",
-        "estado": "pendente",
-        "texto": "O aviso de alta prevista chegando por e-mail ou WhatsApp, com preferência por empresa.",
-        "falta": "Escolher o canal com cada parceiro e definir quem recebe.",
-    },
-    {
-        "fase": "Depois",
-        "titulo": "Uma conta por empresa, com isolamento testado",
-        "estado": "pendente",
-        "texto": "Cada empresa vê só o que é dela, e existe um teste que tenta ler o dado do vizinho "
-                 "e espera receber 403.",
-        "falta": "Cadastro de usuários e o teste de autorização no integração contínua.",
-    },
-    {
-        "fase": "Depois",
-        "titulo": "Evidência de teste e de segurança",
-        "estado": "andamento",
-        "texto": "Testes de ponta a ponta nas telas e a bateria de verificação de controles, com a "
-                 "saída guardada como evidência.",
-        "falta": "Playwright nas telas em 390px e 1280px, e a coleta automática das evidências.",
-    },
-)
-
-
-# Onde a inteligência artificial realmente entra, o que ela faz e como a gente
-# confere. Escrito para quem nunca programou: nenhuma sigla sem tradução.
-IA_NO_SISTEMA = (
-    {
-        "onde": "Separar cada avaliação por assunto",
-        "faz": "Lê a frase escrita pelo cliente e decide se ela fala de atendimento, "
-               "demora, preço, qualidade ou ambiente.",
-        "confere": "Separamos um monte de avaliações e marcamos o assunto à mão. "
-                   "Depois comparamos o que a máquina disse com o que a gente marcou.",
-        "melhorar": "Ensinar o sistema a entender quando uma frase fala de dois "
-                    "assuntos ao mesmo tempo e contar nos dois.",
-    },
-    {
-        "onde": "Admitir que não sabe",
-        "faz": "Quando a frase é vaga, curta ou confusa, o sistema responde "
-               "“não sei” em vez de escolher um assunto qualquer.",
-        "confere": "Contamos quantas ficaram sem assunto. Se esse número dispara, "
-                   "é sinal de que o modelo precisa de mais exemplos.",
-        "melhorar": "Mostrar essas frases numa fila para alguém marcar à mão, e o "
-                    "sistema aprender com a correção.",
-    },
-    {
-        "onde": "Estimar o mês seguinte",
-        "faz": "Olha os meses anteriores de cada assunto e calcula quantas "
-               "reclamações devem aparecer no próximo, com mínimo e máximo.",
-        "confere": "Comparamos com o palpite mais simples que existe, repetir o mês "
-                   "passado. Se a máquina não ganhar dele, ela não vai para a tela.",
-        "melhorar": "Levar em conta feriado, férias e promoção, que mexem no "
-                    "movimento e hoje o sistema não enxerga.",
-    },
-    {
-        "onde": "Decidir quando avisar",
-        "faz": "Dispara o aviso quando a alta estimada é grande o bastante para não "
-               "ser apenas variação normal do mês.",
-        "confere": "Todo aviso fica guardado. Quando você confirma ou descarta, "
-                   "o sistema ajusta o quanto precisa subir para avisar de novo.",
-        "melhorar": "Aprender o limite de cada negócio separadamente, em vez de usar "
-                    "o mesmo limite para todos.",
-    },
-    {
-        "onde": "Explicar o aviso em português",
-        "faz": "Ainda não faz. Hoje a frase do aviso é montada com os números "
-               "calculados, sem a IA escrever nada.",
-        "confere": "",
-        "melhorar": "Deixar a IA escrever a explicação, mas sempre em cima de "
-                    "números que vieram do banco. Ela explica, nunca inventa número.",
-    },
-)
-
-# O que a IA ainda erra. Dito na tela, porque banca e cliente vão perguntar.
-LIMITES_DA_IA = (
-    ("Ironia", "“Adorei esperar uma hora” é elogio para a máquina e reclamação para gente."),
-    ("Duas queixas na mesma frase", "Hoje ela escolhe uma só, e a outra se perde."),
-    ("Gíria e erro de digitação", "Quanto mais longe do português comum, menos ela acerta."),
-    ("Negócio novo", "Sem alguns meses de histórico, não há o que estimar, e a tela diz isso."),
-    ("Mês fora do normal", "Reforma, feriadão ou promoção mudam tudo, e o sistema ainda não sabe disso."),
-)
-
-
-# Quem construiu, e o que cada um fez. Fica na área interna: a página pública é
-# comercial, mas a autoria do trabalho precisa estar escrita em algum lugar do
-# próprio sistema, não só no relatório.
 AUTORIA = (
     {
         "nome": "Gabriel Lopes Londe Rodrigues",
-        "frente": "Programa em Python, banco de dados e os dois modelos",
-        "feito": "Escreveu a aplicação, a geração dos dados, a conta da previsão, "
-                 "a avaliação dos modelos e os gráficos desenhados no servidor.",
+        "frente": "Programa, banco de dados e inteligência artificial",
+        "faz": "As contas: separar as avaliações por assunto, prever o mês seguinte, "
+               "investigar a causa, simular a mudança e analisar o teste na prática.",
     },
     {
         "nome": "Matheus Rocafa Moraes",
         "frente": "Segurança e proteção dos dados",
-        "feito": "Montou a entrada com usuário e senha, a guarda da senha, a proteção "
-                 "dos formulários, o limite de tentativas e os cabeçalhos de defesa.",
+        "faz": "A entrada com senha, a separação entre empresas, a proteção da "
+               "inteligência artificial contra manipulação e o cuidado com a LGPD.",
     },
     {
         "nome": "Nicolas Marques Linares",
         "frente": "Telas, textos, testes e parceiros",
-        "feito": "Desenhou e escreveu as telas, cuidou da leitura em celular e "
-                 "computador, dos testes de uso e do contato com as empresas parceiras.",
+        "faz": "As telas, os gráficos, os botões de ajuda, os testes de uso, o contato "
+               "com as empresas parceiras e o relatório.",
     },
+)
+
+MENU = (
+    {"id": "resumo", "rotulo": "Resumo", "href": "/resumo"},
+    {"id": "avisos", "rotulo": "Avisos", "href": "/avisos"},
+    {"id": "investigacao", "rotulo": "Por quê?", "href": "/investigacao"},
+    {"id": "simulador", "rotulo": "E se?", "href": "/simulador"},
+    {"id": "experimentos", "rotulo": "Testes", "href": "/experimentos"},
+    {"id": "ajuda", "rotulo": "Ajuda", "href": "/ajuda"},
+)
+
+MENU_MAIS = (
+    {"id": "confianca", "rotulo": "Dá para confiar?", "href": "/confianca"},
+    {"id": "o-que-falta", "rotulo": "O que falta", "href": "/o-que-falta"},
+    {"id": "sobre", "rotulo": "Sobre o sistema", "href": "/sobre"},
+)
+
+NOMES_CATEGORIA = {
+    "atendimento": "atendimento",
+    "demora": "demora",
+    "preco": "preço",
+    "qualidade": "qualidade",
+    "ambiente": "ambiente",
+}
+ARTIGO = {"atendimento": "o", "demora": "a", "preco": "o", "qualidade": "a", "ambiente": "o"}
+
+ESTADOS = {
+    "vai_piorar": {"rotulo": "Vai piorar", "icone": "▲", "classe": "piorar"},
+    "fique_de_olho": {"rotulo": "Fique de olho", "icone": "●", "classe": "olho"},
+    "normal": {"rotulo": "Tudo normal", "icone": "✓", "classe": "normal"},
+}
+
+VEREDITOS = {
+    "sustentada": {"rotulo": "Provável causa", "classe": "provavel"},
+    "inconclusiva": {"rotulo": "Ainda não dá para dizer", "classe": "incerta"},
+    "descartada": {"rotulo": "Não parece ser isso", "classe": "descartada"},
+}
+
+FORCAS = {"forte": 3, "moderada": 2, "fraca": 1}
+
+RESULTADOS_TESTE = {
+    "funcionou": {"rotulo": "Funcionou", "classe": "provavel"},
+    "nao_funcionou": {"rotulo": "Não funcionou", "classe": "descartada"},
+    "ainda_nao_da_para_saber": {"rotulo": "Ainda não dá para saber", "classe": "incerta"},
+}
+
+# Cada termo: o rótulo, duas frases simples e um exemplo. Usado pelo botão "?".
+GLOSSARIO = {
+    "avaliacoes_lidas": {
+        "rotulo": "Avaliações lidas",
+        "texto": "Todas as avaliações que os clientes escreveram sobre o negócio no mês, "
+                 "boas e ruins. Inclui quem deu só estrelas, sem escrever nada.",
+        "exemplo": "163 avaliações lidas: 142 viraram reclamação e 21 não.",
+    },
+    "reclamacoes": {
+        "rotulo": "Reclamações",
+        "texto": "Avaliações em que o cliente reclamou de alguma coisa. Cada uma é "
+                 "encaixada num assunto: atendimento, demora, preço, qualidade ou ambiente.",
+        "exemplo": "“A pizza chegou fria” é uma reclamação de demora.",
+    },
+    "assunto": {
+        "rotulo": "Assunto",
+        "texto": "O tema da reclamação. São cinco: atendimento, demora, preço, qualidade e "
+                 "ambiente.",
+        "exemplo": "“Cobraram uma taxa que ninguém avisou” fala de preço.",
+    },
+    "sem_assunto": {
+        "rotulo": "Sem assunto",
+        "texto": "Avaliações que não viraram reclamação: elogios, quem deu só estrelas e "
+                 "frases vagas demais. O sistema prefere dizer que não sabe a inventar um assunto.",
+        "exemplo": "“Fui atendido.” não diz se foi bom ou ruim.",
+    },
+    "nota_media": {
+        "rotulo": "Nota média",
+        "texto": "A média das estrelas, de 1 a 5, de todas as avaliações do mês. Quem deu só "
+                 "estrelas também conta.",
+        "exemplo": "Nota 2,1 quer dizer que a maioria deu 1 ou 2 estrelas.",
+    },
+    "mes_fechado": {
+        "rotulo": "Mês fechado",
+        "texto": "Um mês que já terminou. Só mês inteiro entra nas comparações, para não "
+                 "comparar meio mês com mês inteiro.",
+        "exemplo": "Em 13 de outubro, o último mês fechado é setembro.",
+    },
+    "mes_andamento": {
+        "rotulo": "Mês em andamento",
+        "texto": "O mês de agora, que ainda vai receber avaliações. A tela mostra quanto já "
+                 "chegou e quanto deve chegar até o fim.",
+        "exemplo": "Até 13 de outubro chegaram 22; até o fim do mês devem ser perto de 50.",
+    },
+    "estimativa": {
+        "rotulo": "Estimativa",
+        "texto": "Quantas reclamações devem chegar, olhando os meses anteriores. Vem sempre "
+                 "com o mínimo e o máximo, porque ninguém sabe o número exato.",
+        "exemplo": "“Cerca de 50, entre 47 e 52”.",
+    },
+    "minimo_maximo": {
+        "rotulo": "Entre o mínimo e o máximo",
+        "texto": "A faixa onde o número real deve cair. Em 8 de cada 10 meses, ele cai dentro "
+                 "dela; quanto mais longe o mês, mais larga a faixa.",
+        "exemplo": "“Entre 47 e 52”: menos de 47 ou mais de 52 seria surpresa.",
+    },
+    "avisos": {
+        "rotulo": "Avisos",
+        "texto": "Assuntos que devem crescer no mês. O sistema avisa antes de a reclamação virar "
+                 "o motivo de o cliente não voltar.",
+        "exemplo": "“A demora deve passar de 46 para cerca de 50.”",
+    },
+    "vai_piorar": {
+        "rotulo": "Vai piorar",
+        "texto": "O assunto deve crescer, e nem o melhor cenário volta ao número de hoje. "
+                 "Vale agir já.",
+        "exemplo": "A demora teve 46 em setembro; o mínimo esperado para outubro é 47.",
+    },
+    "fique_de_olho": {
+        "rotulo": "Fique de olho",
+        "texto": "O assunto deve crescer, mas ainda pode voltar ao normal sozinho. Vale "
+                 "acompanhar.",
+        "exemplo": "O preço deve subir de 22 para 24, mas pode ficar em 22.",
+    },
+    "possivel_causa": {
+        "rotulo": "Possível causa",
+        "texto": "Uma explicação que o sistema testou com as contas. Vem do seu diário, do "
+                 "calendário, do clima, dos dias da semana ou das palavras que os clientes usam.",
+        "exemplo": "“A demora aumentou depois que entrou o entregador novo.”",
+    },
+    "provavel_causa": {
+        "rotulo": "Provável causa",
+        "texto": "As contas mostram que essa explicação bate com o que aconteceu, e com folga. "
+                 "É por ela que vale começar.",
+        "exemplo": "Antes eram 4 reclamações por semana; depois, 8.",
+    },
+    "ainda_nao_da": {
+        "rotulo": "Ainda não dá para dizer",
+        "texto": "Pode ser, pode não ser. Faltam dados para ter certeza para um lado ou para o "
+                 "outro.",
+        "exemplo": "Com mais algumas semanas de chuva, dá para saber se a chuva pesa.",
+    },
+    "nao_parece": {
+        "rotulo": "Não parece ser isso",
+        "texto": "As contas mostram que essa explicação não muda nada, ou muda muito pouco. "
+                 "Pode deixar de lado.",
+        "exemplo": "O cardápio novo não mexeu na demora.",
+    },
+    "forca": {
+        "rotulo": "Força da evidência",
+        "texto": "O quanto as contas apoiam a explicação. Três barras é forte, uma barra é "
+                 "fraca.",
+        "exemplo": "Forte: a diferença é grande e aparece em quase todas as semanas.",
+    },
+    "ia_sugere": {
+        "rotulo": "Ideia da inteligência artificial",
+        "texto": "A inteligência artificial lê as avaliações, sem nomes nem telefones, e sugere "
+                 "ideias. Quem decide se a ideia vale são as contas, nunca ela.",
+        "exemplo": "Ela sugeriu “pizza saindo mais devagar”; as contas não confirmaram.",
+    },
+    "diario": {
+        "rotulo": "Diário do negócio",
+        "texto": "Onde você anota as mudanças do negócio, com a data. É dele que saem muitas "
+                 "das possíveis causas.",
+        "exemplo": "“2 de junho: entrou um entregador novo para sexta e sábado.”",
+    },
+    "simulador": {
+        "rotulo": "E se?",
+        "texto": "Mostra o que deve acontecer com as reclamações se você mudar quantas pessoas "
+                 "trabalham em cada turno, e quanto isso custa. Nada muda de verdade.",
+        "exemplo": "Um entregador a mais na sexta e no sábado à noite: de 50 para cerca de 36 reclamações.",
+    },
+    "espera": {
+        "rotulo": "Espera média",
+        "texto": "Quanto tempo, em média, o cliente espera para ser atendido ou receber o "
+                 "pedido. É calculada pelo movimento e pela equipe de cada turno.",
+        "exemplo": "Com 2 entregadores para 22 pedidos numa noite, a espera passa de meia hora.",
+    },
+    "custo_por_reclamacao": {
+        "rotulo": "Custo por reclamação evitada",
+        "texto": "Quanto a mudança custa por mês dividido por quantas reclamações ela deve "
+                 "evitar. Ajuda a comparar mudanças diferentes.",
+        "exemplo": "R$ 780 por mês para evitar 14 reclamações: cerca de R$ 56 cada.",
+    },
+    "teste_na_pratica": {
+        "rotulo": "Teste na prática",
+        "texto": "Você faz a mudança só em alguns dias, escolhidos por sorteio, e compara com os "
+                 "outros dias. É o jeito de saber se funcionou de verdade ou foi coincidência.",
+        "exemplo": "Entregador extra em 6 das 12 noites de sexta e sábado.",
+    },
+    "sorteio": {
+        "rotulo": "Por que sortear os dias",
+        "texto": "Se você escolhe os dias, sem querer escolhe os mais fáceis. O sorteio deixa a "
+                 "comparação justa.",
+        "exemplo": "Metade das sextas com a mudança, metade sem, por sorteio.",
+    },
+    "codigo_plano": {
+        "rotulo": "Código do plano",
+        "texto": "Um código que nasce junto com o plano do teste. Se alguém mudar o plano "
+                 "depois de começar, o código deixa de bater e o sistema avisa.",
+        "exemplo": "Anote o código: 3F9A-71C2.",
+    },
+    "seguiu_sorteio": {
+        "rotulo": "Seguiu o sorteio",
+        "texto": "Quantos dias a mudança foi feita exatamente como o sorteio mandou. Quanto mais "
+                 "perto de todos, mais confiável o resultado.",
+        "exemplo": "Seguiu em 11 de 12 dias.",
+    },
+    "chute_simples": {
+        "rotulo": "O chute mais simples",
+        "texto": "O palpite mais bobo possível, que serve de comparação. Se o sistema não ganhar "
+                 "dele, não vale a pena usar o sistema.",
+        "exemplo": "Para a estimativa, o chute é repetir o número do mês passado.",
+    },
+    "acerto": {
+        "rotulo": "Acerto",
+        "texto": "De cada 10 avaliações conferidas à mão, em quantas o sistema escolheu o "
+                 "assunto certo.",
+        "exemplo": "Acerta 8 de cada 10; o chute mais simples acerta 3.",
+    },
+    "certeza": {
+        "rotulo": "Certeza",
+        "texto": "O quanto o sistema tem certeza do assunto que escolheu. Com pouca certeza, ele "
+                 "prefere deixar sem assunto.",
+        "exemplo": "“A pizza chegou fria”: certeza alta de que é demora.",
+    },
+    "laboratorio": {
+        "rotulo": "Laboratório",
+        "texto": "Negócios de mentira em que nós sabemos a causa verdadeira. Servem para medir "
+                 "se o sistema acerta antes de usar com negócio de verdade.",
+        "exemplo": "Em 200 negócios de mentira, ele achou a causa certa em 148.",
+    },
+    "etapas": {
+        "rotulo": "Passos combinados",
+        "texto": "O que precisa estar pronto entre o combinado com o negócio e o aviso chegando "
+                 "até o dono.",
+        "exemplo": "Sem a autorização assinada, nenhuma avaliação real é lida.",
+    },
+}
+
+FAQ = (
+    ("Por que a estimativa não é um número exato?",
+     "Porque ninguém sabe o futuro. Em vez de fingir, o sistema mostra o número mais provável "
+     "e a faixa onde o real deve cair. Em 8 de cada 10 meses, ele cai dentro dela."),
+    ("De onde vêm as avaliações?",
+     "Das avaliações públicas do seu negócio na internet, lidas só com a sua autorização "
+     "assinada. O nome e a foto de quem escreveu nunca são guardados."),
+    ("A inteligência artificial decide alguma coisa?",
+     "Não. Ela só sugere ideias de possíveis causas, lendo avaliações sem nomes nem telefones. "
+     "Quem decide se a ideia vale são as contas, e você vê o resultado de cada uma."),
+    ("Por que os dias do teste são sorteados?",
+     "Para a comparação ser justa. Se você escolhesse, sem querer pegaria os dias mais calmos, "
+     "e a mudança pareceria melhor do que é."),
+    ("O simulador muda alguma coisa no meu negócio?",
+     "Não. Ele só mostra o que deve acontecer. Para mudar de verdade, você faz o teste na "
+     "prática."),
+    ("E se eu não souber quantas pessoas trabalham em cada turno?",
+     "Responda “não sei”. O simulador avisa que falta esse dado em vez de inventar um "
+     "número."),
+    ("Por que algumas avaliações ficam sem assunto?",
+     "Elogios, avaliações só com estrelas e frases vagas não dizem do que o cliente reclamou. O "
+     "sistema prefere dizer que não sabe a chutar."),
+)
+
+# Página pública. Linguagem de quem tem o negócio, nada de sigla.
+ENTREGAS = (
+    {
+        "titulo": "Por quê?",
+        "texto": "Quando uma reclamação começa a crescer, o sistema investiga a causa: confere o "
+                 "que mudou no seu negócio, o calendário, o clima e o que os clientes escrevem. "
+                 "Mostra o que é provável e o que não é.",
+    },
+    {
+        "titulo": "E se?",
+        "texto": "Antes de contratar ou mudar a escala, você vê quantas reclamações a mudança "
+                 "deve evitar e quanto ela custa por mês.",
+    },
+    {
+        "titulo": "Testar na prática",
+        "texto": "Você faz a mudança em dias sorteados e o sistema compara com os outros dias. "
+                 "No fim, diz se funcionou de verdade ou se foi coincidência.",
+    },
+)
+
+PASSOS = (
+    ("01", "Lê o que já está escrito",
+     "As avaliações do seu negócio são públicas. Com a sua autorização, o sistema lê todas e "
+     "separa por assunto."),
+    ("02", "Avisa antes de virar problema",
+     "Com os meses anteriores, estima o próximo e avisa quando um assunto deve crescer."),
+    ("03", "Ajuda a decidir e confere",
+     "Mostra a causa provável, simula a solução e prova, com um teste, se ela funcionou."),
+)
+
+DISPENSADO = (
+    "Instalar programa, aplicativo ou aparelho no seu negócio.",
+    "Dar acesso ao seu caixa, à sua agenda ou ao seu financeiro.",
+    "Pedir para o seu cliente responder pesquisa.",
+    "Ler avaliação uma por uma.",
+)
+
+TECNOLOGIAS = (
+    ("O site", ("Python 3.12, FastAPI e Uvicorn", "Jinja2, com as telas montadas no servidor",
+                "Gráficos em SVG desenhados em Python", "CSS próprio, sem framework")),
+    ("Dados e inteligência artificial", ("PostgreSQL, SQLAlchemy e Alembic",
+                                         "pandas, NumPy, SciPy e statsmodels",
+                                         "scikit-learn com TF-IDF na separação por assunto",
+                                         "SimPy e teoria de filas no simulador")),
+    ("Qualidade e segurança", ("pytest e Playwright, em celular e computador",
+                               "axe para acessibilidade", "Ruff, bandit, pip-audit e gitleaks",
+                               "Senha guardada com scrypt e proteção contra formulário falso")),
 )

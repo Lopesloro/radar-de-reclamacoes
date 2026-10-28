@@ -1,20 +1,12 @@
 {% extends "base.html" %}
 {% import "_macros.html" as m %}
-{% block titulo %}Não encontrado, {{ projeto.nome }}{% endblock %}
+{% block titulo %}Página não encontrada, {{ projeto.nome }}{% endblock %}
 
 {% block conteudo %}
 <section class="secao secao--topo">
   <div class="container">
-    {{ m.cabeca("Esse comércio não está no painel",
-                "O endereço aponta para um parceiro que não existe nesta demonstração.") }}
-    <ul class="parceiros">
-      {% for c in comercios %}
-      <li class="parceiro">
-        <p class="parceiro__nome"><a href="/comercio/{{ c.id }}">{{ c.nome }}</a></p>
-        <p class="parceiro__meta">{{ c.ramo }} · {{ c.cidade }}</p>
-      </li>
-      {% endfor %}
-    </ul>
+    {{ m.cabeca("Essa página não existe", "O endereço pode estar errado, ou o negócio não faz parte da demonstração.") }}
+    {{ m.estado_vazio("Volte ao resumo para ver os negócios disponíveis.", {"rotulo": "Ir para o resumo", "href": "/resumo"}) }}
   </div>
 </section>
 {% endblock %}

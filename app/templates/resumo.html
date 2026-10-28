@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}Resumo, {{ projeto.nome }}{% endblock %}
+
+{% block conteudo %}
+<section class="secao secao--topo">
+  <div class="container">
+    <div class="topo-pagina">
+      <div>
+        {{ m.cabeca("Resumo dos seus negócios",
+                    piorando ~ " de " ~ cartoes | length ~ " negócios têm um assunto que vai piorar em " ~ (mes_corrente | mes_longo) ~ ".") }}
+      </div>
+      <button type="button" class="botao botao--secundario botao--tour so-com-js" data-tour-iniciar>Primeira vez aqui? Faça o tour</button>
+    </div>
+
+    <div class="numeros" data-tour="1">
+      {{ m.numero("Avaliações lidas", "avaliacoes_lidas", lidas | inteiro, "em " ~ (mes | mes_longo) ~ ", somando os negócios") }}
+      {{ m.numero("Reclamações", "reclamacoes", reclamacoes | inteiro, "o resto é elogio, só estrelas ou frase vaga") }}
+      {{ m.numero("Avisos", "avisos", avisos | length, "assuntos que devem crescer") }}
+    </div>
+
+    <ul class="cartoes">
+      {% for item in cartoes %}
+      {% set n = item.negocio %}
+      <li class="cartao cartao--negocio">
+        <div class="cartao__cabeca">
+          <div>
+            <h2 class="cartao__titulo"><a href="/comercio/{{ n.empresa_id }}">{{ n.nome }}</a></h2>
+            <p class="cartao__meta">{{ n.ramo }} · {{ n.cidade }}</p>
+          </div>
+          <div class="com-ajuda"{% if loop.first %} data-tour="2"{% endif %}>
+            {{ m.semaforo(n.estado) }}
+            {{ m.ajuda(n.estado if n.estado != 'normal' else 'estimativa') }}
+          </div>
+        </div>
+        <p class="cartao__frase"{% if loop.first %} data-tour="3"{% endif %}>{{ item.frase }}</p>
+        <div class="cartao__grafico">
+          {{ item.grafico }}
+          <p class="cartao__legenda">{{ n.vai_crescer | assunto | capitalize }} nos últimos 6 meses</p>
+        </div>
+        <p class="cartao__detalhe">O que mais incomoda: <strong>{{ n.mais_reclamado | assunto }}</strong>, {{ n.mais_reclamado_qtd }} reclamações em {{ n.mes_referencia | mes_longo }}.</p>
+        <div class="cartao__acoes">
+          <a class="botao botao--primario" href="/investigacao/{{ n.empresa_id }}/{{ n.vai_crescer }}"{% if loop.first %} data-principal data-tour="4"{% endif %}>Por quê?</a>
+          <a class="botao botao--secundario" href="/simulador/{{ n.empresa_id }}?categoria={{ n.vai_crescer }}">E se eu mudar algo?</a>
+          <a class="botao botao--texto" href="/comercio/{{ n.empresa_id }}">Ver detalhes</a>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+
+    {{ m.proximo_passo([
+      {"rotulo": "Ver os avisos", "href": "/avisos"},
+      {"rotulo": "Dá para confiar?", "href": "/confianca"},
+    ]) }}
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}<script src="/static/js/tour.js?v={{ impressao }}" defer></script>{% endblock %}

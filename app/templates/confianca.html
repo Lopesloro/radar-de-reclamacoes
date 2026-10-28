@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}Dá para confiar?, {{ projeto.nome }}{% endblock %}
+
+{% block conteudo %}
+{% set c = classificacao %}
+{% set p = previsao %}
+{% set lab = laboratorio %}
+<section class="secao secao--topo">
+  <div class="container">
+    {{ m.cabeca("Dá para confiar?",
+                "Cada parte do sistema é comparada com o chute mais simples. Se não ganhar dele, não aparece na sua tela.") }}
+    <div class="com-ajuda com-ajuda--linha"><p class="nota">O que é o chute mais simples?</p>{{ m.ajuda("chute_simples") }}</div>
+
+    <h2 class="titulo-secao">Separar as avaliações por assunto</h2>
+    <figure class="grafico">
+      <figcaption class="grafico__frase">O sistema acerta o assunto de {{ acerto }} em cada 10 avaliações. O chute mais simples acerta {{ acerto_chute }}.</figcaption>
+      <div class="pictogramas">
+        <div class="pictograma">
+          <p class="pictograma__rotulo"><strong>{{ acerto }} de cada 10</strong> com o sistema</p>
+          {{ picto_sistema }}
+        </div>
+        <div class="pictograma">
+          <p class="pictograma__rotulo"><strong>{{ acerto_chute }} de cada 10</strong> com o chute: responder sempre “{{ c.categoria_regua | assunto }}”</p>
+          {{ picto_chute }}
+        </div>
+      </div>
+      <div class="grafico__ajudas">
+        {{ m.como_ler(["Cada boneco é uma avaliação, de 10 conferidas à mão por nós.",
+                       "Boneco cheio: o sistema acertou o assunto. Boneco vazio: errou.",
+                       "Embaixo, o mesmo para o chute mais simples, que responde sempre o assunto mais comum."]) }}
+        {{ m.numeros_em_tabela(["Quem responde", "Acertos de cada 10"], [["o sistema", acerto], ["o chute mais simples", acerto_chute]], "Acertos de cada 10") }}
+      </div>
+    </figure>
+
+    {{ m.grafico("Quando o sistema diz que uma reclamação é de um assunto, ele acerta na maioria das vezes.",
+        grafico_assuntos,
+        ["Cada barra é um assunto.",
+         "A parte azul mostra, de cada 100 vezes que o sistema disse esse assunto, quantas estavam certas.",
+         "Conferimos " ~ (c.amostra | inteiro) ~ " avaliações separadas à mão."],
+        ["Assunto", "Acertos de cada 100", "Avaliações conferidas"], linhas_assuntos) }}
+
+    {% call m.tecnico() %}
+    <div class="tabela-rolagem">
+      <table class="tabela">
+        <caption class="visualmente-oculto">Métricas do classificador</caption>
+        <thead><tr><th scope="col">Assunto</th><th scope="col" class="num">Precisão</th><th scope="col" class="num">Recall</th><th scope="col" class="num">F1</th><th scope="col" class="num">Amostra</th></tr></thead>
+        <tbody>
+          {% for l in c.linhas %}<tr><th scope="row">{{ l.categoria }}</th><td class="num">{{ l.precisao | decimal(2) }}</td><td class="num">{{ l.recall | decimal(2) }}</td><td class="num">{{ l.f1 | decimal(2) }}</td><td class="num">{{ l.amostra }}</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p>F1 macro do modelo: {{ c.f1_macro | decimal(2) }}. F1 macro da régua (classe mais frequente): {{ c.f1_macro_regua | decimal(2) }}. Acurácia: {{ c.acerto_geral | decimal(2) }} contra {{ c.acerto_regua | decimal(2) }}.</p>
+    {% endcall %}
+
+    <h2 class="titulo-secao">Estimar o mês seguinte</h2>
+    {{ m.grafico("Em " ~ ((p.cobertura * 10) | round | int) ~ " de cada 10 meses, o número real ficou entre o mínimo e o máximo que o sistema disse. Ele erra, em média, " ~ (p.erro_medio | inteiro) ~ " reclamações por mês; repetindo o mês passado, o erro seria de " ~ (p.erro_medio_regua | inteiro) ~ ".",
+        grafico_previsao,
+        ["Cada par de colunas é um mês. A azul é o que o sistema disse um mês antes; a cinza é o que aconteceu.",
+         "Embaixo, quanto ele errou naquele mês.",
+         "O sistema nunca viu o resultado antes de responder: em cada mês, ele só conhecia o passado.",
+         "Os números são de " ~ p.exemplo ~ "."],
+        ["Mês", "O sistema disse", "Aconteceu", "Errou por"], linhas_previsao) }}
+
+    {% call m.tecnico() %}
+    <p>Erro médio absoluto: {{ p.erro_medio | decimal(2) }} contra {{ p.erro_medio_regua | decimal(2) }} da régua (repetir o mês anterior). Cobertura da faixa P10–P90: {{ (p.cobertura * 100) | round | int }}% em {{ p.janelas }} janelas, com validação de origem móvel.</p>
+    {% endcall %}
+
+    <h2 class="titulo-secao">As partes novas, testadas no laboratório</h2>
+    <div class="com-ajuda com-ajuda--linha"><p class="nota">Antes de usar com negócio de verdade, testamos com {{ lab.cenarios }} negócios de mentira em que nós sabemos a causa.</p>{{ m.ajuda("laboratorio") }}</div>
+    <figure class="grafico">
+      <figcaption class="grafico__frase">O sistema acha a causa certa em {{ (lab.acerto_agente * 10) | round | int }} de cada 10 negócios. Culpar a última mudança anotada acerta {{ (lab.acerto_regua * 10) | round | int }}.</figcaption>
+      <div class="pictogramas">
+        <div class="pictograma">
+          <p class="pictograma__rotulo"><strong>{{ (lab.acerto_agente * 10) | round | int }} de cada 10</strong> com o sistema</p>
+          {{ picto_agente }}
+        </div>
+        <div class="pictograma">
+          <p class="pictograma__rotulo"><strong>{{ (lab.acerto_regua * 10) | round | int }} de cada 10</strong> culpando a última mudança anotada</p>
+          {{ picto_agente_chute }}
+        </div>
+      </div>
+      <div class="grafico__ajudas">
+        {{ m.como_ler(["Cada boneco é um negócio de mentira, de 10.",
+                       "Boneco cheio: a primeira causa da lista era a verdadeira."]) }}
+        {{ m.numeros_em_tabela(["Parte do sistema", "Resultado"],
+            [["acha a causa certa", ((lab.acerto_agente * 10) | round | int) ~ " de cada 10"],
+             ["causa certa entre as 3 primeiras", ((lab.acerto_agente_top3 * 10) | round | int) ~ " de cada 10"],
+             ["sem a inteligência artificial", ((lab.acerto_agente_sem_ia * 10) | round | int) ~ " de cada 10"],
+             ["culpar a última mudança anotada", ((lab.acerto_regua * 10) | round | int) ~ " de cada 10"],
+             ["o E se? acerta a faixa", ((lab.cobertura_simulador * 10) | round | int) ~ " de cada 10"],
+             ["o teste diz que funcionou quando não funcionou", ((lab.falso_positivo_aa * 100) | round | int) ~ " de cada 100"]],
+            "Resultados do laboratório") }}
+      </div>
+    </figure>
+
+    <ul class="fatos">
+      <li>A causa certa aparece entre as 3 primeiras em <strong>{{ (lab.acerto_agente_top3 * 10) | round | int }} de cada 10</strong> negócios.</li>
+      <li>Sem a inteligência artificial, ele acerta <strong>{{ (lab.acerto_agente_sem_ia * 10) | round | int }} de cada 10</strong>: ela ajuda um pouco, mas não decide.</li>
+      <li>O E se? acerta a faixa em <strong>{{ (lab.cobertura_simulador * 10) | round | int }} de cada 10</strong> mudanças simuladas.</li>
+      <li>O teste na prática diz que funcionou, quando não funcionou, em só <strong>{{ (lab.falso_positivo_aa * 100) | round | int }} de cada 100</strong> testes.</li>
+    </ul>
+
+    {{ m.proximo_passo([
+      {"rotulo": "Voltar ao resumo", "href": "/resumo"},
+      {"rotulo": "Ver o que falta", "href": "/o-que-falta"},
+    ]) }}
+  </div>
+</section>
+{% endblock %}

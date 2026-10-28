@@ -1,34 +1,127 @@
-{% macro aviso_demo() %}
-<div class="aviso-demo" role="note">
-  <div class="container">
-    Dados de demonstração: comércios, avaliações e números fictícios, gerados no
-    servidor. A coleta real começa quando os termos dos parceiros estiverem assinados.
+{# Componentes que se repetem em todas as telas. Texto dos balões: GLOSSARIO em app/conteudo.py. #}
+
+{% macro ajuda(chave) %}
+{%- set termo = glossario[chave] -%}
+<details class="ajuda" data-ajuda>
+  <summary class="ajuda__botao" aria-label="O que é {{ termo.rotulo }}?">?</summary>
+  <div class="ajuda__balao">
+    <p class="ajuda__titulo">{{ termo.rotulo }}</p>
+    <p class="ajuda__texto">{{ termo.texto }}</p>
+    <p class="ajuda__exemplo"><span>Exemplo:</span> {{ termo.exemplo }}</p>
+    <button type="button" class="ajuda__fechar">Entendi</button>
   </div>
+</details>
+{%- endmacro %}
+
+{% macro rotulo(texto, chave) %}
+<div class="com-ajuda"><span class="com-ajuda__texto">{{ texto }}</span>{{ ajuda(chave) }}</div>
+{%- endmacro %}
+
+{% macro numero(rotulo_texto, chave, valor, nota=None, tour=None) %}
+<div class="numero"{% if tour %} data-tour="{{ tour }}"{% endif %}>
+  {{ rotulo(rotulo_texto, chave) }}
+  <p class="numero__valor">{{ valor }}</p>
+  {% if nota %}<p class="numero__nota">{{ nota }}</p>{% endif %}
 </div>
-{% endmacro %}
+{%- endmacro %}
 
-{% macro cabeca(titulo, lead) %}
-<h1 class="titulo titulo--pagina">{{ titulo }}</h1>
-<span class="regua" aria-hidden="true"></span>
-{% if lead %}<p class="lead">{{ lead }}</p>{% endif %}
-{% endmacro %}
+{% macro como_ler(passos) %}
+<details class="dobra">
+  <summary class="dobra__botao">Como ler este gráfico</summary>
+  <ol class="dobra__passos">
+    {% for passo in passos %}<li>{{ passo }}</li>{% endfor %}
+  </ol>
+</details>
+{%- endmacro %}
 
-{% macro estado(gravidade) %}
-{% if gravidade == "critico" %}<span class="estado estado--critico">Alta prevista</span>
-{% elif gravidade == "atencao" %}<span class="estado estado--atencao">Atenção</span>
-{% else %}<span class="estado estado--ok">Estável</span>{% endif %}
-{% endmacro %}
+{% macro numeros_em_tabela(cabecalho, linhas, legenda) %}
+<details class="dobra">
+  <summary class="dobra__botao">Ver os números em tabela</summary>
+  <div class="tabela-rolagem">
+    <table class="tabela">
+      <caption class="visualmente-oculto">{{ legenda }}</caption>
+      <thead><tr>{% for c in cabecalho %}<th scope="col"{% if not loop.first %} class="num"{% endif %}>{{ c }}</th>{% endfor %}</tr></thead>
+      <tbody>
+        {% for linha in linhas %}
+        <tr>{% for valor in linha %}{% if loop.first %}<th scope="row">{{ valor }}</th>{% else %}<td class="num">{{ valor }}</td>{% endif %}{% endfor %}</tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</details>
+{%- endmacro %}
 
-{% macro seletor_comercio(comercios, atual_id, rota) %}
-<nav class="seletor" aria-label="Comércio parceiro">
-  {% for c in comercios %}
-  <a href="{{ rota }}/{{ c.id }}"{% if c.id == atual_id %} aria-current="true"{% endif %}>{{ c.nome }}</a>
+{% macro grafico(frase, desenho, passos, cabecalho, linhas, id=None, tour=None) %}
+<figure class="grafico"{% if id %} id="{{ id }}"{% endif %}{% if tour %} data-tour="{{ tour }}"{% endif %}>
+  <figcaption class="grafico__frase">{{ frase }}</figcaption>
+  <div class="grafico__desenho">{{ desenho }}</div>
+  <div class="grafico__ajudas">
+    {{ como_ler(passos) }}
+    {{ numeros_em_tabela(cabecalho, linhas, frase) }}
+  </div>
+</figure>
+{%- endmacro %}
+
+{% macro proximo_passo(botoes) %}
+<nav class="proximo" aria-label="Próximo passo">
+  <p class="proximo__rotulo">Próximo passo</p>
+  <div class="proximo__botoes">
+    {% for b in botoes %}
+    <a class="botao {{ 'botao--primario' if loop.first else 'botao--secundario' }}" href="{{ b.href }}"{% if loop.first %} data-principal{% endif %}>{{ b.rotulo }}</a>
+    {% endfor %}
+  </div>
+</nav>
+{%- endmacro %}
+
+{% macro estado_vazio(texto, botao=None) %}
+<div class="vazio">
+  <p class="vazio__texto">{{ texto }}</p>
+  {% if botao %}<a class="botao botao--primario" href="{{ botao.href }}" data-principal>{{ botao.rotulo }}</a>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro semaforo(estado) %}
+{%- set e = estados[estado] -%}
+<span class="semaforo semaforo--{{ e.classe }}"><span class="semaforo__icone" aria-hidden="true">{{ e.icone }}</span>{{ e.rotulo }}</span>
+{%- endmacro %}
+
+{% macro etiqueta_veredito(veredito) %}
+{%- set v = vereditos[veredito] -%}
+<span class="etiqueta etiqueta--{{ v.classe }}">{{ v.rotulo }}</span>
+{%- endmacro %}
+
+{% macro forca(nivel) %}
+{%- set n = forcas[nivel] -%}
+<span class="forca forca--{{ n }}">
+  <span class="forca__barras" aria-hidden="true"><span></span><span></span><span></span></span>
+  <span class="forca__texto">evidência {{ nivel }}</span>
+</span>
+{%- endmacro %}
+
+{% macro tecnico(titulo="Detalhes técnicos") %}
+<details class="tecnico">
+  <summary class="tecnico__botao">{{ titulo }}</summary>
+  <div class="tecnico__corpo">{{ caller() }}</div>
+</details>
+{%- endmacro %}
+
+{% macro seletor(negocios, atual, rota, sufixo="") %}
+<nav class="seletor" aria-label="Escolher o negócio">
+  {% for n in negocios %}
+  <a href="{{ rota }}/{{ n.empresa_id }}{{ sufixo }}"{% if n.empresa_id == atual %} aria-current="page"{% endif %}>{{ n.nome }}</a>
   {% endfor %}
 </nav>
-{% endmacro %}
+{%- endmacro %}
 
-{% macro marcador(estado) %}
-{% if estado == "feito" %}<span class="marcador marcador--feito">Concluída</span>
-{% elif estado == "andamento" %}<span class="marcador marcador--andamento">Em andamento</span>
-{% else %}<span class="marcador marcador--pendente">Pendente</span>{% endif %}
-{% endmacro %}
+{% macro abas_assunto(lista, atual, rota) %}
+<nav class="abas" aria-label="Escolher o assunto">
+  {% for c in lista %}
+  <a href="{{ rota }}{{ c }}"{% if c == atual %} aria-current="page"{% endif %}>{{ c | assunto }}</a>
+  {% endfor %}
+</nav>
+{%- endmacro %}
+
+{% macro cabeca(titulo, lead=None) %}
+<h1 class="titulo-pagina">{{ titulo }}</h1>
+{% if lead %}<p class="lead">{{ lead }}</p>{% endif %}
+{%- endmacro %}

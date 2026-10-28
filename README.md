@@ -1,107 +1,115 @@
-# Radar de Reclamações
+# Radar de Reclamações · PI6
 
-Lê o que os clientes de um comércio escreveram na internet, separa por assunto
-— atendimento, demora, preço, qualidade, ambiente — e estima quantas
-reclamações de cada assunto devem aparecer no mês seguinte.
+Descobre por que os clientes de um pequeno negócio reclamam, mostra o efeito de
+uma mudança antes de o dono gastar e prova, com um teste, se ela funcionou.
 
-Projeto Integrador VI · Engenharia de Software · PUC-Campinas · 2026.2
-Gabriel Lopes Londe Rodrigues, Nicolas Marques Linares e Matheus Rocafa Moraes.
+Projeto Integrador VI · Engenharia de Software · PUC-Campinas · 2026.2.
+Gabriel Lopes Londe Rodrigues, Matheus Rocafa Moraes e Nicolas Marques Linares.
 Orientação da Profa. Sílvia C. de Matos Soares.
 
-## No ar
+Repositório: <https://github.com/NicolasML28/PI-VI>.
 
-<https://radar-de-reclamacoes.onrender.com> — entra com **admin / admin**.
+As regras do repositório estão em [`CLAUDE.md`](CLAUDE.md). O plano e a divisão do
+trabalho ficam fora do git, com a equipe.
 
-A senha é de demonstração e a tela de entrada avisa isso. Para usar com dado
-real, defina no painel do Render:
+## O que já funciona
 
-| Variável | Para quê |
+| Parte | Estado |
 |---|---|
-| `RADAR_USUARIO` e `RADAR_SENHA` | Substituem a credencial de demonstração |
-| `RADAR_CHAVE` | Assina o cookie de sessão. Sem ela a chave muda a cada reinício, e quem estava logado cai quando o serviço acorda |
+| Telas, gráficos, botões de ajuda e tour | Prontos, com dados de mentira (`app/falsos.py`) |
+| Testes das telas e de ponta a ponta (390px e 1280px) | Prontos |
+| Entrada com senha e uma conta por empresa | **Provisório:** a demonstração abre sem senha. É a Fase 0 do Matheus |
+| Banco de dados | Falta. É a Fase 0 do Gabriel |
+| Classificador, previsão, agente, simulador e teste de verdade | Faltam. Fases 1 a 3 do Gabriel |
 
-O plano é gratuito: depois de quinze minutos parado o serviço dorme, e o
-primeiro acesso seguinte demora alguns segundos.
+Quando uma parte real fica pronta, só muda a função correspondente em
+`app/servicos.py`; as telas continuam iguais.
 
 ## Rodar na sua máquina
 
+Windows (PowerShell):
+
+```powershell
+py -3.12 -m venv .venv
+```
+
+```powershell
+.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+```
+
+```powershell
+.venv\Scripts\python.exe -m uvicorn app.web:app --reload --port 8000
+```
+
+Mac ou Linux:
+
 ```bash
-python3 -m venv .venv && ./.venv/bin/pip install -r requirements.txt
+python3.12 -m venv .venv
 ```
 
 ```bash
-./.venv/bin/uvicorn app.web:app --reload --port 8000
+.venv/bin/pip install -r requirements-dev.txt
 ```
-
-Abre em <http://localhost:8000>. Para rodar os testes:
 
 ```bash
-./.venv/bin/python -m pytest -q
+.venv/bin/uvicorn app.web:app --reload --port 8000
 ```
+
+Abre em <http://localhost:8000>.
+
+## Testes
+
+Testes do código e das telas (rápidos):
+
+```bash
+python -m pytest -q
+```
+
+Testes no navegador, em celular e computador. Na primeira vez, instale o Chromium:
+
+```bash
+python -m playwright install chromium
+```
+
+```bash
+python -m pytest -m e2e -q
+```
+
+No Windows dá para usar o Edge, sem baixar nada: `python -m pytest -m e2e --browser-channel msedge`.
+Os prints de cada tela ficam em `docs/evidencias/telas/`, só na máquina (fora do git).
 
 ## Telas
 
 | Endereço | O que mostra |
 |---|---|
-| `/` | Página pública: o que o sistema faz, para quem e o que ele não pede |
-| `/entrar` | Usuário e senha |
-| `/painel` | Um resumo por negócio: o assunto mais reclamado e o que deve crescer |
-| `/comercio/{id}` | Os assuntos do mês, a variação e as últimas avaliações lidas |
-| `/previsao/{id}` | Histórico e estimativa do mês seguinte, com mínimo e máximo |
-| `/alertas` | Avisos de alta, com confirmar e descartar |
-| `/acuracia` | O quanto o sistema acerta, sempre ao lado do palpite simples |
-| `/etapas` | O que já funciona, o que falta e onde a IA entra |
+| `/` | Página pública, com uma ação só: entrar |
+| `/resumo` | Um cartão por negócio, com o sinal (Vai piorar, Fique de olho, Tudo normal) |
+| `/comercio/{negócio}` | Do que reclamaram no mês e as últimas avaliações |
+| `/previsao/{negócio}` | O mês corrente e o seguinte, com mínimo e máximo |
+| `/avisos` | Assuntos que devem crescer |
+| `/investigacao/{negócio}/{assunto}` | **Por quê?** As possíveis causas, testadas |
+| `/simulador/{negócio}` | **E se?** O efeito e o custo de mudar a equipe |
+| `/experimentos` | **Testes na prática**, com os dias sorteados e o resultado |
+| `/confianca` | Dá para confiar? Cada parte comparada com o chute mais simples |
+| `/o-que-falta`, `/ajuda`, `/sobre` | O que falta, glossário e a área da banca |
 | `/saude` | Estado do serviço, em JSON |
-
-## Como ele decide
-
-São duas perguntas, e cada uma é comparada com um palpite bobo de propósito:
-
-| Pergunta | O palpite bobo | Só entra na tela se |
-|---|---|---|
-| De que assunto fala esta avaliação? | responder sempre o assunto mais comum | acertar mais que ele |
-| Quantas reclamações no mês que vem? | repetir o número do mês passado | errar menos que ele |
-
-A estimativa começa no número do mês passado e só se afasta dele quando os seis
-últimos meses mostram uma tendência forte o bastante para não ser oscilação
-normal. Há teste que quebra a build se o sistema perder do palpite bobo.
-
-## Segurança
-
-Só defesa. Nada aqui ataca nada.
-
-- Sessão assinada em cookie `HttpOnly`, `SameSite=Lax`, oito horas
-- Senha guardada como hash `scrypt` e comparada em tempo constante
-- Token contra CSRF em todo formulário
-- Oito tentativas de entrada por origem a cada cinco minutos
-- `Content-Security-Policy` sem `unsafe-inline`, HSTS, `X-Frame-Options`,
-  `X-Content-Type-Options` e `Referrer-Policy` em toda resposta
-- Depois do login, só redireciona para endereço interno
-
-Onze testes cobrem isso, incluindo um que falha se a política de segurança
-voltar a aceitar `unsafe-inline`.
-
-## Dados
-
-Os números das telas são **de demonstração**: negócios, avaliações e contagens
-inventadas, geradas pelo próprio servidor e sempre iguais. Nenhuma avaliação
-exibida foi escrita por um cliente real.
-
-Quando a coleta real começar, a avaliação é pública mas o autor dela não entra
-no projeto: nome, foto e qualquer tentativa de identificar quem escreveu ficam
-de fora, e citação em relatório vai anonimizada.
 
 ## Pastas
 
 ```
 app/
-  web.py            os endereços do site
-  conteudo.py       os textos fixos
-  demo.py           os dados de demonstração e as contas dos dois modelos
-  seguranca.py      senha, sessão, CSRF e cabeçalhos
-  formatos.py       número e data no jeito brasileiro
-  graficos/svg.py   os gráficos, desenhados no servidor
-  templates/        uma tela por arquivo
-  static/           CSS e JavaScript próprios
-tests/              48 testes
+  web.py            cria o site e liga as rotas
+  contratos.py      os tipos combinados entre os três
+  servicos.py       a única porta das telas para os dados
+  falsos.py         dados de mentira com o formato dos contratos
+  conteudo.py       textos fixos e glossário dos botões "?"
+  formatos.py       número, dinheiro e data em português
+  graficos/         gráficos em SVG e as frases que os explicam
+  rotas/            uma área de telas por arquivo
+  templates/        o HTML de cada tela
+  static/           CSS e JavaScript
+  banco/ modelos/ mundo/ investigacao/ decisao/ experimento/ coleta/   (Gabriel)
+  seguranca/                                                           (Matheus)
+tests/              testes do código e das telas
+tests/e2e/          testes no navegador
 ```

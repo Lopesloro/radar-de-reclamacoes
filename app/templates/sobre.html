@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}Sobre o sistema, {{ projeto.nome }}{% endblock %}
+
+{% block conteudo %}
+<section class="secao secao--topo">
+  <div class="container">
+    {{ m.cabeca("Sobre o sistema",
+                projeto.disciplina ~ " de " ~ projeto.curso ~ " da " ~ projeto.instituicao ~ ", " ~ projeto.semestre ~ ". Orientação da " ~ projeto.orientadora ~ ".") }}
+
+    <h2 class="titulo-secao">Quem construiu</h2>
+    <p class="nota">Escrito do zero por três alunos. Cada um responde por uma frente.</p>
+    <ul class="autoria">
+      {% for pessoa in autoria %}
+      <li class="autor">
+        <p class="autor__nome">{{ pessoa.nome }}</p>
+        <p class="autor__frente">{{ pessoa.frente }}</p>
+        <p class="autor__faz">{{ pessoa.faz }}</p>
+      </li>
+      {% endfor %}
+    </ul>
+
+    <h2 class="titulo-secao">Como funciona por dentro</h2>
+    <ol class="fatos fatos--numerados">
+      <li><strong>Separar por assunto.</strong> As avaliações públicas, já sem nomes e telefones, são separadas em cinco assuntos.</li>
+      <li><strong>Estimar o mês.</strong> Com os meses anteriores, o sistema estima o mês corrente e o seguinte, com mínimo e máximo, e avisa quando um assunto deve crescer.</li>
+      <li><strong>Por quê?</strong> Um agente junta possíveis causas (diário do negócio, calendário, clima, dias e turnos, palavras novas e ideias da inteligência artificial) e testa cada uma com estatística.</li>
+      <li><strong>E se?</strong> Um modelo de filas liga a equipe de cada turno à espera, e a espera às reclamações, para estimar o efeito e o custo de uma mudança.</li>
+      <li><strong>Teste na prática.</strong> A mudança é feita em dias sorteados, o plano é selado antes de começar e o resultado compara os dias com e sem a mudança.</li>
+      <li><strong>Laboratório.</strong> Negócios de mentira com causa conhecida medem se o agente, o simulador e o teste acertam, sempre ao lado de um chute simples.</li>
+    </ol>
+
+    <h2 class="titulo-secao">Com o que é feito</h2>
+    <div class="tecnologias">
+      {% for grupo, itens in tecnologias %}
+      <div class="tecnologia">
+        <h3 class="tecnologia__titulo">{{ grupo }}</h3>
+        <ul>{% for item in itens %}<li>{{ item }}</li>{% endfor %}</ul>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% call m.tecnico("Detalhes técnicos para a banca") %}
+    <ul>
+      <li>Classificação: TF-IDF com regressão logística (um contra todos), limiar de confiança e comparação com a régua da classe mais frequente por F1 macro.</li>
+      <li>Previsão: nível do último mês fechado mais a tendência de seis meses quando ela supera 1,8 erro padrão; faixa P10–P90; validação com origem móvel e erro médio absoluto (MAE) contra a régua.</li>
+      <li>Agente: GLM de Poisson com degrau, qui-quadrado por dia e turno, log-odds com prior de Dirichlet para termos novos e correção de Benjamini-Hochberg (q-valor).</li>
+      <li>Simulador: Erlang C (M/M/c) por turno, GLM de Poisson calibrado e Monte Carlo para a faixa.</li>
+      <li>Experimento: aleatorização em blocos por dia da semana, análise de poder por simulação, intenção de tratar, teste de permutação dentro dos blocos e plano selado por hash SHA-256.</li>
+      <li>Segurança: senha com scrypt, sessão em cookie HttpOnly e SameSite, token contra CSRF, CSP sem unsafe-inline e isolamento entre empresas testado.</li>
+    </ul>
+    {% endcall %}
+
+    {{ m.proximo_passo([{"rotulo": "Voltar ao resumo", "href": "/resumo"}]) }}
+  </div>
+</section>
+{% endblock %}

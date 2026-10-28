@@ -8,6 +8,11 @@ venv/
 .coverage
 htmlcov/
 
+# Banco local e saídas de teste
+*.db
+test-results/
+playwright-report/
+
 # Segredos e configuração local
 .env
 .env.*
@@ -18,3 +23,8 @@ htmlcov/
 .idea/
 .vscode/
 .claude/
+
+# Documentação e prints: ficam só na máquina, fora do GitHub
+plano/
+referencia/
+docs/

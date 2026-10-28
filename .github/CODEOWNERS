@@ -1,0 +1,39 @@
+# Quem revisa o quê (tabela do CLAUDE.md).
+# TROCAR @USUARIO_DO_MATHEUS pelo usuário do Matheus no GitHub.
+
+*                               @NicolasML28 @Lopesloro @USUARIO_DO_MATHEUS
+
+# Contratos: os três
+/app/contratos.py               @Lopesloro @USUARIO_DO_MATHEUS @NicolasML28
+
+# Gabriel: motor
+/app/falsos.py                  @Lopesloro
+/app/banco/                     @Lopesloro
+/app/modelos/                   @Lopesloro
+/app/mundo/                     @Lopesloro
+/app/investigacao/              @Lopesloro
+/app/decisao/                   @Lopesloro
+/app/experimento/               @Lopesloro
+/app/coleta/                    @Lopesloro
+/alembic/                       @Lopesloro
+/requirements.txt               @Lopesloro
+
+# Matheus: segurança
+/app/seguranca/                 @USUARIO_DO_MATHEUS
+/app/investigacao/ia.py         @USUARIO_DO_MATHEUS
+/app/investigacao/protecao.py   @USUARIO_DO_MATHEUS
+/app/experimento/selo.py        @USUARIO_DO_MATHEUS
+/app/auditoria.py               @USUARIO_DO_MATHEUS
+/app/rotas/acesso_provisorio.py @USUARIO_DO_MATHEUS
+/.github/workflows/seguranca.yml @USUARIO_DO_MATHEUS
+
+# Nicolas: telas
+/app/rotas/                     @NicolasML28
+/app/templates/                 @NicolasML28
+/app/static/                    @NicolasML28
+/app/graficos/                  @NicolasML28
+/app/conteudo.py                @NicolasML28
+/app/formatos.py                @NicolasML28
+/app/servicos.py                @NicolasML28
+/tests/e2e/                     @NicolasML28
+/docs/                          @NicolasML28

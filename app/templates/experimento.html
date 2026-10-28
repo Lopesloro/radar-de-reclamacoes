@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}{{ plano.acao }}, {{ projeto.nome }}{% endblock %}
+
+{% block conteudo %}
+<section class="secao secao--topo">
+  <div class="container">
+    <p class="voltar"><a href="/experimentos">← Todos os testes</a></p>
+    {{ m.cabeca(plano.acao, negocio.nome ~ " · reclamações de " ~ (plano.categoria | assunto) ~ ", de " ~ (plano.inicio | data_longa) ~ " a " ~ (plano.fim | data_longa) ~ ".") }}
+
+    <div class="numeros">
+      {{ m.numero("Código do plano", "codigo_plano", codigo, "guardado em " ~ (plano.selado_em.date() | data_longa)) }}
+      {{ m.numero("Seguiu o sorteio", "seguiu_sorteio", seguiu ~ " de " ~ marcados, "dos dias já marcados") }}
+      {{ m.numero("Dias do teste", "teste_na_pratica", total, (plano.dias_com_acao | length) ~ " com a mudança e " ~ (plano.dias_sem_acao | length) ~ " sem") }}
+    </div>
+
+    {% if resultado %}
+    {% set rt = resultados_teste[resultado.veredito] %}
+    <div class="veredito veredito--{{ rt.classe }}">
+      <p class="veredito__rotulo">{{ rt.rotulo }}</p>
+      <p class="veredito__frase">{{ resultado.frase }}</p>
+    </div>
+    {{ m.grafico("Reclamações por dia: " ~ (resultado.media_sem | decimal) ~ " nos dias sem a mudança e " ~ (resultado.media_com | decimal) ~ " nos dias com.",
+        grafico,
+        ["A coluna cinza é a média de reclamações por dia nos dias sorteados para ficar como sempre.",
+         "A coluna azul é a média nos dias sorteados para ter a mudança.",
+         "Como os dias foram sorteados, a diferença entre as duas é efeito da mudança, não sorte."],
+        ["Dias", "Reclamações por dia"],
+        [["sem a mudança", resultado.media_sem | decimal], ["com a mudança", resultado.media_com | decimal]]) }}
+    {% call m.tecnico() %}
+    <p>Efeito por mês: {{ resultado.efeito_mes | decimal }} (intervalo de {{ resultado.efeito_min | decimal }} a {{ resultado.efeito_max | decimal }}), por teste de permutação dentro de cada bloco de dia da semana. Adesão: {{ (resultado.adesao * 100) | round | int }}%. Análise por intenção de tratar. Selo SHA-256: <code>{{ plano.selo }}</code>.</p>
+    {% endcall %}
+    {% else %}
+    <div class="aviso aviso--neutro">
+      <p><strong>O resultado sai em {{ plano.fim | data_longa }}.</strong> Com esse prazo, dá para perceber uma queda de {{ plano.menor_efeito_detectavel | inteiro }} reclamações por mês ou mais. Quedas menores podem passar despercebidas.</p>
+    </div>
+    {% endif %}
+
+    <h2 class="titulo-secao">Os dias sorteados</h2>
+    <p class="nota">Cada quadrado é um dia do teste. O sorteio diz se é dia com ou sem a mudança; a marca embaixo diz o que aconteceu.</p>
+    <ul class="calendario">
+      {% for d in marcacoes %}
+      <li class="dia dia--{{ 'com' if d.com_acao else 'sem' }}{% if d.data == hoje %} dia--hoje{% endif %}">
+        <span class="dia__data">{{ d.data.weekday() | dia_semana }} {{ d.data | data_curta }}</span>
+        <span class="dia__tipo">{{ "com a mudança" if d.com_acao else "sem a mudança" }}</span>
+        <span class="dia__marca">
+          {% if d.seguiu is none %}{{ "ainda não chegou" if d.data > hoje else "falta marcar" }}
+          {% elif d.seguiu %}✓ seguiu
+          {% else %}✗ não seguiu{% endif %}
+        </span>
+      </li>
+      {% endfor %}
+    </ul>
+
+    {{ m.proximo_passo([
+      {"rotulo": "Ver todos os testes", "href": "/experimentos"},
+      {"rotulo": "Voltar ao resumo", "href": "/resumo"},
+    ]) }}
+  </div>
+</section>
+{% endblock %}

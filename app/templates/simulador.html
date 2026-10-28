@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}E se?, {{ negocio.nome }}{% endblock %}
+
+{% macro linha_turno(item) %}
+{% set t = item.turno %}
+<li class="turno{% if item.valor != t.equipe %} turno--mudou{% endif %}">
+  <label class="turno__rotulo" for="{{ item.campo }}">{{ t.dia_semana | dia_semana | capitalize }}, {{ t.periodo | periodo }}</label>
+  <input class="turno__campo" type="number" id="{{ item.campo }}" name="{{ item.campo }}" value="{{ item.valor }}" min="1" max="{{ equipe_maxima }}" inputmode="numeric">
+  <span class="turno__hoje">hoje: {{ t.equipe }} {{ "pessoa" if t.equipe == 1 else "pessoas" }}</span>
+</li>
+{% endmacro %}
+
+{% block conteudo %}
+{% set r = resultado %}
+<section class="secao secao--topo">
+  <div class="container">
+    {{ m.seletor(negocios, negocio.empresa_id, "/simulador", "?categoria=" ~ escolhida) }}
+    {{ m.cabeca("E se eu mudar a equipe?",
+                negocio.nome ~ ": mude quantas pessoas trabalham em cada turno e veja o que deve acontecer com as reclamações de " ~ (escolhida | assunto) ~ ".") }}
+    <div class="com-ajuda com-ajuda--linha"><p class="nota">Nada muda no seu negócio: é só uma conta.</p>{{ m.ajuda("simulador") }}</div>
+
+    <div class="simulador">
+      <form class="simulador__formulario cartao" method="get" action="/simulador/{{ negocio.empresa_id }}">
+        <h2 class="cartao__titulo">A mudança</h2>
+        <label class="campo">
+          <span class="campo__rotulo">Assunto</span>
+          <select class="campo__entrada" name="categoria">
+            {% for c in categorias_disponiveis %}<option value="{{ c }}"{% if c == escolhida %} selected{% endif %}>{{ c | assunto }}</option>{% endfor %}
+          </select>
+        </label>
+
+        {% set sugeridos = turnos | selectattr("sugerido") | list %}
+        {% set outros = turnos | rejectattr("sugerido") | list %}
+        {% if sugeridos %}
+        <p class="simulador__grupo">Turnos da provável causa</p>
+        <ul class="turnos">{% for item in sugeridos %}{{ linha_turno(item) }}{% endfor %}</ul>
+        {% endif %}
+        <details class="dobra"{% if not sugeridos %} open{% endif %}>
+          <summary class="dobra__botao">{{ "Outros turnos" if sugeridos else "Todos os turnos" }}</summary>
+          <ul class="turnos">{% for item in outros %}{{ linha_turno(item) }}{% endfor %}</ul>
+        </details>
+
+        <button class="botao botao--primario botao--largo" type="submit" data-principal>Ver o que acontece</button>
+      </form>
+
+      <div class="simulador__resultado">
+        {% if not r.confiavel %}
+        <div class="aviso aviso--olho"><p><strong>Este resultado não é confiável.</strong> {{ r.motivo }}</p></div>
+        {% endif %}
+
+        {{ m.grafico(frase, grafico,
+            ["A coluna cinza é quantas reclamações de " ~ (escolhida | assunto) ~ " devem chegar este mês, sem mudar nada.",
+             "A coluna azul é a estimativa com a mudança. O número com ≈ é o mais provável.",
+             "A faixa clara em volta mostra o mínimo e o máximo esperados: o resultado real deve cair dentro dela."],
+            ["Situação", "Reclamações por mês", "Espera média"],
+            [["hoje", r.reclamacoes_atual | inteiro, (r.espera_atual_min | decimal) ~ " min"],
+             ["com a mudança", "≈ " ~ (r.reclamacoes_cenario | inteiro) ~ " (entre " ~ (r.minimo | inteiro) ~ " e " ~ (r.maximo | inteiro) ~ ")", (r.espera_cenario_min | decimal) ~ " min"]]) }}
+
+        <div class="numeros numeros--dois">
+          {{ m.numero("Espera média", "espera", (r.espera_cenario_min | decimal) ~ " min", "hoje: " ~ (r.espera_atual_min | decimal) ~ " min") }}
+          {{ m.numero("Custo a mais por mês", "simulador", r.custo_extra_mes | moeda, "pelas horas a mais de trabalho") }}
+          {% if r.custo_por_reclamacao_evitada %}
+          {{ m.numero("Por reclamação evitada", "custo_por_reclamacao", r.custo_por_reclamacao_evitada | moeda, "custo dividido pelas reclamações a menos") }}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    {{ m.proximo_passo([
+      {"rotulo": "Testar na prática", "href": "/experimentos"},
+      {"rotulo": "Voltar ao Por quê?", "href": "/investigacao/" ~ negocio.empresa_id ~ "/" ~ escolhida},
+    ]) }}
+  </div>
+</section>
+{% endblock %}

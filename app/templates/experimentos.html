@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}Testes na prática, {{ projeto.nome }}{% endblock %}
+
+{% block conteudo %}
+<section class="secao secao--topo">
+  <div class="container">
+    {{ m.cabeca("Testes na prática",
+                "Você faz a mudança só em alguns dias, sorteados pelo sistema, e no fim ele compara com os outros dias. Assim dá para saber se funcionou de verdade.") }}
+    <div class="com-ajuda com-ajuda--linha"><p class="nota">Por que sortear os dias?</p>{{ m.ajuda("sorteio") }}</div>
+
+    {% if itens %}
+    <ul class="cartoes">
+      {% for item in itens %}
+      {% set p = item.plano %}
+      <li class="cartao">
+        <div class="cartao__cabeca">
+          <div>
+            <h2 class="cartao__titulo">{{ p.acao }}</h2>
+            <p class="cartao__meta">{{ item.negocio.nome }} · {{ p.categoria | assunto }}</p>
+          </div>
+          <span class="etiqueta etiqueta--{{ 'incerta' if p.estado == 'em_andamento' else 'neutra' }}">{{ "Em andamento" if p.estado == "em_andamento" else "Terminado" }}</span>
+        </div>
+        <p class="cartao__detalhe">De {{ p.inicio | data_longa }} a {{ p.fim | data_longa }}.</p>
+        <div class="progresso">
+          <label class="progresso__rotulo" for="progresso-{{ p.id }}">{{ item.marcados }} de {{ item.total }} dias marcados</label>
+          <progress id="progresso-{{ p.id }}" max="{{ item.total }}" value="{{ item.marcados }}">{{ item.marcados }} de {{ item.total }}</progress>
+        </div>
+        <div class="cartao__acoes">
+          <a class="botao botao--primario" href="/experimentos/{{ p.id }}"{% if loop.first %} data-principal{% endif %}>Ver o teste</a>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    {{ m.estado_vazio("Nenhum teste ainda. Comece simulando uma mudança.", {"rotulo": "Simular uma mudança", "href": "/simulador"}) }}
+    {% endif %}
+
+    <details class="dobra dobra--bloco">
+      <summary class="dobra__botao">Como funciona um teste na prática</summary>
+      <ol class="dobra__passos">
+        <li>Você escolhe a mudança, como um entregador a mais na sexta à noite.</li>
+        <li>O sistema sorteia em quais dias você faz a mudança e em quais não faz, e guarda o plano com um código.</li>
+        <li>Todo dia você marca se seguiu o sorteio. No fim, o sistema compara os dois grupos de dias e diz se funcionou.</li>
+      </ol>
+    </details>
+
+    {{ m.proximo_passo([
+      {"rotulo": "Simular uma mudança antes", "href": "/simulador"},
+      {"rotulo": "Voltar ao resumo", "href": "/resumo"},
+    ]) }}
+  </div>
+</section>
+{% endblock %}

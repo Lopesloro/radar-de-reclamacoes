@@ -1,19 +1,19 @@
 {% extends "base.html" %}
-{% block titulo %}Entrar - {{ projeto.nome }}{% endblock %}
+{% block titulo %}Entrar, {{ projeto.nome }}{% endblock %}
 
 {% block conteudo %}
-<section class="entrada">
-  <div class="container entrada__grade">
+<section class="entrada-pagina">
+  <div class="container entrada">
     <div class="entrada__texto">
-      <p class="eyebrow">Acesso ao painel</p>
-      <h1 class="titulo">O painel do seu negócio é só seu</h1>
+      <p class="sobrelinha">Acesso ao painel</p>
+      <h1 class="titulo-classico">O painel do seu negócio é só seu</h1>
       <span class="regua" aria-hidden="true"></span>
-      <p class="lead">
-        A avaliação que seus clientes escrevem é pública, qualquer um lê. Mas a
-        leitura que o sistema faz dela, assunto por assunto e mês a mês, fica
-        guardada atrás de usuário e senha.
+      <p class="lead lead--leitura">
+        A avaliação que seus clientes escrevem é pública, qualquer um lê. Mas a leitura
+        que o sistema faz dela, assunto por assunto e mês a mês, fica guardada atrás de
+        usuário e senha.
       </p>
-      <p class="lead">
+      <p class="lead lead--leitura">
         Cada negócio enxerga apenas o que é dele. Ninguém de fora vê o seu painel.
       </p>
     </div>
@@ -22,33 +22,27 @@
       <h2 class="entrada__titulo">Entrar no painel</h2>
 
       {% if erro == "credencial" %}
-      <p class="aviso aviso--erro" role="alert">Usuário ou senha não confere.</p>
-      {% elif erro == "bloqueado" %}
-      <p class="aviso aviso--erro" role="alert">Tentativas demais. Espere alguns minutos e tente de novo.</p>
-      {% elif erro == "sessao" %}
-      <p class="aviso aviso--erro" role="alert">A página ficou aberta tempo demais. Tente outra vez.</p>
+      <p class="aviso-entrada aviso-entrada--erro" role="alert">Usuário ou senha não conferem.</p>
       {% endif %}
 
+      {# PROVISÓRIO: o token contra CSRF e a sessão entram aqui na Fase 0 do Matheus. #}
       <form method="post" action="/entrar" class="formulario">
-        <input type="hidden" name="csrf" value="{{ csrf }}">
-        <input type="hidden" name="proximo" value="{{ proximo }}">
-        <label class="campo">
-          <span class="campo__rotulo">Usuário</span>
-          <input class="campo__entrada" type="text" name="usuario" autocomplete="username"
-                 required autofocus value="{{ usuario_demo if senha_demo else '' }}">
+        <label class="campo-classico">
+          <span class="campo-classico__rotulo">Usuário</span>
+          <input class="campo-classico__entrada" type="text" name="usuario" autocomplete="username"
+                 required value="{{ usuario_demo if senha_e_demo else '' }}">
         </label>
-        <label class="campo">
-          <span class="campo__rotulo">Senha</span>
-          <input class="campo__entrada" type="password" name="senha" autocomplete="current-password" required>
+        <label class="campo-classico">
+          <span class="campo-classico__rotulo">Senha</span>
+          <input class="campo-classico__entrada" type="password" name="senha" autocomplete="current-password" required>
         </label>
-        <button class="botao botao--solido botao--largo">Entrar</button>
+        <button class="botao botao--classico botao--largo" type="submit" data-principal>Entrar</button>
       </form>
 
-      {% if senha_demo %}
-      <p class="aviso aviso--atencao">
-        Esta é uma versão de demonstração, com negócios e avaliações de exemplo.
-        Entre com <strong>{{ usuario_demo }}</strong> e a senha <strong>admin</strong>
-        para conhecer as telas.
+      {% if senha_e_demo %}
+      <p class="aviso-entrada aviso-entrada--atencao">
+        Esta é uma versão de demonstração, com negócios e avaliações de exemplo. Entre com
+        <strong>{{ usuario_demo }}</strong> e a senha <strong>admin</strong> para conhecer as telas.
       </p>
       {% endif %}
     </div>

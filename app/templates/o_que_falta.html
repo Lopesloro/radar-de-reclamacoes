@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}O que falta, {{ projeto.nome }}{% endblock %}
+
+{% block conteudo %}
+<section class="secao secao--topo">
+  <div class="container">
+    {{ m.cabeca("O que falta",
+                "O que já está pronto e o que ainda falta, para cada negócio, entre o combinado e o aviso chegando até o dono.") }}
+    <div class="com-ajuda com-ajuda--linha"><p class="nota">São sete passos para cada negócio.</p>{{ m.ajuda("etapas") }}</div>
+
+    {% for bloco in blocos %}
+    {% set prontos = bloco.etapas | selectattr("estado", "equalto", "feito") | list | length %}
+    <article class="cartao cartao--etapas">
+      <div class="cartao__cabeca">
+        <div>
+          <h2 class="cartao__titulo">{{ bloco.negocio.nome }}</h2>
+          <p class="cartao__meta">{{ bloco.negocio.ramo }} · {{ bloco.negocio.cidade }}</p>
+        </div>
+        <div class="progresso progresso--curto">
+          <label class="progresso__rotulo" for="etapas-{{ bloco.negocio.empresa_id }}">{{ prontos }} de {{ bloco.etapas | length }} prontos</label>
+          <progress id="etapas-{{ bloco.negocio.empresa_id }}" max="{{ bloco.etapas | length }}" value="{{ prontos }}">{{ prontos }}</progress>
+        </div>
+      </div>
+      <ol class="etapas">
+        {% for e in bloco.etapas %}
+        <li class="etapa etapa--{{ e.estado }}">
+          <span class="etapa__marca">{{ {"feito": "✓ Pronto", "andamento": "● Em andamento", "pendente": "○ Falta"}[e.estado] }}</span>
+          <p class="etapa__titulo">{{ e.titulo }}</p>
+          <p class="etapa__texto">{{ e.detalhe }}</p>
+          {% if e.falta %}<p class="etapa__falta"><strong>Falta:</strong> {{ e.falta }}</p>{% endif %}
+        </li>
+        {% endfor %}
+      </ol>
+    </article>
+    {% endfor %}
+
+    <h2 class="titulo-secao">O que ainda está sendo construído</h2>
+    <ul class="fatos">
+      <li><strong>Entrada com e-mail e senha</strong>, e uma conta para cada negócio. Hoje a demonstração abre sem senha.</li>
+      <li><strong>Avaliações de verdade</strong>, guardadas num banco de dados. Hoje os números são de mentira.</li>
+      <li><strong>As contas de verdade</strong> do Por quê?, do E se? e do teste na prática. Hoje as telas mostram exemplos.</li>
+      <li><strong>Marcar o dia do teste e responder aos avisos</strong> direto pela tela.</li>
+    </ul>
+
+    {{ m.proximo_passo([{"rotulo": "Voltar ao resumo", "href": "/resumo"}]) }}
+  </div>
+</section>
+{% endblock %}

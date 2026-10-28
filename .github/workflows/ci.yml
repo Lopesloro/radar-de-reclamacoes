@@ -7,6 +7,7 @@ on:
 
 jobs:
   testes:
+    name: Testes e estilo
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,6 +16,32 @@ jobs:
           python-version: "3.12"
           cache: pip
       - name: Instalar dependências
-        run: pip install -r requirements.txt
-      - name: Rodar testes
+        run: pip install -r requirements-dev.txt
+      - name: Ruff
+        run: ruff check .
+      - name: Testes
         run: pytest -ra
+      # O banco PostgreSQL entra aqui quando o Gabriel terminar a Fase 0 dele
+      # (plano/01-gabriel.md): um "services: postgres" e o DATABASE_URL.
+
+  ponta-a-ponta:
+    name: Telas no navegador (390px e 1280px)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Instalar dependências
+        run: pip install -r requirements-dev.txt
+      - name: Instalar o Chromium do Playwright
+        run: python -m playwright install --with-deps chromium
+      - name: Testes de ponta a ponta
+        run: pytest -m e2e -ra
+      - name: Guardar os prints como evidência
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prints-das-telas
+          path: docs/evidencias/telas/

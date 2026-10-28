@@ -1,0 +1,22 @@
+#!/bin/sh
+# Trava de entrega: nenhum commit entra com a bateria vermelha.
+# Ligar uma vez por máquina:  git config core.hooksPath .githooks
+#
+# Pular num caso justificado:  git commit --no-verify
+# Se você está pulando com frequência, o problema é o teste, não o gate.
+
+PY=".venv/bin/python"
+[ -x "$PY" ] || PY="python3"
+
+echo "pre-commit: rodando a bateria..."
+if ! "$PY" -m pytest -q --ignore=tests/e2e >/tmp/pre-commit-radar.log 2>&1; then
+  echo
+  echo "COMMIT BLOQUEADO: a bateria de testes falhou."
+  tail -15 /tmp/pre-commit-radar.log
+  echo
+  echo "Saída completa em /tmp/pre-commit-radar.log"
+  exit 1
+fi
+
+tail -1 /tmp/pre-commit-radar.log
+exit 0

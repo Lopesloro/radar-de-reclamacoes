@@ -1,21 +1,22 @@
 services:
   - type: web
-    name: radar-de-reclamacoes
+    name: radar-de-reclamacoes-pi6
     runtime: python
     plan: free
     region: oregon
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app.web:app --host 0.0.0.0 --port $PORT --proxy-headers
+    # --forwarded-allow-ips: o serviço só recebe tráfego pelo proxy do Render.
+    # O Matheus confere essa linha na Fase 0 dele (plano/02-matheus.md, item 0.2).
+    startCommand: uvicorn app.web:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips='*'
     healthCheckPath: /saude
     envVars:
       - key: PYTHON_VERSION
         value: "3.12.7"
-      # Chave da sessão gerada pelo Render: não existe no repositório.
+      # Chave da sessão gerada pelo Render: nunca fica no repositório.
       - key: RADAR_CHAVE
         generateValue: true
-      # Usuário e senha ficam no painel do Render, nunca aqui. Sem eles, o site
-      # sobe com a credencial de demonstração e avisa isso na tela de entrada.
-      - key: RADAR_USUARIO
+      # Preenchidas no painel do Render, nunca aqui.
+      - key: DATABASE_URL
         sync: false
-      - key: RADAR_SENHA
+      - key: RADAR_SENHA_DEMO
         sync: false

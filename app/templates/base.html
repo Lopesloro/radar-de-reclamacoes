@@ -4,43 +4,66 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block titulo %}{{ projeto.nome }}{% endblock %}</title>
-  <meta name="description" content="Lê a avaliação pública do seu negócio, mostra do que os clientes mais reclamam e avisa qual queixa está crescendo antes de ela virar problema.">
+  <meta name="description" content="{{ projeto.resumo }}">
   <meta name="theme-color" content="#0F6E7B">
   <link rel="icon" href="/static/icone.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lora:ital@0;1&family=Playfair+Display&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital@0;1&family=Playfair+Display:wght@400;600&display=swap">
   <link rel="stylesheet" href="/static/css/app.css?v={{ impressao }}">
   <script src="/static/js/inicio.js?v={{ impressao }}"></script>
 </head>
-<body>
+<body class="{% block corpo %}{% endblock %}">
   <a class="pular" href="#conteudo">Pular para o conteúdo</a>
 
-  <header class="topo {% block topo_classe %}{% endblock %}" data-topo>
+  <header class="topo {% block topo_classe %}{% endblock %}">
     <div class="container topo__linha">
-      <a class="marca" href="{{ '/painel' if logado else '/' }}">{{ projeto.nome }}</a>
-      {% if logado %}
+      <a class="marca" href="{{ '/resumo' if usuario else '/' }}">{{ projeto.nome }}</a>
+
+      {% if usuario %}
       <nav class="menu" aria-label="Principal">
-        {% for item in menu %}
-        <a href="{{ item.href }}"{% if item.id == ativo %} aria-current="page"{% endif %}>{{ item.rotulo }}</a>
-        {% endfor %}
+        <ul class="menu__lista">
+          {% for item in menu %}
+          <li><a href="{{ item.href }}"{% if item.id == ativo %} aria-current="page"{% endif %}{% if item.id == 'ajuda' %} data-tour="5"{% endif %}>{{ item.rotulo }}</a></li>
+          {% endfor %}
+          <li>
+            <details class="menu__mais" data-fecha-fora>
+              <summary{% if ativo in ['confianca', 'o-que-falta', 'sobre'] %} class="menu__mais--ativo"{% endif %}>Mais</summary>
+              <ul class="menu__lista-mais">
+                {% for item in menu_mais %}
+                <li><a href="{{ item.href }}"{% if item.id == ativo %} aria-current="page"{% endif %}>{{ item.rotulo }}</a></li>
+                {% endfor %}
+              </ul>
+            </details>
+          </li>
+        </ul>
       </nav>
+
+      <details class="menu-movel" data-fecha-fora>
+        <summary class="menu-movel__botao">Menu</summary>
+        <nav class="menu-movel__painel" aria-label="Principal no celular">
+          <ul>
+            {% for item in menu + menu_mais %}
+            <li><a href="{{ item.href }}"{% if item.id == ativo %} aria-current="page"{% endif %}>{{ item.rotulo }}</a></li>
+            {% endfor %}
+          </ul>
+        </nav>
+      </details>
+      {% else %}
+      <a class="botao botao--mini" href="/entrar">Entrar</a>
       {% endif %}
-      <div class="topo__conta">
-        {% if logado %}
-        <span class="topo__usuario">{{ usuario }}</span>
-        <form method="post" action="/sair">
-          <input type="hidden" name="csrf" value="{{ csrf }}">
-          <button class="botao botao--mini">Sair</button>
-        </form>
-        {% else %}
-        <a class="botao botao--mini botao--mini-acao" href="/entrar">Entrar</a>
-        {% endif %}
-      </div>
     </div>
   </header>
 
-  <main id="conteudo">
+  {% if usuario and demonstracao %}
+  <div class="faixa-demo" role="note">
+    <div class="container">
+      Você está vendo <strong>negócios de demonstração</strong>: as avaliações e os números são de mentira, para mostrar como o sistema funciona.
+    </div>
+  </div>
+  {% endif %}
+
+  <main id="conteudo" tabindex="-1">
     {% block conteudo %}{% endblock %}
   </main>
 
@@ -51,33 +74,22 @@
         <p class="rodape__texto">{{ projeto.resumo }}</p>
       </div>
       <div>
-        <h2 class="rodape__titulo">Navegar</h2>
+        <p class="rodape__titulo">Navegar</p>
         <ul class="rodape__lista">
-          {% if logado %}
-          {% for item in menu %}
-          <li><a href="{{ item.href }}">{{ item.rotulo }}</a></li>
-          {% endfor %}
+          {% if usuario %}
+          {% for item in menu + menu_mais %}<li><a href="{{ item.href }}">{{ item.rotulo }}</a></li>{% endfor %}
           {% else %}
-          <li><a href="/entrar">Entrar no painel</a></li>
+          <li><a href="/entrar">Entrar</a></li>
           {% endif %}
-          <li><a href="/saude">Estado do serviço</a></li>
-        </ul>
-      </div>
-      <div>
-        <h2 class="rodape__titulo">Como funciona</h2>
-        <ul class="rodape__lista">
-          <li>Lê a avaliação pública do seu negócio</li>
-          <li>Separa por assunto e conta o mês</li>
-          <li>Estima o mês seguinte e avisa a alta</li>
-          <li>Sem instalar nada no seu negócio</li>
         </ul>
       </div>
     </div>
     <div class="container rodape__base">
-      <p>Dados de demonstração. Nenhuma avaliação exibida aqui foi escrita por um cliente real.</p>
+      <p>Nenhuma avaliação mostrada aqui foi escrita por um cliente de verdade.</p>
     </div>
   </footer>
 
   <script src="/static/js/app.js?v={{ impressao }}" defer></script>
+  {% block scripts %}{% endblock %}
 </body>
 </html>
