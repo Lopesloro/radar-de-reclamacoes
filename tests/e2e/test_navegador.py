@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 
 import pytest
@@ -13,9 +14,11 @@ pytestmark = pytest.mark.e2e
 
 TELAS = [
     "/", "/entrar", "/resumo", "/comercio/bella-massa", "/previsao/bella-massa", "/avisos",
-    "/investigacao", "/investigacao/bella-massa/demora", "/investigacao/patinhas/ambiente",
+    # A sessão do teste é da Bella Massa. Tela de outra empresa devolve 403 de
+    # propósito, e isso é verificado em tests/seguranca/test_isolamento.py.
+    "/investigacao", "/investigacao/bella-massa/demora", "/investigacao/bella-massa/ambiente",
     "/simulador", "/simulador/bella-massa", "/experimentos", "/experimentos/exp-bella-entregador",
-    "/experimentos/exp-sorriso-recepcao", "/confianca", "/o-que-falta", "/ajuda", "/sobre",
+     "/confianca", "/o-que-falta", "/ajuda", "/sobre",
 ]
 
 # Mede, em cada gráfico visível, o tamanho em que a letra aparece de fato na tela.
@@ -144,6 +147,12 @@ def test_menu_do_celular_abre_e_leva_a_ajuda(abrir):
 def test_sem_javascript_o_site_continua_funcionando(browser, endereco):
     contexto = browser.new_context(java_script_enabled=False, viewport={"width": 390, "height": 900})
     pagina = contexto.new_page()
+    # Entra pelo formulário, que funciona sem JavaScript. Sem isto a tela interna
+    # devolve a página de entrada, e o teste mediria a tela errada.
+    pagina.goto(endereco + "/entrar")
+    pagina.fill('input[name="usuario"]', "bella")
+    pagina.fill('input[name="senha"]', os.environ["RADAR_SENHA_DEMO"])
+    pagina.click('form.formulario button[type="submit"]')
     pagina.goto(endereco + "/simulador/bella-massa?categoria=demora&t-4-noite=4")
     assert "devem cair de" in pagina.locator(".grafico__frase").first.inner_text()
     pagina.locator("details.ajuda summary").first.click()
@@ -171,4 +180,10 @@ def test_topo_da_pagina_publica_fica_solido_ao_rolar(abrir):
     topo = pagina.locator("header.topo")
     assert "solido" not in (topo.get_attribute("class") or "")
     pagina.mouse.wheel(0, 600)
-    pagina.wait_for_function("document.querySelector('header.topo').classList.contains('solido')")
+    # Nada de wait_for_function aqui: ele avalia texto como script, e a nossa CSP
+    # não permite 'unsafe-eval'. O teste tem de respeitar a política do site.
+    for _ in range(60):
+        if "solido" in (topo.get_attribute("class") or ""):
+            break
+        pagina.wait_for_timeout(100)
+    assert "solido" in (topo.get_attribute("class") or ""), "o topo não ficou sólido ao rolar"

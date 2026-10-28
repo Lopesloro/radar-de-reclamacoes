@@ -3,8 +3,6 @@
 import re
 from html.parser import HTMLParser
 
-import re
-
 import pytest
 
 from tests.conftest import TELAS_DO_DONO, TODAS_AS_TELAS

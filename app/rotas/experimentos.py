@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, Request
 from app import servicos
 from app.graficos import svg
 from app.rotas._telas import tela
+from app.seguranca import empresa_do_usuario, exigir_empresa
 
 rotas = APIRouter()
 
@@ -23,7 +24,7 @@ def _progresso(marcacoes) -> tuple[int, int]:
 @rotas.get("/experimentos")
 def lista(request: Request):
     itens = []
-    for plano in servicos.experimentos():
+    for plano in servicos.experimentos(empresa_do_usuario(request)):
         marcados, total = _progresso(servicos.marcacoes(plano.id))
         itens.append({
             "plano": plano,
@@ -38,7 +39,10 @@ def lista(request: Request):
 def detalhe(request: Request, plano_id: str):
     plano = servicos.experimento(plano_id)
     if plano is None:
-        raise HTTPException(status_code=404)
+        # Recusa igual à de empresa alheia: 404 aqui contaria quais planos existem.
+        raise HTTPException(status_code=403, detail="Esse plano não é o seu.")
+    # O parâmetro se chama plano_id, então a trava automática não o cobre.
+    exigir_empresa(request, plano.empresa_id)
     marcacoes = servicos.marcacoes(plano_id)
     marcados, total = _progresso(marcacoes)
     resultado = servicos.analisar(plano_id)

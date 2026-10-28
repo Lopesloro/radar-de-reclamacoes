@@ -6,6 +6,7 @@ Sem baixar o Chromium, dá para usar o Edge do Windows: `pytest -m e2e --browser
 
 from __future__ import annotations
 
+import os
 import socket
 import threading
 import time
@@ -44,6 +45,22 @@ def endereco():
     linha.join(timeout=5)
 
 
+# A conta de demonstração. As telas internas exigem sessão desde que a entrada
+# de verdade entrou; sem isto, todo teste de botão cairia na tela de login.
+USUARIO_DEMO = "bella"
+SENHA_DEMO = os.environ.setdefault("RADAR_SENHA_DEMO", "admin")
+os.environ.setdefault("RADAR_CHAVE", "chave-de-teste-nao-usar-em-producao")
+
+
+def _entrar(pagina) -> None:
+    """Entra pelo formulário, como uma pessoa faria. O token vem do próprio HTML."""
+    pagina.ir("/entrar")
+    pagina.fill('input[name="usuario"]', USUARIO_DEMO)
+    pagina.fill('input[name="senha"]', SENHA_DEMO)
+    pagina.click('form.formulario button[type="submit"]')
+    pagina.wait_for_url(lambda u: "/entrar" not in u, timeout=10_000)
+
+
 @pytest.fixture
 def abrir(browser, endereco):
     """Abre uma aba com a largura pedida e junta os erros do console."""
@@ -57,6 +74,7 @@ def abrir(browser, endereco):
         pagina.on("console", lambda m: pagina.erros.append(m.text) if m.type == "error" else None)
         pagina.on("pageerror", lambda e: pagina.erros.append(str(e)))
         pagina.ir = lambda rota: pagina.goto(endereco + rota, wait_until="networkidle")
+        _entrar(pagina)
         return pagina
 
     yield _abrir

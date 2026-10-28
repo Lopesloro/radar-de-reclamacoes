@@ -8,7 +8,7 @@ from app import servicos
 from app.contratos import CATEGORIAS
 from app.graficos import frases, svg
 from app.rotas._telas import tela
-from app.rotas.acesso_provisorio import empresa_permitida
+from app.seguranca import empresa_do_usuario, exigir_empresa
 
 rotas = APIRouter()
 
@@ -26,15 +26,16 @@ ORIGENS = {
 def indice(request: Request):
     return tela(
         request, "investigacao_indice.html", "investigacao",
-        avisos=[{"alerta": a, "frase": frases.alerta(a)} for a in servicos.alertas()],
-        negocios=servicos.comercios(),
+        avisos=[{"alerta": a, "frase": frases.alerta(a)}
+                for a in servicos.alertas(empresa_do_usuario(request))],
+        negocios=servicos.comercios(empresa_do_usuario(request)),
         categorias_disponiveis=CATEGORIAS,
     )
 
 
 @rotas.get("/investigacao/{empresa}/{categoria}")
 def investigar(request: Request, empresa: str, categoria: str):
-    empresa_permitida(empresa)
+    exigir_empresa(request, empresa)
     if categoria not in CATEGORIAS:
         raise HTTPException(status_code=404)
     negocio = servicos.comercio(empresa)
@@ -52,7 +53,7 @@ def investigar(request: Request, empresa: str, categoria: str):
     return tela(
         request, "investigacao.html", "investigacao",
         negocio=negocio,
-        negocios=servicos.comercios(),
+        negocios=servicos.comercios(empresa_do_usuario(request)),
         categoria=categoria,
         categorias_disponiveis=CATEGORIAS,
         investigacao=resultado,

@@ -11,6 +11,23 @@ TENTATIVAS_MAXIMAS = 8
 JANELA_SEGUNDOS = 300
 
 
+def origem_do_pedido(requisicao) -> str:
+    """A origem que vale para o limite de tentativas.
+
+    `request.client.host` não serve: o serviço roda atrás do proxy do Render com
+    `--forwarded-allow-ips='*'`, e nesse modo o uvicorn confia no **primeiro**
+    item do X-Forwarded-For, que é exatamente o que o cliente mandou. Quem erra
+    a senha troca o cabeçalho e ganha um balde de tentativas novo.
+
+    O último item é o que o proxy mais próximo escreveu, e esse o cliente não
+    escolhe. Sem o cabeçalho, cai no endereço da conexão.
+    """
+    encadeados = requisicao.headers.get("x-forwarded-for", "")
+    if encadeados:
+        return origem_de(encadeados.split(",")[-1].strip())
+    return origem_de(requisicao.client.host if requisicao.client else None)
+
+
 def origem_de(host: str | None) -> str:
     """IPv6 conta pelo bloco /64: quem recebe um IPv6 recebe milhões de endereços e trocaria de origem."""
     if not host:

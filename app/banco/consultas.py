@@ -261,6 +261,9 @@ def alertas(sessao: Session, empresa_id: str) -> tuple[Alerta, ...]:
         .join(modelo.Previsao, modelo.Previsao.id == modelo.Alerta.previsao_id)
         .join(modelo.Comercio, modelo.Comercio.id == modelo.Alerta.comercio_id)
         .where(modelo.Alerta.empresa_id == empresa_id)
+        # A docstring promete "os avisos abertos". Sem esta linha, aviso já
+        # confirmado ou descartado volta na lista e entra na contagem.
+        .where(modelo.Alerta.situacao == "aberto")
     ).all()
 
     avisos = [

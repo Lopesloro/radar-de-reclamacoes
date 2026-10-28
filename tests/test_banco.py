@@ -11,7 +11,8 @@ from sqlalchemy import create_engine, inspect, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.banco import consultas, modelo, sessao as fonte
+from app.banco import consultas, modelo
+from app.banco import sessao as fonte
 from app.contratos import CATEGORIAS, Alerta, AvaliacaoTela, ResumoComercio, SerieMensal
 
 HOJE = date(2026, 10, 13)
@@ -214,7 +215,9 @@ def test_sem_database_url_nada_muda(monkeypatch):
 
     from app import servicos
     assert servicos.DADOS_DE_DEMONSTRACAO
-    assert len(servicos.comercios()) == 3
+    # A contagem sem empresa é a da página pública; a lista por empresa exige o filtro.
+    assert servicos.quantos_negocios() == 3
+    assert len(servicos.comercios("bella-massa")) == 1
 
 
 def test_com_database_url_o_banco_entra(monkeypatch, tmp_path):
@@ -238,9 +241,9 @@ def test_postgres_do_render_vira_url_que_o_sqlalchemy_entende(monkeypatch):
 
 def test_a_migracao_cria_o_mesmo_esquema_das_entidades(tmp_path, monkeypatch):
     """Se a entidade mudar e ninguém gerar a migração, este teste quebra."""
-    from alembic import command
     from alembic.config import Config
 
+    from alembic import command
     from app.banco import RAIZ
 
     arquivo = tmp_path / "migrado.sqlite3"
@@ -262,9 +265,9 @@ def test_a_migracao_cria_o_mesmo_esquema_das_entidades(tmp_path, monkeypatch):
 
 
 def test_a_migracao_deixa_o_vocabulario_de_assuntos_pronto(tmp_path, monkeypatch):
-    from alembic import command
     from alembic.config import Config
 
+    from alembic import command
     from app.banco import RAIZ
 
     arquivo = tmp_path / "assuntos.sqlite3"

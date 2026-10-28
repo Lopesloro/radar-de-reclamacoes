@@ -28,4 +28,14 @@ if ! "$PY" -m pytest -q --ignore=tests/e2e >/tmp/pre-commit-radar.log 2>&1; then
 fi
 
 tail -1 /tmp/pre-commit-radar.log
+
+# A CI roda `ruff check .` e reprova. Sem isto aqui, a bateria verde esconde
+# uma CI vermelha, e só o GitHub avisa — depois do push.
+if ! "$PY" -m ruff check . >/tmp/pre-commit-ruff.log 2>&1; then
+  echo
+  echo "COMMIT BLOQUEADO: o ruff reprovou."
+  tail -10 /tmp/pre-commit-ruff.log
+  exit 1
+fi
+echo "pre-commit: ruff limpo"
 exit 0

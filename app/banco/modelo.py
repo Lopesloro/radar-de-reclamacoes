@@ -26,6 +26,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
+
 # Um objeto ForeignKey pertence a uma coluna só, por isso cada uso cria o seu.
 def _para_empresa() -> ForeignKey:
     return ForeignKey("empresa.id", ondelete="CASCADE")

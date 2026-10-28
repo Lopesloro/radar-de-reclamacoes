@@ -37,8 +37,15 @@ def existe(empresa_id: str) -> bool:
     return falsos.existe(empresa_id)
 
 
-def comercios() -> tuple[ResumoComercio, ...]:
-    return falsos.comercios()
+def comercios(empresa_id: str) -> tuple[ResumoComercio, ...]:
+    """Os negócios da empresa. O parâmetro é obrigatório de propósito: sem ele,
+    a tela lista o negócio dos outros, e já listou."""
+    return tuple(c for c in falsos.comercios() if c.empresa_id == empresa_id)
+
+
+def quantos_negocios() -> int:
+    """Só a contagem, para a página pública, que não tem sessão nem dado de ninguém."""
+    return len(falsos.comercios())
 
 
 def comercio(empresa_id: str) -> ResumoComercio | None:
@@ -57,8 +64,8 @@ def avaliacoes(empresa_id: str, limite: int = 12) -> tuple[AvaliacaoTela, ...]:
     return falsos.avaliacoes(empresa_id, limite)
 
 
-def alertas() -> tuple[Alerta, ...]:
-    return falsos.alertas()
+def alertas(empresa_id: str) -> tuple[Alerta, ...]:
+    return tuple(a for a in falsos.alertas() if a.empresa_id == empresa_id)
 
 
 def acuracia_classificacao() -> AcuraciaClassificacao:
@@ -93,7 +100,7 @@ def cenario_sugerido(investigacao: Investigacao) -> Cenario | None:
     return falsos.cenario_sugerido(investigacao)
 
 
-def experimentos(empresa_id: str | None = None) -> tuple[PlanoExperimento, ...]:
+def experimentos(empresa_id: str) -> tuple[PlanoExperimento, ...]:
     return falsos.experimentos(empresa_id)
 
 

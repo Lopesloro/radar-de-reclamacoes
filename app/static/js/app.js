@@ -21,11 +21,20 @@
     if (!balao) return;
     balao.style.left = "";
     if (!window.matchMedia("(min-width: 800px)").matches) return;
-    var sobra = balao.getBoundingClientRect().right - (document.documentElement.clientWidth - 12);
+    // Mede a partir do próprio <details>, que tem posição mesmo com o balão ainda
+    // fechado. Medir o balão só funciona depois do evento `toggle`, que o navegador
+    // dispara de forma assíncrona: quem abre e olha na mesma hora vê o balão vazado.
+    var largura = balao.offsetWidth || 320;   // 320px é a largura do balão no CSS
+    var direita = detalhe.getBoundingClientRect().left - 8 + largura;
+    var sobra = direita - (document.documentElement.clientWidth - 12);
     if (sobra > 0) balao.style.left = (-8 - sobra) + "px";
   }
 
   ajudas.forEach(function (detalhe) {
+    // No clique, antes do `toggle`: assim o balão já nasce dentro da tela.
+    var gatilho = detalhe.querySelector("summary");
+    if (gatilho) gatilho.addEventListener("click", function () { ajustar(detalhe); });
+
     detalhe.addEventListener("toggle", function () {
       if (!detalhe.open) return;
       ajudas.forEach(function (outro) { if (outro !== detalhe) outro.open = false; });

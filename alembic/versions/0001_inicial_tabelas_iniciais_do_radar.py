@@ -10,6 +10,7 @@ Criada em: 2026-10-27
 from __future__ import annotations
 
 import sqlalchemy as sa
+
 from alembic import op
 
 revision = '0001_inicial'
@@ -129,7 +130,7 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['empresa_id'], ['empresa.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['versao_modelo_id'], ['versao_modelo.id'], ),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('comercio_id', 'categoria_id', 'mes', 'versao_modelo_id', name='uq_previsao_comercio_cat_mes')
+    sa.UniqueConstraint('comercio_id', 'categoria_id', 'mes', 'versao_modelo_id', name='uq_previsao_comercio_cat_mes')  # noqa: E501
     )
     with op.batch_alter_table('previsao', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_previsao_comercio_id'), ['comercio_id'], unique=False)

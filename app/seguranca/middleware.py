@@ -113,6 +113,9 @@ def _para_a_entrada(scope: Scope) -> Response:
     return RedirectResponse(f"/entrar?{urlencode({'proximo': pedido})}", status_code=303)
 
 
+# Só urlencoded: formulário multipart (envio de arquivo) precisa mandar o token
+# no cabeçalho X-CSRF-Token, porque o corpo não é lido aqui. Hoje não existe
+# nenhum no projeto; o primeiro vai levar 403 se ignorar esta nota.
 def _e_formulario(scope: Scope) -> bool:
     """Só o formulário comum é lido aqui. JSON e arquivo passam com o token no cabeçalho, de corpo intacto."""
     return _cabecalho(scope, b"content-type").strip().lower().startswith("application/x-www-form-urlencoded")

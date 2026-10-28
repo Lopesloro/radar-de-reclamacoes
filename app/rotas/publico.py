@@ -8,6 +8,7 @@ from fastapi import APIRouter, Request
 
 from app import conteudo, servicos
 from app.rotas._telas import tela
+from app.seguranca.destino import caminho_interno
 
 rotas = APIRouter()
 
@@ -23,15 +24,16 @@ def inicio(request: Request):
         entregas=conteudo.ENTREGAS,
         passos=conteudo.PASSOS,
         dispensado=conteudo.DISPENSADO,
-        total_negocios=len(servicos.comercios()),
+        total_negocios=servicos.quantos_negocios(),
     )
 
 
 @rotas.get("/entrar")
-def entrar(request: Request, erro: str | None = None):
+def entrar(request: Request, erro: str | None = None, proximo: str = ""):
     return tela(
         request, "entrar.html", "entrar", publica=True,
         erro=erro,
+        proximo=caminho_interno(proximo),
         usuario_demo=USUARIO_DEMO,
         senha_e_demo=os.environ.get("RADAR_SENHA_DEMO") == "admin",
     )

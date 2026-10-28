@@ -14,7 +14,7 @@ from app import servicos
 from app.contratos import CATEGORIAS, Cenario
 from app.graficos import frases, svg
 from app.rotas._telas import tela
-from app.rotas.acesso_provisorio import empresa_permitida
+from app.seguranca import empresa_do_usuario, exigir_empresa
 
 rotas = APIRouter()
 EQUIPE_MAXIMA = 20
@@ -26,12 +26,15 @@ def _campo(turno) -> str:
 
 @rotas.get("/simulador")
 def indice(request: Request):
-    return tela(request, "simulador_indice.html", "simulador", negocios=servicos.comercios())
+    return tela(
+        request, "simulador_indice.html", "simulador",
+        negocios=servicos.comercios(empresa_do_usuario(request)),
+    )
 
 
 @rotas.get("/simulador/{empresa}")
 def simulador(request: Request, empresa: str, categoria: str | None = None):
-    empresa_permitida(empresa)
+    exigir_empresa(request, empresa)
     negocio = servicos.comercio(empresa)
     escolhida = categoria if categoria in CATEGORIAS else negocio.vai_crescer
     abertos = [t for t in servicos.operacao(empresa) if t.equipe > 0]
@@ -66,7 +69,7 @@ def simulador(request: Request, empresa: str, categoria: str | None = None):
     return tela(
         request, "simulador.html", "simulador",
         negocio=negocio,
-        negocios=servicos.comercios(),
+        negocios=servicos.comercios(empresa_do_usuario(request)),
         escolhida=escolhida,
         categorias_disponiveis=CATEGORIAS,
         turnos=turnos,

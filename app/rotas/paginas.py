@@ -7,6 +7,7 @@ from fastapi import APIRouter, Request
 from app import conteudo, formatos, servicos
 from app.graficos import frases, svg
 from app.rotas._telas import tela
+from app.seguranca import empresa_do_usuario
 
 rotas = APIRouter()
 
@@ -51,7 +52,8 @@ def confianca(request: Request):
 def o_que_falta(request: Request):
     return tela(
         request, "o_que_falta.html", "o-que-falta",
-        blocos=[{"negocio": c, "etapas": servicos.etapas(c.empresa_id)} for c in servicos.comercios()],
+        blocos=[{"negocio": c, "etapas": servicos.etapas(c.empresa_id)}
+                for c in servicos.comercios(empresa_do_usuario(request))],
     )
 
 

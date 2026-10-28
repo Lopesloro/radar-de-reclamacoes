@@ -10,7 +10,7 @@ from starlette.testclient import TestClient
 SENHA_DEMO = os.environ.setdefault("RADAR_SENHA_DEMO", "admin")
 os.environ.setdefault("RADAR_CHAVE", "chave-de-teste-nao-usar-em-producao")
 
-from app.web import app
+from app.web import app  # noqa: E402  (importa depois de definir as variáveis de ambiente)
 
 # Telas do dono do negócio: valem as regras de linguagem simples.
 # A sessão do teste é da Bella Massa, então só as telas dela entram aqui. Pedir

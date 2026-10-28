@@ -10,14 +10,15 @@ from app.contratos import CATEGORIAS
 from app.formatos import mes_longo
 from app.graficos import frases, svg
 from app.rotas._telas import tela
-from app.rotas.acesso_provisorio import empresa_permitida
+from app.seguranca import empresa_do_usuario, exigir_empresa
 
 rotas = APIRouter()
 
 
 @rotas.get("/resumo")
 def resumo(request: Request):
-    negocios = servicos.comercios()
+    empresa = empresa_do_usuario(request)
+    negocios = servicos.comercios(empresa)
     cartoes = []
     for c in negocios:
         serie = servicos.serie(c.empresa_id, c.vai_crescer)
@@ -29,7 +30,15 @@ def resumo(request: Request):
                 f"Reclamações de {frases.nome(c.vai_crescer)} nos últimos 6 meses",
             ),
         })
-    avisos = servicos.alertas()
+    avisos = servicos.alertas(empresa)
+    if not negocios:
+        # Empresa recém-conectada, ainda sem um mês fechado: a tela diz isso em
+        # vez de estourar. consultas.comercios() pula comércio sem histórico.
+        return tela(
+            request, "resumo.html", "resumo",
+            cartoes=[], mes=None, mes_corrente=None,
+            lidas=0, reclamacoes=0, avisos=(), sem_historico=True,
+        )
     return tela(
         request, "resumo.html", "resumo",
         cartoes=cartoes,
@@ -44,7 +53,7 @@ def resumo(request: Request):
 
 @rotas.get("/comercio/{empresa}")
 def comercio(request: Request, empresa: str):
-    empresa_permitida(empresa)
+    exigir_empresa(request, empresa)
     negocio = servicos.comercio(empresa)
     todas = sorted(servicos.series(empresa), key=lambda s: s.ultimo, reverse=True)
     mes_anterior = mes_longo(todas[0].meses[-2][0])
@@ -52,7 +61,7 @@ def comercio(request: Request, empresa: str):
     return tela(
         request, "comercio.html", "resumo",
         negocio=negocio,
-        negocios=servicos.comercios(),
+        negocios=servicos.comercios(empresa_do_usuario(request)),
         series=todas,
         mes_anterior=mes_anterior,
         frase=frases.assuntos_do_mes(todas, negocio.mes_referencia),
@@ -64,20 +73,20 @@ def comercio(request: Request, empresa: str):
 
 
 @rotas.get("/previsao")
-def previsao_inicial():
-    alerta = next(iter(servicos.alertas()), None)
+def previsao_inicial(request: Request):
+    alerta = next(iter(servicos.alertas(empresa_do_usuario(request))), None)
     destino = f"/previsao/{alerta.empresa_id}?categoria={alerta.categoria}" if alerta else \
-        f"/previsao/{servicos.comercios()[0].empresa_id}"
+        f"/previsao/{empresa_do_usuario(request)}"
     return RedirectResponse(destino, status_code=303)
 
 
 @rotas.get("/previsao/{empresa}")
 def previsao(request: Request, empresa: str, categoria: str | None = None):
-    empresa_permitida(empresa)
+    exigir_empresa(request, empresa)
     negocio = servicos.comercio(empresa)
     escolhida = categoria if categoria in CATEGORIAS else negocio.vai_crescer
     serie = servicos.serie(empresa, escolhida)
-    alerta = next((a for a in servicos.alertas()
+    alerta = next((a for a in servicos.alertas(empresa_do_usuario(request))
                    if a.empresa_id == empresa and a.categoria == escolhida), None)
     corrente, proximo = serie.previsoes
     tabela = [(formatos.mes_ano(mes), valor, "mês fechado") for mes, valor in serie.meses[-6:]]
@@ -88,7 +97,7 @@ def previsao(request: Request, empresa: str, categoria: str | None = None):
     return tela(
         request, "previsao.html", "resumo",
         negocio=negocio,
-        negocios=servicos.comercios(),
+        negocios=servicos.comercios(empresa_do_usuario(request)),
         serie=serie,
         escolhida=escolhida,
         categorias_disponiveis=CATEGORIAS,
@@ -103,7 +112,7 @@ def previsao(request: Request, empresa: str, categoria: str | None = None):
 
 @rotas.get("/avisos")
 def avisos(request: Request):
-    lista = servicos.alertas()
+    lista = servicos.alertas(empresa_do_usuario(request))
     return tela(
         request, "avisos.html", "avisos",
         avisos=[{"alerta": a, "frase": frases.alerta(a)} for a in lista],

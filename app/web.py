@@ -35,6 +35,8 @@ def saude() -> JSONResponse:
 
 @app.exception_handler(StarletteHTTPException)
 async def erro_http(request: Request, erro: StarletteHTTPException):
-    if erro.status_code == 404:
-        return tela(request, "nao_encontrado.html", "", status_code=404)
+    if erro.status_code in (403, 404):
+        # O 403 do isolamento é a recusa que o dono do negócio mais encontra.
+        # Devolver JSON cru no navegador fere "a tela fala a língua do dono".
+        return tela(request, "nao_encontrado.html", "", status_code=erro.status_code)
     return JSONResponse({"erro": erro.detail}, status_code=erro.status_code)

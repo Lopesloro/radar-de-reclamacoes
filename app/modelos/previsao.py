@@ -14,9 +14,9 @@ régua: repetir o número do mês anterior.
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from datetime import date
 from statistics import fmean, stdev
-from typing import Sequence
 
 from app.contratos import AcuraciaPrevisao, PrevisaoMes
 
