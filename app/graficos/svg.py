@@ -56,7 +56,11 @@ def _retangulo(x: float, y: float, largura: float, altura: float, cor: str, *,
 
 
 def _svg(largura: int, altura: int, titulo: str, corpo: list[str], classe: str) -> Markup:
-    return Markup(
+    # O único texto de fora é `titulo`, e ele passa por `escape`. Nome de negócio
+    # vem do cadastro e é texto livre: sem o escape, um nome com `<script>`
+    # entraria no SVG como marcação. O teste está em
+    # tests/seguranca/test_respostas.py.
+    return Markup(  # nosec B704
         f'<svg class="{classe}" viewBox="0 0 {largura} {altura}" role="img" '
         f'aria-label="{escape(titulo)}" xmlns="http://www.w3.org/2000/svg">'
         f"<title>{escape(titulo)}</title>{''.join(corpo)}</svg>"
@@ -64,7 +68,8 @@ def _svg(largura: int, altura: int, titulo: str, corpo: list[str], classe: str) 
 
 
 def _duas_versoes(largo: Markup, estreito: Markup) -> Markup:
-    return Markup(f'<div class="grafico__versoes">{largo}{estreito}</div>')
+    # As duas partes já são Markup montados aqui, não texto de fora.
+    return Markup(f'<div class="grafico__versoes">{largo}{estreito}</div>')  # nosec B704
 
 
 # ------------------------------------------------------------ colunas por mês
@@ -354,7 +359,7 @@ def mini_colunas(pontos: Sequence[tuple[date, int]], titulo: str) -> Markup:
         if i in (0, len(pontos) - 1):
             corpo.append(_texto(i * vao + vao / 2, altura - 6, MESES_CURTOS[mes.month - 1],
                                 tamanho=12, cor=MUDO))
-    return Markup(
+    return Markup(  # nosec B704 - o rótulo e a dica passam por `escape` acima
         f'<svg class="mini-colunas" width="{largura}" height="{altura}" viewBox="0 0 {largura} {altura}" '
         f'role="img" aria-label="{escape(titulo)}" xmlns="http://www.w3.org/2000/svg">'
         f"<title>{escape(titulo)}</title>{''.join(corpo)}</svg>"

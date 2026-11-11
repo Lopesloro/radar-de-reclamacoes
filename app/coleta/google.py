@@ -33,7 +33,7 @@ import httpx
 
 from app.coleta import AvaliacaoBruta, ErroDeFonte
 
-ENDERECO_TOKEN = "https://oauth2.googleapis.com/token"
+ENDERECO_TOKEN = "https://oauth2.googleapis.com/token"  # nosec B105 - endereço, não senha
 ENDERECO_AVALIACOES = "https://mybusiness.googleapis.com/v4/{parent}/reviews"
 ESCOPO = "https://www.googleapis.com/auth/business.manage"
 ENDERECO_CONSENTIMENTO = "https://accounts.google.com/o/oauth2/v2/auth"

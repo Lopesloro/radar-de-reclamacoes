@@ -91,7 +91,7 @@ def _estrelas(bruta: str) -> int:
 
 
 def _linhas(conteudo: str) -> list[dict]:
-    texto = conteudo.lstrip("﻿").strip()
+    texto = conteudo.lstrip("\ufeff").strip()
     if texto.startswith(("[", "{")):
         dados = json.loads(texto)
         if isinstance(dados, dict):

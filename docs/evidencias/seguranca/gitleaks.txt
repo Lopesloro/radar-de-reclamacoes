@@ -1,0 +1,11 @@
+# Gitleaks — segredos no código e em todo o histórico do git
+
+Rodado em 11/11/2026 00:50, gitleaks 8.30.1
+Comando: gitleaks git . --redact
+
+O histórico inteiro é varrido, e não só o código de agora: segredo apagado
+num commit antigo continua vazado para quem clona o repositório.
+
+12:50AM INF 25 commits scanned.
+12:50AM INF scanned ~1344868 bytes (1.34 MB) in 204ms
+12:50AM INF no leaks found

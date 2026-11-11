@@ -1,7 +1,9 @@
 # Radar de Reclamações · PI6
 
-Descobre por que os clientes de um pequeno negócio reclamam, mostra o efeito de
-uma mudança antes de o dono gastar e prova, com um teste, se ela funcionou.
+Lê as avaliações públicas de um pequeno negócio, separa cada uma por assunto,
+estima quantas reclamações de cada assunto devem chegar no mês e avisa quando um
+assunto deve crescer. Cada número aparece na tela ao lado do chute mais simples
+que existe, e onde o sistema não ganha do chute, está escrito que não ganha.
 
 Projeto Integrador VI · Engenharia de Software · PUC-Campinas · 2026.2.
 Gabriel Lopes Londe Rodrigues, Matheus Rocafa Moraes e Nicolas Marques Linares.
@@ -9,21 +11,32 @@ Orientação da Profa. Sílvia C. de Matos Soares.
 
 Repositório: <https://github.com/NicolasML28/PI-VI>.
 
-As regras do repositório estão em [`CLAUDE.md`](CLAUDE.md). O plano e a divisão do
-trabalho ficam fora do git, com a equipe.
+As regras do repositório estão em [`CLAUDE.md`](CLAUDE.md). A documentação está
+em [`docs/`](docs/):
+
+| Documento | Responde a |
+|---|---|
+| [`docs/fontes-de-avaliacao.md`](docs/fontes-de-avaliacao.md) | como o comerciante liga a conta dele, e o que cada plataforma exige |
+| [`docs/previsao-e-ia.md`](docs/previsao-e-ia.md) | o que o sistema acerta, o que não acerta, e como foi medido |
+| [`docs/seguranca.md`](docs/seguranca.md) | cada item de segurança, onde está e qual teste prova |
+| [`docs/producao.md`](docs/producao.md) | como pôr no ar e atender vinte clientes |
 
 ## O que já funciona
 
 | Parte | Estado |
 |---|---|
-| Telas, gráficos, botões de ajuda e tour | Prontos, com dados de mentira (`app/falsos.py`) |
-| Testes das telas e de ponta a ponta (390px e 1280px) | Prontos |
-| Entrada com senha e uma conta por empresa | **Provisório:** a demonstração abre sem senha. É a Fase 0 do Matheus |
-| Banco de dados | Falta. É a Fase 0 do Gabriel |
-| Classificador, previsão, agente, simulador e teste de verdade | Faltam. Fases 1 a 3 do Gabriel |
+| Leitura das avaliações: Google, iFood e arquivo CSV/JSON | Pronta. Google e iFood dependem de liberação da plataforma; o arquivo funciona hoje |
+| Separação por assunto, com IA e com modelo próprio de reserva | Pronta. F1 macro 0,42 contra 0,07 da régua |
+| Contagem por mês, estimativa e faixa de mínimo e máximo | Pronta. Faixa cobre 0,82 do que promete 0,80 |
+| Aviso de assunto que vai crescer | Pronto. Acerta 0,59 contra 0,22 da régua de alarme |
+| Área do cliente: resumo, avisos, estimativa, configuração e conferência | Pronta |
+| Área da equipe: cadastro de cliente, fontes, coleta, auditoria | Pronta |
+| Entrada com senha Argon2id, isolamento por empresa e auditoria | Prontos |
+| Coleta rodando sozinha, aviso por e-mail, sessão revogável | Faltam. Ver `docs/producao.md` |
+| Por que o assunto cresceu, "E se eu mudar?" e teste na prática | Faltam. Saíram do produto quando o gerador de dados fictícios foi removido |
 
-Quando uma parte real fica pronta, só muda a função correspondente em
-`app/servicos.py`; as telas continuam iguais.
+Nenhuma tela mostra dado de demonstração: o gerador de avaliações fictícias foi
+removido. Quando não há dado, a tela diz isso em uma frase.
 
 ## Rodar na sua máquina
 

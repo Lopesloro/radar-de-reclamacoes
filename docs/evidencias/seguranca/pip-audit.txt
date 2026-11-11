@@ -1,0 +1,6 @@
+# pip-audit — bibliotecas com falha conhecida
+
+Rodado em 11/11/2026 00:50, pip-audit 2.10.1
+Comando: pip-audit -r requirements.txt --no-deps
+
+No known vulnerabilities found

@@ -53,7 +53,17 @@ INSTRUCAO = (
 )
 
 _ETIQUETA = re.compile(r"<\s*/?\s*avalia[cç][aã]o\s*>", re.IGNORECASE)
-_INVISIVEL = re.compile(r"[​-‏‪-‮⁠-⁤﻿]")
+_INVISIVEL = re.compile(
+    # Escritos como escape de propósito: com os caracteres de verdade no
+    # fonte, este arquivo passaria a ser o que ele existe para combater, e o
+    # bandit reprova a build por Trojan Source (gravidade alta). Aconteceu.
+    "[" + "".join((
+        "\\u200b-\\u200f",      # largura zero e marcas de direção
+        "\\u202a-\\u202e",      # troca de sentido do texto
+        "\\u2060-\\u2064",      # juntadores invisíveis
+        "\\ufeff",             # marca de ordem de byte no meio do texto
+    )) + "]"
+)
 
 
 @dataclass(frozen=True)

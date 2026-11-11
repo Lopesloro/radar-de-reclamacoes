@@ -14,6 +14,8 @@ import random
 
 from app.modelos import corpus
 
+# nosec B311 - `random` aqui embaralha o corpus de treino com semente fixa. Não
+# gera nada secreto; o segredo do projeto sai de `secrets`, em app/seguranca/.
 SEMENTE = 7
 VARIACOES = 20
 

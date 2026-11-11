@@ -1,0 +1,25 @@
+# Bandit — falhas no código
+
+Rodado em 11/11/2026 00:50, bandit 1.9.4
+Comando: bandit -r app
+
+
+--------------------------------------------------
+
+Code scanned:
+	Total lines of code: 5612
+	Total lines skipped (#nosec): 0
+	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 5
+
+Run metrics:
+	Total issues (by severity):
+		Undefined: 0
+		Low: 3
+		Medium: 0
+		High: 0
+	Total issues (by confidence):
+		Undefined: 0
+		Low: 0
+		Medium: 0
+		High: 3
+Files skipped (0):

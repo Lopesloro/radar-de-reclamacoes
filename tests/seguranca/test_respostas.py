@@ -77,3 +77,31 @@ def test_cabecalhos_ate_quando_a_rota_quebra(site):
     assert resposta.status_code == 500
     _confere(resposta, "500")
     assert "defeito de teste" not in resposta.text      # o erro fica no log, nunca na tela
+
+
+def test_nome_de_negocio_com_marcacao_nao_vira_marcacao_na_tela(cliente):
+    """O nome do negócio é texto livre do cadastro e vai para dentro do SVG.
+
+    O bandit aponta todo `Markup(...)` como possível XSS, e aqui a defesa é o
+    `html.escape` em cada texto que vem de fora. Este teste é o que sustenta
+    essa resposta: muda o nome do negócio para uma marcação e confere que ela
+    sai escapada, não executável.
+    """
+    from app.banco import modelo
+    from app.banco import sessao as banco
+
+    venenoso = '</title><script>alert("xss")</script>'
+    with banco.Sessao() as sessao:
+        negocio = sessao.get(modelo.Comercio, "bella-massa")
+        original = negocio.nome
+        negocio.nome = venenoso
+        sessao.commit()
+    try:
+        for rota in ("/resumo", "/comercio/bella-massa", "/previsao/bella-massa"):
+            html = cliente.get(rota).text
+            assert "<script>alert" not in html, f"{rota} deixou a marcação passar"
+            assert "&lt;script&gt;" in html or "&lt;/title&gt;" in html, rota
+    finally:
+        with banco.Sessao() as sessao:
+            sessao.get(modelo.Comercio, "bella-massa").nome = original
+            sessao.commit()

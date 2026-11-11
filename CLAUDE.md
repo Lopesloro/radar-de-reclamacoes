@@ -6,17 +6,22 @@ Orientação da Profa. Sílvia C. de Matos Soares.
 
 Repositório: <https://github.com/NicolasML28/PI-VI>.
 
-O repositório guarda só código. O plano, a divisão do trabalho (um documento por
-integrante) e os prints ficam fora do git, com a equipe. Se uma dessas pastas
-existir na máquina (`plano/`, `referencia/`, `docs/`), leia antes de começar.
+O repositório guarda o código e a documentação (`docs/`), que inclui as
+evidências de segurança que a disciplina pede entregues. O plano e a divisão do
+trabalho (um documento por integrante) ficam fora do git, com a equipe; se
+`plano/` ou `referencia/` existirem na máquina, leia antes de começar.
+
+Comece por `docs/`: `seguranca.md`, `previsao-e-ia.md`,
+`fontes-de-avaliacao.md` e `producao.md` respondem, cada um, a uma das perguntas
+que a banca faz.
 
 ## Quem é dono do quê
 
 | Área | Dono | Pastas |
 |---|---|---|
-| Banco, modelos, estatística, mundo simulado, simulador e experimento | Gabriel | `app/banco/`, `app/modelos/`, `app/mundo/`, `app/investigacao/` (menos `ia.py` e `protecao.py`), `app/decisao/`, `app/experimento/` (menos `selo.py`), `alembic/` |
-| Entrada, contas, isolamento entre empresas, IA segura, LGPD, auditoria, CI de segurança | Matheus | `app/seguranca/`, `app/investigacao/ia.py`, `app/investigacao/protecao.py`, `app/experimento/selo.py`, `app/auditoria.py`, `.github/workflows/seguranca.yml` |
-| Telas, textos, gráficos, rotas de página, testes de ponta a ponta, documentação acadêmica | Nicolas | `app/rotas/`, `app/templates/`, `app/static/`, `app/graficos/`, `app/conteudo.py`, `tests/e2e/`, `docs/` |
+| Banco, modelos, estatística, coleta e medição | Gabriel | `app/banco/`, `app/modelos/`, `app/coleta/` (menos `mascara.py`), `app/servicos.py`, `app/mundo/`, `app/decisao/`, `alembic/` |
+| Entrada, contas, isolamento entre empresas, IA segura, LGPD, auditoria, CI de segurança | Matheus | `app/seguranca/`, `app/investigacao/ia.py`, `app/investigacao/protecao.py`, `app/coleta/mascara.py`, `app/auditoria.py`, `app/rotas/formularios.py`, `.github/workflows/seguranca.yml`, `docs/seguranca.md` |
+| Telas, textos, gráficos, rotas de página, testes de ponta a ponta, documentação acadêmica | Nicolas | `app/rotas/` (menos `formularios.py`), `app/templates/`, `app/static/`, `app/graficos/`, `app/conteudo.py`, `tests/e2e/`, `docs/` (menos `seguranca.md`) |
 | Contratos entre as partes | os três | `app/contratos.py` |
 
 Antes de mexer em arquivo de outra pessoa, pergunte. `app/contratos.py` só muda
@@ -40,8 +45,17 @@ em PR aprovado pelos três.
   atributo `style=`. JavaScript e CSS só em arquivos de `app/static/`.
 - **Mundo simulado é determinístico.** Mesma semente, mesmos números. Teste nunca
   depende de sorte.
-- **Dados de demonstração são avisados na tela.** Nenhuma avaliação fictícia se
-  passa por real.
+- **Não existe dado de demonstração.** O gerador de avaliações fictícias foi
+  removido. Toda tela lê o banco, e quando não há dado ela diz isso em uma frase.
+  Tela com número inventado é pior que tela vazia, porque o dono decide em cima
+  dela. Frase inventada em tela também não: se uma tela não tem motor atrás, ela
+  sai do produto e entra na lista de "O que falta".
+- **Dado pessoal é apagado antes do banco**, nunca na hora de mostrar. O que não
+  foi gravado não vaza depois em dump, backup nem log.
+- **Nenhum número vem de modelo de linguagem.** A IA separa texto por assunto e
+  escreve frase; estimativa, faixa e erro saem de estatística conferida.
+- **Segredo não é gravado sem cofre.** Sem `RADAR_COFRE_CHAVE`, o sistema recusa
+  gravar token de fonte, em vez de gravar em texto.
 - **Português nos nomes**, como no código original (`comercio`, `avaliacao`,
   `previsao`). Comentário explica o porquê, não o quê.
 

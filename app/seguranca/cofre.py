@@ -16,11 +16,22 @@ Duas regras valem aqui, e as duas têm teste:
 A cifra é Fernet (AES-128-CBC com HMAC-SHA256) da biblioteca `cryptography`:
 cifra autenticada, então um segredo adulterado no banco falha ao abrir em vez de
 devolver lixo.
+
+A chave do Fernet tem um formato próprio (32 bytes em base64 urlsafe), e o
+`generateValue` do Render gera um texto aleatório que **não** está nesse
+formato. Em vez de pedir para alguém colar a chave na mão (e descobrir o erro
+quando o primeiro token não gravar), o valor da variável é passado por SHA-256
+para virar a chave: qualquer texto com entropia suficiente serve, e o do Render
+serve. O preço é que trocar a variável torna ilegível o que já foi cifrado, o
+que é o comportamento correto de uma troca de chave.
 """
 
 from __future__ import annotations
 
+import base64
+import hashlib
 import os
+import secrets
 
 from cryptography.fernet import Fernet, InvalidToken
 
@@ -31,9 +42,14 @@ class CofreFechado(RuntimeError):
     """Pediram para cifrar sem chave configurada. Nunca cair para texto puro."""
 
 
+# Abaixo disto o valor não tem entropia para virar chave. Vinte e quatro
+# caracteres é o tamanho de um `secrets.token_urlsafe(18)`.
+TAMANHO_MINIMO = 24
+
+
 def gerar_chave() -> str:
-    """Uma chave nova, para colar na variável de ambiente do serviço."""
-    return Fernet.generate_key().decode()
+    """Um valor novo para a variável de ambiente do serviço."""
+    return secrets.token_urlsafe(32)
 
 
 def chave() -> str | None:
@@ -41,16 +57,16 @@ def chave() -> str | None:
     return valor or None
 
 
+def _derivar(valor: str) -> bytes:
+    """A chave do Fernet a partir do texto da variável de ambiente."""
+    resumo = hashlib.sha256(valor.encode()).digest()
+    return base64.urlsafe_b64encode(resumo[:32])
+
+
 def disponivel() -> bool:
-    """True quando há chave e ela tem o formato que o Fernet aceita."""
+    """True quando há valor configurado e ele é longo o bastante."""
     valor = chave()
-    if valor is None:
-        return False
-    try:
-        Fernet(valor.encode())
-    except (ValueError, TypeError):
-        return False
-    return True
+    return valor is not None and len(valor) >= TAMANHO_MINIMO
 
 
 def _motor() -> Fernet:
@@ -58,12 +74,14 @@ def _motor() -> Fernet:
     if valor is None:
         raise CofreFechado(
             f"{VARIAVEL_CHAVE} não está configurada: sem ela o segredo da fonte "
-            "não é gravado. Gere uma com app.seguranca.cofre.gerar_chave()."
+            "não é gravado. Gere um valor com app.seguranca.cofre.gerar_chave()."
         )
-    try:
-        return Fernet(valor.encode())
-    except (ValueError, TypeError) as erro:
-        raise CofreFechado(f"{VARIAVEL_CHAVE} não é uma chave Fernet válida.") from erro
+    if len(valor) < TAMANHO_MINIMO:
+        raise CofreFechado(
+            f"{VARIAVEL_CHAVE} tem menos de {TAMANHO_MINIMO} caracteres: "
+            "curta demais para cifrar segredo de cliente."
+        )
+    return Fernet(_derivar(valor))
 
 
 def cifrar(segredo: str) -> str:

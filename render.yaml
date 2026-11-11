@@ -15,8 +15,24 @@ services:
       # Chave da sessão gerada pelo Render: nunca fica no repositório.
       - key: RADAR_CHAVE
         generateValue: true
+      # Cifra o token das fontes em repouso. Sem ela o sistema RECUSA gravar
+      # token, em vez de gravar em texto no banco.
+      - key: RADAR_COFRE_CHAVE
+        generateValue: true
       # Preenchidas no painel do Render, nunca aqui.
+      # DATABASE_URL: a ligação interna do Postgres do próprio Render.
       - key: DATABASE_URL
         sync: false
-      - key: RADAR_SENHA_DEMO
+      # Senha do administrador do primeiro arranque. Sem ela ninguém entra: o
+      # sistema não tem senha escrita no código.
+      - key: RADAR_ADMIN_SENHA
+        sync: false
+      # Chave da IA que separa as avaliações por assunto. Sem ela o sistema usa
+      # o modelo próprio e nada quebra.
+      - key: RADAR_IA_CHAVE
+        sync: false
+      # Credenciais do aplicativo no Google, para a fonte do Perfil da Empresa.
+      - key: RADAR_GOOGLE_CLIENTE_ID
+        sync: false
+      - key: RADAR_GOOGLE_CLIENTE_SEGREDO
         sync: false

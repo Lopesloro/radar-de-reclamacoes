@@ -5,6 +5,17 @@ jinja2==3.1.6
 python-multipart==0.0.32
 itsdangerous==2.2.0
 
+# Segurança (Matheus)
+# argon2-cffi: hash de senha Argon2id, a recomendação atual da OWASP.
+# cryptography: cifra Fernet do token das fontes em repouso.
+argon2-cffi==25.1.0
+# 50.0.2 e não 46.0.3: o pip-audit achou 13 falhas conhecidas na 46.0.3,
+# incluindo PYSEC-2026-3552, que só é corrigida a partir da 50.0.0.
+cryptography==50.0.2
+
+# Leitura das plataformas e da IA (cliente HTTP com tempo limite)
+httpx==0.28.1
+
 # Banco (Gabriel)
 sqlalchemy==2.1.4
 alembic==1.20.0

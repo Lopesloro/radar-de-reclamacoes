@@ -29,11 +29,24 @@ def test_sem_chave_o_sistema_recusa_gravar(sem_chave):
         cofre.cifrar(SEGREDO)
 
 
-def test_chave_malformada_tambem_recusa(monkeypatch):
-    monkeypatch.setenv(cofre.VARIAVEL_CHAVE, "isso-nao-e-uma-chave-fernet")
+def test_valor_curto_demais_recusa(monkeypatch):
+    """Qualquer texto longo serve como chave, mas texto curto não tem entropia."""
+    monkeypatch.setenv(cofre.VARIAVEL_CHAVE, "curta")
     assert cofre.disponivel() is False
-    with pytest.raises(cofre.CofreFechado):
+    with pytest.raises(cofre.CofreFechado, match="caracteres"):
         cofre.cifrar(SEGREDO)
+
+
+def test_o_valor_que_o_render_gera_serve_como_chave(monkeypatch):
+    """O `generateValue` do Render não produz chave no formato do Fernet.
+
+    Exigir o formato exato faria a configuração parecer certa no painel e o
+    primeiro token não gravar. O valor é derivado por SHA-256, então qualquer
+    texto com entropia suficiente funciona.
+    """
+    monkeypatch.setenv(cofre.VARIAVEL_CHAVE, "A1b2C3d4E5f6G7h8I9j0KlMnOpQrStUvWx")
+    assert cofre.disponivel() is True
+    assert cofre.decifrar(cofre.cifrar(SEGREDO)) == SEGREDO
 
 
 def test_ida_e_volta(com_chave):

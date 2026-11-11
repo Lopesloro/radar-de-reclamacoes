@@ -33,7 +33,7 @@ import httpx
 from app.coleta import AvaliacaoBruta, ErroDeFonte
 
 BASE = "https://merchant-api.ifood.com.br"
-CAMINHO_TOKEN = "/authentication/v1.0/oauth/token"
+CAMINHO_TOKEN = "/authentication/v1.0/oauth/token"  # nosec B105 - caminho, não senha
 VARIAVEL_PREFIXO = "RADAR_IFOOD_PREFIXO"
 PREFIXO_PADRAO = "/review/v1.0"
 
