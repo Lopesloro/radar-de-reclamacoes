@@ -229,3 +229,69 @@ def test_pagina_publica_tem_o_titulo_do_print(cliente):
     html = cliente.get("/").text
     assert "Você sabe a sua nota. Não sabe o motivo dela." in html
     assert "Entrar no painel" in html
+
+
+def test_o_mes_corrente_estourado_aparece_na_tela(cliente, monkeypatch):
+    """Defeito visto em produção: a tela dizia "variação normal" com o mês corrente
+    já acima do máximo esperado para o mês inteiro.
+
+    A estimativa fala do mês fechado, mas o dono abre a tela no dia 10. O que já
+    chegou é informação, e o sistema a ignorava.
+    """
+    from datetime import date
+
+    from app.contratos import PrevisaoMes, SerieMensal
+    from app.graficos import frases
+
+    def _serie(parcial, p10, p50, p90, fracao=0.5, ultimo=19):
+        return SerieMensal(
+            empresa_id="c", categoria="demora",
+            meses=((date(2026, 9, 1), 16), (date(2026, 10, 1), ultimo)),
+            parcial=(date(2026, 11, 1), parcial), parcial_fracao=fracao,
+            previsoes=(PrevisaoMes(date(2026, 11, 1), p10, p50, p90),
+                       PrevisaoMes(date(2026, 12, 1), p10, p50, p90)),
+        )
+
+    estourado = frases.leitura_da_faixa(_serie(parcial=22, p10=16, p50=19, p90=21))
+    assert "já passou do esperado" in estourado
+    assert "variação normal" not in estourado
+
+    no_meio = frases.leitura_da_faixa(_serie(parcial=20, p10=16, p50=19, p90=21, fracao=0.4))
+    assert "40% do mês passado" in no_meio
+    # Nada de extrapolar: o total projetado seria 50, um número que o sistema não
+    # consegue defender, porque avaliação não chega em ritmo constante.
+    assert "50" not in no_meio
+
+    # No começo do mês a regra não vale: poucos dias não dizem nada sobre o mês.
+    cedo = frases.leitura_da_faixa(_serie(parcial=19, p10=16, p50=19, p90=21, fracao=0.1))
+    assert "do mês passado, e o esperado" not in cedo
+
+    tranquilo = frases.leitura_da_faixa(_serie(parcial=8, p10=16, p50=19, p90=21))
+    assert "já passou do esperado" not in tranquilo
+    assert "sobe-e-desce normal" in tranquilo
+
+
+def test_a_frase_da_ia_nunca_contradiz_a_frase_propria(monkeypatch):
+    """A conclusão é calculada uma vez e a IA só a reescreve.
+
+    Na tela de produção as duas discordavam: a frase própria dizia "acima do
+    esperado" e a IA dizia "ainda é normal", lado a lado. Duas conclusões opostas
+    deixam o dono sem saber o que fazer, e isso é pior que nenhuma frase.
+    """
+    from datetime import date
+
+    from app.contratos import PrevisaoMes, SerieMensal
+    from app.graficos import frases
+    from app.modelos import leitura
+
+    serie = SerieMensal(
+        empresa_id="c", categoria="demora",
+        meses=((date(2026, 9, 1), 16), (date(2026, 10, 1), 19)),
+        parcial=(date(2026, 11, 1), 26), parcial_fracao=0.33,
+        previsoes=(PrevisaoMes(date(2026, 11, 1), 16, 19, 23),
+                   PrevisaoMes(date(2026, 12, 1), 17, 21, 27)),
+    )
+    propria = frases.leitura_da_faixa(serie)
+    assert "já passou do esperado" in propria
+    # A pergunta que vai para a IA carrega essa mesma conclusão, palavra por palavra.
+    assert propria in leitura._pergunta("Cantina do Centro", "demora", serie)

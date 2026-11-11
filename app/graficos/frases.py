@@ -83,6 +83,48 @@ def alerta(item) -> str:
     )
 
 
+def ritmo_do_mes(serie) -> str:
+    """O que o mês corrente já diz, antes de acabar.
+
+    A estimativa fala do mês fechado, mas o dono abre a tela no dia 10. Se já
+    chegaram 22 reclamações num mês cuja estimativa inteira é 19, isso é
+    informação, e o sistema estava jogando fora: ele comparava a estimativa com o
+    mês ANTERIOR e dizia "variação normal" com o mês corrente já estourado.
+
+    Duas leituras, nesta ordem:
+
+    1. o que já chegou passou do máximo esperado para o mês inteiro;
+    2. com uma parte do mês passada, o que já chegou está perto do máximo
+       esperado para o mês inteiro.
+
+    A segunda só vale depois do primeiro terço do mês.
+
+    **O que esta função não faz, de propósito: extrapolar.** A tentação é dividir
+    o que chegou pela fração do mês e anunciar o total. Com 22 reclamações num
+    terço do mês isso dá 67, um número que o sistema não consegue defender —
+    avaliação não chega em ritmo constante, e 67 na tela é alarme falso com cara
+    de medida. A frase diz o fato (quanto chegou, quanto do mês passou, qual era
+    o máximo esperado) e deixa a conta com quem conhece o negócio.
+    """
+    if not serie.previsoes:
+        return ""
+    corrente = serie.previsoes[0]
+    ja_chegou = serie.parcial[1]
+    if ja_chegou > corrente.p90:
+        return (
+            f"Atenção: já chegaram {ja_chegou} neste mês, e o máximo esperado para o mês "
+            f"inteiro era {corrente.p90}. O mês já passou do esperado."
+        )
+    fracao = serie.parcial_fracao
+    if fracao >= 0.33 and ja_chegou >= corrente.p50:
+        passou_do_mes = round(fracao * 100)
+        return (
+            f"Já chegaram {ja_chegou} com {passou_do_mes}% do mês passado, e o esperado para "
+            f"o mês inteiro era {corrente.p50}. Vale olhar o que mudou nos últimos dias."
+        )
+    return ""
+
+
 def leitura_da_faixa(serie) -> str:
     """O que a faixa quer dizer, em uma frase, sem termo técnico.
 
@@ -93,6 +135,9 @@ def leitura_da_faixa(serie) -> str:
         return ""
     corrente = serie.previsoes[0]
     largura = corrente.p90 - corrente.p10
+    aviso_do_ritmo = ritmo_do_mes(serie)
+    if aviso_do_ritmo:
+        return aviso_do_ritmo
     if corrente.p10 > serie.ultimo:
         return (
             f"Mesmo no cenário mais fraco ({corrente.p10}), o mês fecha acima dos "
