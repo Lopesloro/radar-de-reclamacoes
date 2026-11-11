@@ -6,6 +6,25 @@ de o programador lembrar — a coluna está lá para ser usada. Só `empresa` (a
 e `categoria` (vocabulário igual para as três) ficam de fora.
 
 Nomes em português, como no resto do código.
+
+## Uma pegadinha que vale saber antes de escrever código que grava
+
+Este módulo **não** declara `relationship()` entre as tabelas, só as chaves
+estrangeiras. A consequência é concreta: o SQLAlchemy não conhece a dependência
+entre as tabelas e **não garante a ordem dos INSERT** quando várias entram na
+mesma transação. Gravar `serie_mensal` e `categoria` juntos pode falhar com
+"FOREIGN KEY constraint failed", dependendo da ordem em que o SQLAlchemy resolveu
+mandar.
+
+A regra, então: **`sessao.flush()` entre quem é apontado e quem aponta.** É o que
+`app/coleta/motor.py` faz entre a versão do modelo e as classificações, e entre a
+previsão e o alerta. Quem escrever gravação nova aqui precisa fazer o mesmo.
+
+Por que não declarar `relationship()` e resolver de vez: porque `relationship()`
+traz carregamento automático junto, e carregamento automático é o caminho mais
+curto para uma consulta ler dado de outra empresa sem ninguém pedir. O filtro por
+empresa é a regra que sustenta o projeto, e um `flush()` explícito é um preço
+baixo para não abrir essa porta.
 """
 
 from __future__ import annotations

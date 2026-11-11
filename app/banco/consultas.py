@@ -225,10 +225,23 @@ def comercios(sessao: Session, empresa_id: str) -> tuple[ResumoComercio, ...]:
         ) or 0
 
         mais_reclamado = max(fechado, key=lambda c: (fechado[c], c))
-        em_alta = max(
-            fechado,
-            key=lambda c: ((previstas[c].p50 - fechado[c]) if c in previstas else -10**6, c),
-        )
+
+        def _quanto_cresce(categoria: str, fechado=fechado,
+                           previstas=previstas) -> tuple[int, int, str]:
+            """A ordem que escolhe o assunto em alta: cresce mais, e depois o maior.
+
+            O segundo critério não é enfeite. Sem ele o desempate caía na ordem
+            alfabética, e um assunto com 1 reclamação que sobe 1 ganhava de um com
+            19 que também sobe 1, só porque "qualidade" vem depois de "demora".
+            A tela então dizia "a demora é o que mais incomoda" no gráfico e abria
+            a estimativa em qualidade. Aconteceu em produção.
+            """
+            atual = fechado[categoria]
+            if categoria not in previstas:
+                return (-10**6, atual, categoria)
+            return (previstas[categoria].p50 - atual, atual, categoria)
+
+        em_alta = max(fechado, key=_quanto_cresce)
         cartoes.append(ResumoComercio(
             empresa_id=comercio.id,
             nome=comercio.nome,

@@ -290,3 +290,59 @@ def test_a_migracao_deixa_o_vocabulario_de_assuntos_pronto(tmp_path, monkeypatch
     with create_engine(f"sqlite:///{arquivo}").connect() as conexao:
         assuntos = conexao.execute(text("SELECT id FROM categoria ORDER BY ordem")).scalars().all()
     assert tuple(assuntos) == CATEGORIAS
+
+
+def test_o_assunto_em_alta_desempata_pelo_tamanho_e_nao_pelo_alfabeto(tmp_path, monkeypatch):
+    """Defeito real de produção, visto na tela antes de ser visto no código.
+
+    Dois assuntos crescendo a mesma quantidade: um com 19 reclamações no mês e
+    outro com 1. O desempate era pela ordem alfabética do nome do assunto, então
+    "qualidade" (1 reclamação) ganhava de "demora" (19). A tela dizia "a demora é
+    o que mais incomoda" no gráfico e abria a estimativa em qualidade.
+    """
+    monkeypatch.setenv("DATABASE_URL", f"sqlite:///{tmp_path / 'alta.sqlite3'}")
+    fonte.esquecer()
+    modelo.Base.metadata.create_all(fonte.motor())
+
+    with fonte.Sessao() as sessao:
+        sessao.add(modelo.Empresa(id="e1", nome="Empresa"))
+        sessao.flush()
+        sessao.add(modelo.Comercio(id="c1", empresa_id="e1", nome="Negócio",
+                                   ramo="Teste", cidade="Campinas, SP"))
+        sessao.add(modelo.VersaoModelo(id="v1", empresa_id="e1", tipo="previsao",
+                                       nome="teste", treinada_em=datetime.now(), ativa=True))
+        for categoria in CATEGORIAS:
+            sessao.add(modelo.Categoria(id=categoria, nome=categoria, ordem=1))
+        # O flush aqui não é zelo: sem `relationship()` no modelo, o SQLAlchemy não
+        # conhece a dependência entre as tabelas e não garante a ordem dos INSERT.
+        # Sem este flush, `serie_mensal` pode entrar antes de `categoria` e a chave
+        # estrangeira falha. Ver a nota em app/banco/modelo.py.
+        sessao.flush()
+        # Outubro fechado: demora com 19, qualidade com 1, o resto com zero.
+        quantidades = {"demora": 19, "qualidade": 1, "atendimento": 0,
+                       "preco": 0, "ambiente": 0}
+        for categoria, quantas in quantidades.items():
+            sessao.add(modelo.SerieMensal(empresa_id="e1", comercio_id="c1",
+                                          categoria_id=categoria, mes=date(2026, 10, 1),
+                                          quantidade=quantas, fechado=True))
+        # Novembro estimado: as duas crescem exatamente 1.
+        for categoria, quantas in (("demora", 20), ("qualidade", 2)):
+            sessao.add(modelo.Previsao(
+                id=f"p-{categoria}", empresa_id="e1", comercio_id="c1",
+                categoria_id=categoria, mes=date(2026, 11, 1),
+                p10=quantas - 1, p50=quantas, p90=quantas + 1, versao_modelo_id="v1",
+            ))
+        sessao.add(modelo.Avaliacao(id="a1", empresa_id="e1", comercio_id="c1",
+                                    id_origem="o1", data=date(2026, 10, 5), estrelas=2,
+                                    texto="Esperei demais"))
+        sessao.commit()
+
+    with fonte.Sessao() as sessao:
+        cartao = consultas.comercios(sessao, "e1")[0]
+    fonte.esquecer()
+
+    assert cartao.vai_crescer == "demora", (
+        f"o assunto em alta saiu {cartao.vai_crescer!r}: o desempate voltou para o alfabeto"
+    )
+    assert cartao.vai_crescer_de == 19
+    assert cartao.mais_reclamado == "demora"
