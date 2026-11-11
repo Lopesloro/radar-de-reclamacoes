@@ -295,3 +295,26 @@ def test_a_frase_da_ia_nunca_contradiz_a_frase_propria(monkeypatch):
     assert "já passou do esperado" in propria
     # A pergunta que vai para a IA carrega essa mesma conclusão, palavra por palavra.
     assert propria in leitura._pergunta("Cantina do Centro", "demora", serie)
+
+
+def test_a_pagina_publica_so_fala_em_demonstracao_se_houver(cliente, monkeypatch):
+    """Frase que fala de dado que não existe mais é frase que mente.
+
+    A página dizia "São 1 negócios de demonstração" com erro de concordância, e
+    continuaria dizendo isso com zero negócios no ar.
+    """
+    from app import servicos
+
+    monkeypatch.setattr(servicos, "quantos_negocios", lambda: 1)
+    um = cliente.get("/").text
+    assert "Há um negócio de demonstração" in um
+    assert "1 negócios" not in um
+
+    monkeypatch.setattr(servicos, "quantos_negocios", lambda: 0)
+    nenhum = cliente.get("/").text
+    assert "demonstração" not in nenhum
+    assert "Peça um acesso" in nenhum
+
+    monkeypatch.setattr(servicos, "quantos_negocios", lambda: 3)
+    varios = cliente.get("/").text
+    assert "São 3 negócios de demonstração" in varios

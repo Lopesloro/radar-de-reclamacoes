@@ -86,7 +86,16 @@
 <section class="fechamento">
   <div class="container fechamento__caixa">
     <h2 class="fechamento__titulo">Veja funcionando</h2>
-    <p class="fechamento__texto">São {{ total_negocios }} negócios de demonstração, com avaliações de mentira, para você andar pelas telas antes de conectar o seu.</p>
+    {# A frase só aparece enquanto existir negócio de demonstração no ar, e diz
+       que ele é de demonstração. Quando a equipe apagar o piloto, ela some
+       sozinha: frase que fala de dado que não existe mais é frase que mente. #}
+    {% if total_negocios == 1 %}
+    <p class="fechamento__texto">Há um negócio de demonstração, com avaliações escritas pela nossa equipe, para você andar pelas telas antes de ligar o seu.</p>
+    {% elif total_negocios > 1 %}
+    <p class="fechamento__texto">São {{ total_negocios }} negócios de demonstração, com avaliações escritas pela nossa equipe, para você andar pelas telas antes de ligar o seu.</p>
+    {% else %}
+    <p class="fechamento__texto">Peça um acesso para andar pelas telas com o seu negócio antes de decidir.</p>
+    {% endif %}
     <a class="botao botao--claro" href="/entrar">Entrar</a>
   </div>
 </section>
