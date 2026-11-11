@@ -42,6 +42,21 @@ from app.modelos import LIMITE_CONFIANCA, ativo, previsao
 MOTIVO_SEM_CONFIANCA = "o texto não deixou claro o assunto"
 MOTIVO_SEM_TEXTO = "a avaliação é só nota, sem texto"
 
+# Acima disto, a classificação usa o modelo local mesmo com a IA configurada.
+#
+# A conta: a IA vai em lotes de 8 e a conta gratuita aceita 12 chamadas por
+# minuto, então 450 avaliações (um histórico normal de 15 meses, que é o primeiro
+# arquivo de todo cliente novo) são 57 chamadas e cerca de cinco minutos. Cinco
+# minutos **dentro de um pedido web**: o operador acha que travou, o navegador ou
+# o proxy desiste no meio, e a transação morre com a importação pela metade.
+# Aconteceu no primeiro teste em produção.
+#
+# A escolha, então: o histórico antigo entra pelo modelo local, e a IA fica para
+# a coleta do dia a dia, que é pequena. Quem quiser a IA no histórico tem o
+# caminho certo, que é a coleta agendada rodando fora do pedido web — está em
+# docs/producao.md como o próximo passo.
+LIMITE_PARA_IA = 120
+
 
 @dataclass(frozen=True)
 class Resultado:
@@ -58,8 +73,9 @@ class Resultado:
     def em_uma_frase(self) -> str:
         if self.novas == 0:
             return f"{self.lidas} avaliações lidas, nenhuma nova."
+        quem = "a inteligência artificial" if self.modelo.startswith("ia:") else "o modelo próprio"
         return (
-            f"{self.novas} avaliações novas de {self.lidas} lidas. "
+            f"{self.novas} avaliações novas de {self.lidas} lidas, separadas por {quem}. "
             f"{self.com_assunto} com assunto, {self.sem_assunto} sem. "
             f"{self.previsoes} estimativas e {self.avisos} avisos."
         )
@@ -133,19 +149,27 @@ def _guardar_avaliacoes(sessao: Session, empresa_id: str, comercio_id: str,
 
 # ------------------------------------------------------------ 2. separar por assunto
 
-def _classificar(sessao: Session, empresa_id: str,
-                 novas: list[modelo.Avaliacao]) -> tuple[int, int]:
-    """Classifica as avaliações novas. Devolve (com assunto, sem assunto).
+def _escolher_classificador(quantas: int) -> tuple[object, str]:
+    """O classificador e o nome dele, pelo tamanho do lote. Ver LIMITE_PARA_IA."""
+    if ativo.usando_ia() and quantas > LIMITE_PARA_IA:
+        return (ativo.local(), "local:tfidf+regressao (lote grande)")
+    em_uso = ativo.classificador_em_uso()
+    return (em_uso, ativo.nome_do_modelo())
 
-    Só reclamação é classificada: avaliação de 4 ou 5 estrelas sem texto é
-    elogio, e mandá-la ao modelo gastaria chamada de IA para nada.
+
+def _classificar(sessao: Session, empresa_id: str,
+                 novas: list[modelo.Avaliacao]) -> tuple[int, int, str]:
+    """Classifica as avaliações novas. Devolve (com assunto, sem assunto, modelo).
+
+    Só avaliação com texto é classificada: avaliação sem texto não tem assunto a
+    descobrir, e mandá-la ao modelo gastaria chamada de IA para nada.
     """
     if not novas:
-        return (0, 0)
-    versao = _versao_do_modelo(sessao, empresa_id, ativo.nome_do_modelo(), "classificacao")
-    em_uso = ativo.classificador_em_uso()
-
+        return (0, 0, ativo.nome_do_modelo())
     com_texto = [a for a in novas if a.texto]
+    em_uso, nome = _escolher_classificador(len(com_texto))
+    versao = _versao_do_modelo(sessao, empresa_id, nome, "classificacao")
+
     respostas = em_uso.prever_muitos([a.texto for a in com_texto]) if com_texto else []
     por_avaliacao: dict[str, tuple[str | None, float, str | None]] = {}
     for avaliacao, (assunto, confianca) in zip(com_texto, respostas, strict=True):
@@ -176,7 +200,7 @@ def _classificar(sessao: Session, empresa_id: str,
         else:
             com += 1
     sessao.flush()
-    return (com, sem)
+    return (com, sem, nome)
 
 
 # ------------------------------------------------------------ 3. refazer a contagem por mês
@@ -304,7 +328,7 @@ def coletar(sessao: Session, empresa_id: str, comercio_id: str,
     sessao.flush()
 
     novas = _guardar_avaliacoes(sessao, empresa_id, comercio_id, brutas, execucao.id)
-    com, sem = _classificar(sessao, empresa_id, novas)
+    com, sem, nome_do_modelo = _classificar(sessao, empresa_id, novas)
     meses = _refazer_series(sessao, empresa_id, comercio_id, hoje)
     quantas, avisos = _estimar(sessao, empresa_id, comercio_id, hoje)
 
@@ -321,7 +345,7 @@ def coletar(sessao: Session, empresa_id: str, comercio_id: str,
     resultado = Resultado(
         lidas=len(brutas), novas=len(novas), repetidas=len(brutas) - len(novas),
         com_assunto=com, sem_assunto=sem, meses_refeitos=meses,
-        previsoes=quantas, avisos=avisos, modelo=ativo.nome_do_modelo(),
+        previsoes=quantas, avisos=avisos, modelo=nome_do_modelo,
     )
     auditoria.registrar(
         sessao, empresa_id=empresa_id, usuario_id=usuario_id, acao="coleta_rodada",

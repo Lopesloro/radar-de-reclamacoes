@@ -196,3 +196,37 @@ def test_a_mascara_nao_come_palavra_depois_do_nome():
     """Defeito real: `re.IGNORECASE` no padrão inteiro fazia [A-Z] casar com
     minúscula, e "a atendente Maria foi grossa" virava "a atendente [nome] grossa"."""
     assert aplicar("A atendente Maria foi grossa") == "A atendente [nome] foi grossa"
+
+
+def test_lote_grande_usa_o_modelo_local_mesmo_com_ia_ligada(monkeypatch, negocio_vazio):
+    """A IA dentro de um pedido web tem teto de tempo, e um histórico é grande.
+
+    450 avaliações em lotes de 8, a 12 chamadas por minuto, são cerca de cinco
+    minutos dentro do pedido. O operador acha que travou e o proxy desiste no
+    meio. Acima do limite, o histórico entra pelo modelo local; a IA fica para a
+    coleta do dia a dia.
+    """
+    monkeypatch.setenv("RADAR_IA_CHAVE", "chave-de-mentira-para-o-teste")
+    from app.modelos import ativo
+
+    assert ativo.usando_ia() is True
+    escolhido, nome = motor._escolher_classificador(motor.LIMITE_PARA_IA + 1)
+    assert "lote grande" in nome and not nome.startswith("ia:")
+    pequeno, nome_pequeno = motor._escolher_classificador(motor.LIMITE_PARA_IA)
+    assert nome_pequeno.startswith("ia:")
+
+
+def test_sem_ia_o_tamanho_do_lote_nao_muda_nada(monkeypatch):
+    monkeypatch.delenv("RADAR_IA_CHAVE", raising=False)
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    _, grande = motor._escolher_classificador(10_000)
+    _, miudo = motor._escolher_classificador(1)
+    assert grande == miudo == "local:tfidf+regressao"
+
+
+def test_a_frase_do_resultado_diz_quem_separou(negocio_vazio):
+    with banco.Sessao() as sessao:
+        resultado = motor.coletar(sessao, negocio_vazio, negocio_vazio, _brutas(4), hoje=HOJE)
+        sessao.commit()
+    assert "o modelo próprio" in resultado.em_uma_frase()
+    assert "4 avaliações novas" in resultado.em_uma_frase()
