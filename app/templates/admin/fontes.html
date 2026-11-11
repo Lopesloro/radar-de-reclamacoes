@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}Fontes, {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<section class="secao secao--topo">
+  <div class="container">
+    {{ m.cabeca("Fontes de avaliação", "De onde as avaliações de cada negócio são lidas, e como rodar a leitura.") }}
+    {% if recado %}<div class="aviso aviso--normal"><p>{{ recado }}</p></div>{% endif %}
+    {% if erro %}<div class="aviso aviso--piorar"><p>{{ erro }}</p></div>{% endif %}
+    {% if not cofre_ligado %}
+    <div class="aviso aviso--piorar">
+      <p><strong>RADAR_COFRE_CHAVE não está configurada.</strong> Sem ela o sistema recusa gravar token de fonte, em vez de gravar em texto no banco. A fonte de arquivo funciona; Google e iFood não.</p>
+    </div>
+    {% endif %}
+
+    <article class="cartao">
+      <h2 class="cartao__titulo">Ligar ou atualizar fonte</h2>
+      <form class="forma forma--grade" method="post" action="/admin/fontes">
+        <input type="hidden" name="csrf" value="{{ request.state.csrf }}">
+        <label class="campo"><span class="campo__rotulo">Negócio</span>
+          <select class="campo__entrada" name="comercio_id" required>
+            {% for n in negocios %}<option value="{{ n.id }}">{{ n.nome }} ({{ n.id }})</option>{% endfor %}
+          </select></label>
+        <label class="campo"><span class="campo__rotulo">Plataforma</span>
+          <select class="campo__entrada" name="plataforma" required>
+            {% for p in plataformas %}<option value="{{ p.chave }}">{{ p.nome }}</option>{% endfor %}
+          </select></label>
+        <label class="campo"><span class="campo__rotulo">Identificador na plataforma</span>
+          <input class="campo__entrada" name="identificador_externo" maxlength="200" placeholder="accounts/123/locations/456 ou merchantId">
+          <span class="campo__nota">vazio para a fonte de arquivo</span></label>
+        <label class="campo"><span class="campo__rotulo">Segredo</span>
+          <input class="campo__entrada" type="password" name="segredo" maxlength="4000" autocomplete="off">
+          <span class="campo__nota">refresh token do Google, ou clientId:clientSecret do iFood. É cifrado antes de ir para o banco e nunca volta para a tela.</span></label>
+        <button class="botao botao--primario" type="submit">Salvar fonte</button>
+      </form>
+    </article>
+
+    <article class="cartao">
+      <h2 class="cartao__titulo">Enviar avaliações em arquivo</h2>
+      <p class="cartao__texto">Cole o conteúdo do CSV ou do JSON exportado do painel da plataforma. Aceita as colunas <code>id</code>, <code>data</code>, <code>nota</code> e <code>comentario</code>, com variações de nome. Linha inválida é recusada sozinha e o resto entra.</p>
+      <form class="forma" method="post" action="/admin/importar">
+        <input type="hidden" name="csrf" value="{{ request.state.csrf }}">
+        <label class="campo"><span class="campo__rotulo">Negócio</span>
+          <select class="campo__entrada" name="comercio_id" required>
+            {% for n in negocios %}<option value="{{ n.id }}">{{ n.nome }} ({{ n.id }})</option>{% endfor %}
+          </select></label>
+        <label class="campo"><span class="campo__rotulo">Conteúdo do arquivo</span>
+          <textarea class="campo__entrada campo__entrada--area" name="conteudo_do_arquivo" rows="8" required
+                    placeholder="id;data;nota;comentario&#10;r1;13/10/2026;1;Esperei 50 minutos"></textarea></label>
+        <button class="botao botao--secundario" type="submit">Importar e classificar</button>
+      </form>
+    </article>
+
+    <h2 class="titulo-secao">Fontes ligadas</h2>
+    {% if linhas %}
+    <div class="tabela-rolagem">
+      <table class="tabela">
+        <thead><tr><th scope="col">Negócio</th><th scope="col">Plataforma</th><th scope="col">Situação</th><th scope="col">Última leitura</th><th scope="col">Ação</th></tr></thead>
+        <tbody>
+          {% for fonte, negocio, empresa in linhas %}
+          <tr>
+            <th scope="row">{{ negocio.nome }} <span class="nota">{{ empresa.nome }}</span></th>
+            <td>{{ fonte.plataforma }}{% if fonte.identificador_externo %} <span class="nota">{{ fonte.identificador_externo }}</span>{% endif %}</td>
+            <td>{{ fonte.estado }}{% if fonte.erro %} <span class="nota">{{ fonte.erro }}</span>{% endif %}</td>
+            <td>{{ fonte.ultima_coleta | data_longa if fonte.ultima_coleta else "nunca" }}</td>
+            <td>
+              {% if fonte.plataforma != "arquivo" %}
+              <form method="post" action="/admin/fontes/coletar">
+                <input type="hidden" name="csrf" value="{{ request.state.csrf }}">
+                <input type="hidden" name="fonte_id" value="{{ fonte.id }}">
+                <button class="botao botao--mini" type="submit">Coletar agora</button>
+              </form>
+              {% else %}<span class="nota">entra por envio</span>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    {{ m.estado_vazio("Nenhuma fonte ligada ainda.") }}
+    {% endif %}
+
+    <h2 class="titulo-secao">O que cada plataforma exige</h2>
+    <ul class="fatos">
+      {% for p in plataformas %}
+      <li><strong>{{ p.nome }}.</strong> {{ p.como_liga }}{% if p.o_que_trava %} <span class="nota">Trava hoje: {{ p.o_que_trava }}</span>{% endif %}</li>
+      {% endfor %}
+    </ul>
+    <h2 class="titulo-secao">Plataformas sem API de avaliação</h2>
+    <ul class="fatos">
+      {% for nome, caminho in sem_api %}<li><strong>{{ nome }}.</strong> {{ caminho }}</li>{% endfor %}
+    </ul>
+  </div>
+</section>
+{% endblock %}

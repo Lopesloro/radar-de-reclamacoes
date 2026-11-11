@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}Ainda sem avaliações, {{ projeto.nome }}{% endblock %}
+
+{% block conteudo %}
+<section class="secao secao--topo">
+  <div class="container">
+    {% if not tem_banco %}
+    {{ m.cabeca("O sistema está de pé, mas não está guardando nada",
+                "Falta ligar o banco de dados deste serviço. Enquanto ele não estiver ligado, nenhuma avaliação é guardada e nenhuma tela mostra número.") }}
+    <ul class="fatos">
+      <li>Nada foi perdido: o sistema recusa gravar em vez de gravar em lugar errado.</li>
+      <li>Quem liga é a equipe do Radar, no painel do serviço.</li>
+    </ul>
+    {% elif negocio_sem_mes %}
+    {{ m.cabeca("Esse negócio ainda não tem um mês fechado",
+                "O sistema precisa de pelo menos um mês inteiro de avaliações para montar a contagem por assunto. Antes disso, mostrar número seria mostrar uma conta pela metade.") }}
+    <ul class="fatos">
+      <li>Assim que o primeiro mês fechar, o Resumo aparece sozinho.</li>
+      <li>Para a estimativa do mês seguinte são necessários seis meses fechados.</li>
+    </ul>
+    {% elif negocios %}
+    {{ m.cabeca("Os negócios estão cadastrados, as avaliações ainda não chegaram",
+                "A fonte de avaliações deste cliente ainda não leu nada. Enquanto não ler, a tela fica assim de propósito: número inventado é pior que tela vazia.") }}
+    <ul class="fatos">
+      {% for n in negocios %}<li><strong>{{ n.nome }}</strong> · {{ n.cidade }}</li>{% endfor %}
+    </ul>
+    {% else %}
+    {{ m.cabeca("Ainda não há negócio ligado à sua conta",
+                "Quem liga o primeiro negócio e a fonte das avaliações é a equipe do Radar. Depois disso esta tela passa a mostrar o resumo do mês.") }}
+    {% endif %}
+
+    {{ m.proximo_passo([
+      {"rotulo": "Ver a configuração", "href": "/configuracao"},
+      {"rotulo": "O que falta", "href": "/o-que-falta"},
+    ]) }}
+  </div>
+</section>
+{% endblock %}

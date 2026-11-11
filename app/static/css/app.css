@@ -644,3 +644,65 @@ progress::-moz-progress-bar { background: var(--acento); border-radius: 99px; }
 @media (prefers-reduced-motion: no-preference) {
   html { scroll-behavior: smooth; }
 }
+
+/* ===========================================================
+   Área da equipe, configuração e conferência
+   Acrescentado quando o sistema passou a ler dado de verdade:
+   formulário de cadastro, tabela de administração e a lista de
+   conferência de assunto. Nada aqui muda a tela do cliente que
+   já existia.
+   =========================================================== */
+
+.selo-admin {
+  font: 600 11px/1 var(--ui); letter-spacing: .12em; text-transform: uppercase;
+  color: var(--papel); background: var(--acento-escuro);
+  padding: 4px 8px; border-radius: 999px; margin-left: 10px; white-space: nowrap;
+}
+
+/* A leitura da estimativa em linguagem de gente. Fica antes do gráfico porque
+   é o que a pessoa lê primeiro. */
+.leitura {
+  border-left: 3px solid var(--acento);
+  background: var(--acento-claro);
+  padding: 14px 18px; border-radius: 0 var(--raio) var(--raio) 0;
+  margin: 20px 0 24px;
+}
+.leitura__rotulo {
+  font: 600 12px/1 var(--ui); letter-spacing: .14em; text-transform: uppercase;
+  color: var(--acento-escuro); margin: 0 0 6px;
+}
+.leitura__texto { font: 400 17px/1.6 var(--leitura); color: var(--tinta); margin: 0; }
+
+/* Formulário. `forma--grade` para cadastro de várias linhas, `forma--linha`
+   para um par de caixas dentro de uma célula de tabela. */
+.forma { display: grid; gap: 14px; margin-top: 16px; }
+.forma--grade { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); align-items: end; }
+.forma--grade > button { grid-column: 1 / -1; justify-self: start; }
+.forma--linha { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 0; }
+.campo--linha { grid-template-columns: auto 1fr; align-items: center; gap: 10px; }
+.campo__nota { font-size: 13px; color: var(--texto-3); }
+.campo__entrada--area { font: 400 14px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; resize: vertical; }
+
+.caixa { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; white-space: nowrap; }
+
+.titulo-bloco { font: 600 18px/1.3 var(--ui); margin: 20px 0 8px; }
+.dobra__corpo { display: grid; gap: 10px; padding: 12px 0 4px; }
+.dobra__corpo p { margin: 0; }
+
+.dois-lado-a-lado { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+
+/* Conferência: uma avaliação por item, com o assunto do modelo e o seletor. */
+.conferir { list-style: none; padding: 0; margin: 20px 0 0; display: grid; gap: 12px; }
+.conferir__item {
+  border: 1px solid var(--filete); border-radius: var(--raio);
+  padding: 16px 18px; background: var(--papel);
+}
+.conferir__texto { font: 400 17px/1.55 var(--leitura); margin: 0 0 8px; }
+.conferir__meta { font-size: 14px; color: var(--texto-3); margin: 0 0 12px; }
+.conferir__forma { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+.conferir__forma .campo { flex: 1 1 220px; }
+
+@media (max-width: 640px) {
+  .forma--grade { grid-template-columns: 1fr; }
+  .conferir__forma { flex-direction: column; align-items: stretch; }
+}

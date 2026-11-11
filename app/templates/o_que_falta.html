@@ -36,11 +36,11 @@
     {% endfor %}
 
     <h2 class="titulo-secao">O que ainda está sendo construído</h2>
+    <p class="lead">Estas três telas existiam como exemplo e foram retiradas. Elas voltam quando tiverem conta de verdade atrás, e não antes: tela que mostra exemplo como se fosse o seu negócio é pior que tela que não existe.</p>
     <ul class="fatos">
-      <li><strong>Entrada com e-mail e senha</strong>, e uma conta para cada negócio. Hoje a demonstração abre sem senha.</li>
-      <li><strong>Avaliações de verdade</strong>, guardadas num banco de dados. Hoje os números são de mentira.</li>
-      <li><strong>As contas de verdade</strong> do Por quê?, do E se? e do teste na prática. Hoje as telas mostram exemplos.</li>
-      <li><strong>Marcar o dia do teste e responder aos avisos</strong> direto pela tela.</li>
+      {% for item in proximas %}
+      <li><strong>{{ item.titulo }}.</strong> {{ item.texto }} <span class="nota">Falta: {{ item.falta }}</span></li>
+      {% endfor %}
     </ul>
 
     {{ m.proximo_passo([{"rotulo": "Voltar ao resumo", "href": "/resumo"}]) }}

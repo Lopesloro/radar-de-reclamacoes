@@ -56,7 +56,7 @@ def test_tela_abre(cliente, rota):
     assert cliente.get(rota).status_code == 200
 
 
-@pytest.mark.parametrize("rota", TELAS_DO_DONO + ["/sobre"])
+@pytest.mark.parametrize("rota", TELAS_DO_DONO)
 def test_tela_nao_tem_jargao_fora_dos_detalhes_tecnicos(cliente, rota):
     texto = _texto_visivel(cliente.get(rota).text)
     for termo in JARGAO:
@@ -74,7 +74,7 @@ def test_tela_respeita_a_politica_de_seguranca(cliente, rota):
 
 
 @pytest.mark.parametrize("rota", ["/resumo", "/comercio/bella-massa", "/previsao/bella-massa",
-                                  "/investigacao/bella-massa/demora", "/simulador/bella-massa",
+                                  "/configuracao", "/conferir",
                                   "/confianca"])
 def test_tela_tem_botao_de_ajuda(cliente, rota):
     html = cliente.get(rota).text
@@ -83,7 +83,7 @@ def test_tela_tem_botao_de_ajuda(cliente, rota):
 
 
 @pytest.mark.parametrize("rota", ["/comercio/bella-massa", "/previsao/bella-massa",
-                                  "/simulador/bella-massa", "/confianca"])
+                                  "/confianca"])
 def test_todo_grafico_tem_como_ler_e_tabela(cliente, rota):
     html = cliente.get(rota).text
     graficos = html.count('<figure class="grafico"')
@@ -116,15 +116,28 @@ def test_pagina_publica_nao_mostra_nome_de_negocio(cliente):
         assert nome not in html
 
 
-def test_sobre_registra_quem_construiu(cliente):
-    html = cliente.get("/sobre").text
-    for pessoa in ("Gabriel Lopes Londe Rodrigues", "Matheus Rocafa Moraes", "Nicolas Marques Linares"):
+def test_a_ficha_tecnica_nao_aparece_para_o_cliente(cliente):
+    """Quem contrata não precisa saber quem escreveu o sistema, e o site é B2B.
+
+    A ficha com os nomes da equipe mudou para `/admin/sistema`, que o
+    middleware fecha para quem não é da equipe.
+    """
+    assert cliente.get("/admin/sistema").status_code == 403
+    for rota in ("/resumo", "/confianca", "/ajuda", "/configuracao"):
+        html = cliente.get(rota).text
+        for pessoa in ("Gabriel", "Matheus", "Nicolas", "PUC"):
+            assert pessoa not in html, f"{pessoa} aparece em {rota}"
+
+
+def test_a_ficha_tecnica_aparece_para_a_equipe(equipe):
+    html = equipe.get("/admin/sistema").text
+    for pessoa in ("Gabriel Lopes Londe Rodrigues", "Matheus Rocafa Moraes",
+                   "Nicolas Marques Linares"):
         assert pessoa in html
 
 
 @pytest.mark.parametrize("rota", ["/comercio/nao-existe", "/previsao/nao-existe",
-                                  "/investigacao/bella-massa/fofoca", "/experimentos/nao-existe",
-                                  "/pagina-que-nao-existe"])
+                                  "/admin/clientes", "/pagina-que-nao-existe"])
 def test_endereco_errado_responde_404_com_saida(cliente, rota):
     """Empresa inexistente devolve 403, e não 404.
 
@@ -143,16 +156,15 @@ def test_assunto_invalido_na_previsao_volta_para_o_padrao(cliente):
     assert "fofoca" not in resposta.text
 
 
-def test_simulador_aceita_a_mudanca_pelo_endereco(cliente):
-    sem = cliente.get("/simulador/bella-massa?categoria=demora&t-4-noite=2&t-5-noite=2").text
-    com = cliente.get("/simulador/bella-massa?categoria=demora&t-4-noite=4&t-5-noite=4").text
-    assert "Essa mudança quase não mexe" in sem or "Mude a equipe" in sem
-    assert "devem cair de" in com
+def test_a_estimativa_mostra_a_faixa_e_nao_so_o_numero(cliente):
+    """O número do meio empata com a régua; o que o sistema acrescenta é a faixa.
 
-
-def test_simulador_ignora_numero_invalido(cliente):
-    resposta = cliente.get("/simulador/bella-massa?t-4-noite=abc&t-5-noite=999")
-    assert resposta.status_code == 200
+    Se a tela deixar de mostrar o mínimo e o máximo, ela passa a prometer
+    precisão que a medição não sustenta.
+    """
+    html = cliente.get("/previsao/bella-massa?categoria=demora").text
+    assert "entre" in html
+    assert "O que isso quer dizer" in html
 
 
 def test_saude_nao_fala_de_credencial(cliente):
@@ -169,14 +181,27 @@ def test_endereco_do_css_muda_quando_o_arquivo_muda(cliente):
     assert re.fullmatch(r"[0-9a-f]{12}", impressao)
 
 
-def test_entrada_com_a_credencial_de_demonstracao_leva_ao_resumo(cliente):
+def test_entrada_do_dono_leva_a_tela_que_ele_pediu(cliente):
+    from tests.conftest import SENHA
+
     token = _token_csrf(cliente)
     resposta = cliente.post(
         "/entrar",
-        data={"usuario": "bella", "senha": "admin", "csrf": token, "proximo": "/resumo"},
+        data={"usuario": "bella", "senha": SENHA, "csrf": token, "proximo": "/resumo"},
         follow_redirects=False,
     )
     assert resposta.headers["location"] == "/resumo"
+
+
+def test_entrada_da_equipe_leva_para_a_area_da_equipe(anonimo):
+    """Administrador não cai na tela de cliente: a área dele é outra."""
+    import re
+
+    from tests.conftest import SENHA
+
+    token = re.search(r'name="csrf" value="([^"]+)"', anonimo.get("/entrar").text).group(1)
+    resposta = anonimo.post("/entrar", data={"usuario": "admin", "senha": SENHA, "csrf": token})
+    assert resposta.headers["location"] == "/admin"
 
 
 def test_entrada_com_senha_errada_volta_com_aviso(cliente):

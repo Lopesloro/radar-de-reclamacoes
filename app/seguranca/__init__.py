@@ -11,13 +11,17 @@ Variáveis de ambiente:
 
 - `RADAR_CHAVE`: chave que assina o cookie da sessão. Sem ela o servidor sorteia uma a cada partida e
   as sessões caem a cada reinício (o `render.yaml` já gera uma).
-- `RADAR_SENHA_DEMO`: senha das contas de demonstração (`contas.py`). Sem ela, ninguém entra.
+- `RADAR_ADMIN_SENHA`: senha do administrador do primeiro arranque. Sem ela, ninguém entra.
+- `RADAR_ADMIN_USUARIO`: o nome dele, se não for `admin`.
+- `RADAR_COFRE_CHAVE`: cifra o token das fontes em repouso (`cofre.py`). Sem ela, o
+  sistema recusa gravar token, em vez de gravar em texto.
 
 Para as rotas e os templates:
 
 - `usuario_atual(request)` -> `Usuario` ou `None`.
 - `empresa_do_usuario(request)` -> a empresa de onde filtrar toda consulta.
-- `exigir_empresa(request, empresa_id)` -> recusa com 403 a empresa que não é a do usuário.
+- `exigir_comercio(request, comercio_id)` -> recusa com 403 o negócio que não é do usuário.
+- `exigir_admin(request)` -> recusa com 403 quem não é da equipe do Radar.
 - Em todo formulário que altera algo: `<input type="hidden" name="csrf" value="{{ request.state.csrf }}">`.
 """
 
@@ -29,10 +33,13 @@ import secrets
 from fastapi import Depends, FastAPI
 from fastapi.routing import APIRoute
 
+from app.seguranca import contas as _contas
 from app.seguranca.contas import Contas
 from app.seguranca.isolamento import (
     Usuario,
     empresa_do_usuario,
+    exigir_admin,
+    exigir_comercio,
     exigir_empresa,
     usuario_atual,
     vigiar_empresa,
@@ -44,7 +51,10 @@ from app.seguranca.sessao import Assinador
 
 VARIAVEL_CHAVE = "RADAR_CHAVE"
 
-__all__ = ["Usuario", "empresa_do_usuario", "exigir_empresa", "instalar", "usuario_atual"]
+__all__ = [
+    "Usuario", "empresa_do_usuario", "exigir_admin", "exigir_comercio",
+    "exigir_empresa", "instalar", "usuario_atual",
+]
 
 
 def _ja_tem_rotas(app: FastAPI) -> bool:
@@ -55,7 +65,7 @@ def _ja_tem_rotas(app: FastAPI) -> bool:
 def instalar(app: FastAPI, *, contas: Contas | None = None, chave: str | None = None) -> None:
     if _ja_tem_rotas(app):
         raise RuntimeError("instalar(app) vem antes de qualquer rota: sem isso a trava de empresa não vale.")
-    app.state.contas = Contas.da_demonstracao() if contas is None else contas
+    app.state.contas = _contas.do_sistema() if contas is None else contas
     app.state.limite_de_entrada = LimiteDeTentativas()
     app.router.dependencies.append(Depends(vigiar_empresa))
     app.include_router(rotas)

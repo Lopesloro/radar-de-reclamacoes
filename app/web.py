@@ -6,25 +6,52 @@ Tudo é montado no servidor: a página chega pronta, e o JavaScript só melhora
 
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.conteudo import PROJETO, VERSAO
-from app.rotas import experimentos, investigacao, paginas, painel, publico, simulador
+from app.rotas import admin, configuracao, paginas, painel, publico
 from app.rotas._telas import RAIZ, tela
 from app.seguranca import instalar
 
-app = FastAPI(title=PROJETO["nome"], version=VERSAO, docs_url=None, redoc_url=None, openapi_url=None)
+
+@asynccontextmanager
+async def partida(_app: FastAPI):
+    """Na partida: cria a conta do administrador se nenhuma existir.
+
+    Sem isto, um serviço novo com banco vazio não tem por onde entrar, e a única
+    alternativa seria senha escrita no código. É idempotente e não sobrescreve
+    conta que já exista, para uma variável esquecida no painel não reabrir uma
+    conta fechada.
+    """
+    from app.banco import sessao as banco
+    from app.seguranca.contas import garantir_administrador
+
+    if banco.usar_banco():
+        with banco.Sessao() as sessao:
+            garantir_administrador(sessao)
+    yield
+
+
+app = FastAPI(
+    title=PROJETO["nome"], version=VERSAO, lifespan=partida,
+    docs_url=None, redoc_url=None, openapi_url=None,
+)
 app.mount("/static", StaticFiles(directory=RAIZ / "static"), name="static")
 
 # Antes do include_router: com este FastAPI a trava de empresa é fixada no
 # registro da rota. Depois, ela levanta na partida em vez de falhar calada.
 instalar(app)
 
-for modulo in (publico, painel, investigacao, simulador, experimentos, paginas):
+for modulo in (publico, painel, configuracao, paginas, admin):
     app.include_router(modulo.rotas)
+
+
+
 
 
 @app.get("/saude")

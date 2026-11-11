@@ -9,7 +9,7 @@ from fastapi import Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from app import conteudo, formatos, servicos
+from app import conteudo, formatos
 from app.graficos import frases
 from app.seguranca import usuario_atual
 
@@ -53,13 +53,13 @@ paginas.env.globals.update(
     versao=conteudo.VERSAO,
     menu=conteudo.MENU,
     menu_mais=conteudo.MENU_MAIS,
+    menu_admin=conteudo.MENU_ADMIN,
     glossario=conteudo.GLOSSARIO,
     estados=conteudo.ESTADOS,
     vereditos=conteudo.VEREDITOS,
     forcas=conteudo.FORCAS,
     resultados_teste=conteudo.RESULTADOS_TESTE,
     categorias=conteudo.NOMES_CATEGORIA,
-    demonstracao=servicos.DADOS_DE_DEMONSTRACAO,
     impressao=_impressao_dos_estaticos(),
 )
 

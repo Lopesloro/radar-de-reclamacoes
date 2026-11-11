@@ -20,9 +20,8 @@
         <p class="cartao__frase">{{ item.frase }}</p>
         <p class="cartao__meta">Aviso de {{ a.gerado_em | data_longa }}.</p>
         <div class="cartao__acoes">
-          <a class="botao botao--primario" href="/investigacao/{{ a.empresa_id }}/{{ a.categoria }}"{% if loop.first %} data-principal{% endif %}>Por que isso está acontecendo?</a>
-          <a class="botao botao--secundario" href="/simulador/{{ a.empresa_id }}?categoria={{ a.categoria }}">E se eu mudar algo?</a>
-          <a class="botao botao--texto" href="/previsao/{{ a.empresa_id }}?categoria={{ a.categoria }}">Ver a estimativa</a>
+          <a class="botao botao--primario" href="/previsao/{{ a.empresa_id }}?categoria={{ a.categoria }}"{% if loop.first %} data-principal{% endif %}>Ver a estimativa</a>
+          <a class="botao botao--secundario" href="/comercio/{{ a.empresa_id }}">Ver os assuntos do negócio</a>
         </div>
       </li>
       {% endfor %}

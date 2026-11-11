@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}Configuração, {{ projeto.nome }}{% endblock %}
+
+{% block conteudo %}
+<section class="secao secao--topo">
+  <div class="container">
+    {{ m.cabeca("Configuração",
+                "De onde o sistema lê as suas avaliações, para onde o aviso vai, e o que falta para a leitura ser automática.") }}
+
+    <div class="com-ajuda com-ajuda--linha"><p class="nota">São sete passos entre o combinado e o aviso chegando a você.</p>{{ m.ajuda("etapas") }}</div>
+
+    {% if recado %}<div class="aviso aviso--normal"><p>{{ recado }}</p></div>{% endif %}
+    {% if erro %}<div class="aviso aviso--piorar"><p>{{ erro }}</p></div>{% endif %}
+
+    {% if sem_banco %}
+    {{ m.estado_vazio("O banco de dados deste serviço ainda não está ligado, então não há configuração para mostrar.") }}
+    {% else %}
+
+    <article class="cartao">
+      <h2 class="cartao__titulo">Para onde o aviso vai</h2>
+      <p class="cartao__texto">Quando um assunto deve crescer, o sistema avisa aqui na tela. Se você escrever um e-mail, o aviso também vai para lá.</p>
+      <form class="forma" method="post" action="/configuracao/aviso">
+        <input type="hidden" name="csrf" value="{{ request.state.csrf }}">
+        <label class="campo">
+          <span class="campo__rotulo">E-mail para o aviso</span>
+          <input class="campo__entrada" type="email" name="email_aviso" value="{{ email_aviso }}" placeholder="voce@seunegocio.com.br" maxlength="200">
+        </label>
+        <button class="botao botao--primario" type="submit">Salvar</button>
+      </form>
+    </article>
+
+    <h2 class="titulo-secao">De onde as avaliações são lidas</h2>
+    {% for n in negocios %}
+    <article class="cartao">
+      <div class="cartao__cabeca">
+        <div>
+          <h3 class="cartao__titulo">{{ n.nome }}</h3>
+          <p class="cartao__meta">{{ n.ramo }} · {{ n.cidade }}</p>
+        </div>
+      </div>
+      {% set suas = fontes_por_negocio.get(n.id, ()) %}
+      {% if suas %}
+      <div class="tabela-rolagem">
+        <table class="tabela">
+          <thead><tr><th scope="col">Plataforma</th><th scope="col">Situação</th><th scope="col">Última leitura</th></tr></thead>
+          <tbody>
+            {% for f in suas %}
+            <tr>
+              <th scope="row">{{ f.plataforma }}</th>
+              <td>{{ {"ligada": "Lendo", "pendente": "Esperando liberação", "erro": "Com erro"}.get(f.estado, f.estado) }}{% if f.erro %} <span class="nota">{{ f.erro }}</span>{% endif %}</td>
+              <td>{{ f.ultima_coleta | data_longa if f.ultima_coleta else "ainda não leu" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="cartao__texto">Nenhuma fonte ligada neste negócio ainda. Quem liga é a equipe do Radar, com a sua autorização.</p>
+      {% endif %}
+
+      {% set etapas = etapas_por_negocio.get(n.id, ()) %}
+      {% set faltando = etapas | rejectattr("estado", "equalto", "feito") | list %}
+      {% if faltando %}
+      <ul class="fatos">
+        {% for e in faltando %}<li><strong>{{ e.titulo }}:</strong> {{ e.falta }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+    </article>
+    {% endfor %}
+
+    <article class="cartao">
+      <h2 class="cartao__titulo">Conferir o assunto das avaliações</h2>
+      <p class="cartao__texto">
+        Você já conferiu <strong>{{ conferidas }}</strong> de {{ minimo_conferidas }} avaliações.
+        A partir de {{ minimo_conferidas }}, a tela "Dá para confiar?" passa a medir o acerto nas
+        avaliações do seu negócio, e não num conjunto de frases de exemplo. São dois cliques por avaliação.
+      </p>
+      <a class="botao botao--primario" href="/conferir" data-principal>Conferir avaliações</a>
+    </article>
+
+    <h2 class="titulo-secao">As plataformas que o sistema lê</h2>
+    <ul class="fatos">
+      {% for p in plataformas %}
+      <li><strong>{{ p.nome }}.</strong> {{ p.como_liga }}{% if p.o_que_trava %} <span class="nota">Hoje depende de: {{ p.o_que_trava }}</span>{% endif %}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    {{ m.proximo_passo([{"rotulo": "Conferir avaliações", "href": "/conferir"},
+                        {"rotulo": "Voltar ao resumo", "href": "/resumo"}]) }}
+  </div>
+</section>
+{% endblock %}

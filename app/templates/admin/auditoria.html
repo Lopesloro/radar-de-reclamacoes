@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}Auditoria, {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<section class="secao secao--topo">
+  <div class="container">
+    {{ m.cabeca("Trilha de auditoria", "Quem fez o quê, em qual empresa e quando. A linha é gravada na mesma transação da ação: ou as duas existem, ou nenhuma existe.") }}
+    <p class="nota">A trilha nunca repete o conteúdo: diz que alguém leu ou mudou algo de uma empresa, não o que estava escrito. Senha e token de fonte não aparecem aqui.</p>
+    {% if linhas %}
+    <div class="tabela-rolagem">
+      <table class="tabela">
+        <thead><tr><th scope="col">Quando</th><th scope="col">Empresa</th><th scope="col">Quem</th><th scope="col">Ação</th><th scope="col">Objeto</th><th scope="col">Detalhe</th></tr></thead>
+        <tbody>
+          {% for l in linhas %}
+          <tr>
+            <th scope="row">{{ l.quando | data_longa }}</th>
+            <td>{{ l.empresa_id }}</td><td>{{ l.usuario_id or "—" }}</td>
+            <td>{{ l.acao }}</td><td>{{ l.objeto }}</td><td>{{ l.detalhe or "—" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    {{ m.estado_vazio("A trilha está vazia.") }}
+    {% endif %}
+    <h2 class="titulo-secao">As ações que o sistema registra</h2>
+    <p class="nota">{{ acoes | join(", ") }}</p>
+  </div>
+</section>
+{% endblock %}

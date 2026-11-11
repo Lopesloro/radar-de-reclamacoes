@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}Painel da equipe, {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<section class="secao secao--topo">
+  <div class="container">
+    {{ m.cabeca("Painel da equipe", "O estado do sistema inteiro: clientes, leitura das avaliações e o que está pedindo atenção.") }}
+    {% if recado %}<div class="aviso aviso--normal"><p>{{ recado }}</p></div>{% endif %}
+    {% if erro %}<div class="aviso aviso--piorar"><p>{{ erro }}</p></div>{% endif %}
+
+    <div class="numeros">
+      {{ m.numero("Clientes", "etapas", clientes | inteiro) }}
+      {{ m.numero("Negócios", "etapas", negocios | inteiro) }}
+      {{ m.numero("Avaliações guardadas", "mes_fechado", avaliacoes | inteiro) }}
+      {{ m.numero("Avisos abertos", "estimativa", avisos | inteiro) }}
+    </div>
+
+    <ul class="fatos">
+      <li><strong>Separando com:</strong> {{ modelo_no_ar }}.</li>
+      <li><strong>Cofre dos segredos:</strong> {{ "ligado" if cofre_ligado else "desligado — o sistema recusa gravar token de fonte" }}.</li>
+      <li><strong>Sem assunto:</strong> {{ sem_assunto | inteiro }} avaliações, de {{ avaliacoes | inteiro }}, o modelo não soube classificar.</li>
+    </ul>
+
+    {% if fontes_com_erro %}
+    <h2 class="titulo-secao">Fontes com erro</h2>
+    <ul class="fatos">
+      {% for f in fontes_com_erro %}
+      <li><strong>{{ f.comercio_id }} / {{ f.plataforma }}:</strong> {{ f.erro }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if nunca_coletaram %}
+    <h2 class="titulo-secao">Negócios que nunca receberam avaliação</h2>
+    <ul class="fatos">
+      {% for n in nunca_coletaram %}<li>{{ n.nome }} <span class="nota">{{ n.id }}</span></li>{% endfor %}
+    </ul>
+    {% endif %}
+
+    <h2 class="titulo-secao">Últimas coletas</h2>
+    {% if ultimas %}
+    <div class="tabela-rolagem">
+      <table class="tabela">
+        <thead><tr><th scope="col">Negócio</th><th scope="col">Quando</th><th scope="col" class="num">Lidas</th><th scope="col" class="num">Novas</th><th scope="col">Estado</th></tr></thead>
+        <tbody>
+          {% for e in ultimas %}
+          <tr><th scope="row">{{ e.comercio_id }}</th><td>{{ e.iniciada_em | data_longa }}</td><td class="num">{{ e.lidas }}</td><td class="num">{{ e.novas }}</td><td>{{ e.estado }}{% if e.erro %} <span class="nota">{{ e.erro }}</span>{% endif %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    {{ m.estado_vazio("Nenhuma coleta rodou ainda.", {"rotulo": "Ligar a primeira fonte", "href": "/admin/fontes"}) }}
+    {% endif %}
+
+    {{ m.proximo_passo([{"rotulo": "Cadastrar cliente", "href": "/admin/clientes"},
+                        {"rotulo": "Fontes e coleta", "href": "/admin/fontes"}]) }}
+  </div>
+</section>
+{% endblock %}

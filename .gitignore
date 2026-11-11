@@ -24,7 +24,8 @@ playwright-report/
 .vscode/
 .claude/
 
-# Documentação e prints: ficam só na máquina, fora do GitHub
+# Plano e prints de referência: ficam só na máquina, fora do GitHub.
 plano/
 referencia/
-docs/
+# `docs/` ENTRA no repositório: é onde ficam as evidências de segurança e a
+# documentação das fontes de avaliação, que a disciplina pede entregues.

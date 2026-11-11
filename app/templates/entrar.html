@@ -23,16 +23,19 @@
 
       {% if erro == "credencial" %}
       <p class="aviso-entrada aviso-entrada--erro" role="alert">Usuário ou senha não conferem.</p>
+      {% elif erro == "bloqueado" %}
+      <p class="aviso-entrada aviso-entrada--erro" role="alert">Muitas tentativas erradas deste lugar. Espere alguns minutos e tente de novo.</p>
+      {% elif erro == "sessao" %}
+      <p class="aviso-entrada aviso-entrada--atencao" role="alert">A página ficou aberta tempo demais. Tente entrar outra vez.</p>
       {% endif %}
 
-      {# PROVISÓRIO: o token contra CSRF e a sessão entram aqui na Fase 0 do Matheus. #}
       <form method="post" action="/entrar" class="formulario">
         <input type="hidden" name="csrf" value="{{ request.state.csrf }}">
         <input type="hidden" name="proximo" value="{{ proximo | default('/resumo') }}">
         <label class="campo-classico">
           <span class="campo-classico__rotulo">Usuário</span>
           <input class="campo-classico__entrada" type="text" name="usuario" autocomplete="username"
-                 required value="{{ usuario_demo if senha_e_demo else '' }}">
+                 required maxlength="200">
         </label>
         <label class="campo-classico">
           <span class="campo-classico__rotulo">Senha</span>
@@ -41,12 +44,7 @@
         <button class="botao botao--classico botao--largo" type="submit" data-principal>Entrar</button>
       </form>
 
-      {% if senha_e_demo %}
-      <p class="aviso-entrada aviso-entrada--atencao">
-        Esta é uma versão de demonstração, com negócios e avaliações de exemplo. Entre com
-        <strong>{{ usuario_demo }}</strong> e a senha <strong>admin</strong> para conhecer as telas.
-      </p>
-      {% endif %}
+      <p class="nota">Não tem acesso ainda? Quem cria a conta do seu negócio é a equipe do Radar.</p>
     </div>
   </div>
 </section>

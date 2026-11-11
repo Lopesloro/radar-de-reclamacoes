@@ -43,19 +43,31 @@ AUTORIA = (
     },
 )
 
+# O menu do cliente. Só tela que lê dado do banco dele: as telas "Por quê?",
+# "E se?" e "Testes" saíram quando o gerador de dados fictícios foi removido, e
+# voltam quando tiverem motor de verdade. A lista do que falta para cada uma
+# está em `PROXIMAS_ETAPAS`, e aparece na tela "O que falta".
 MENU = (
     {"id": "resumo", "rotulo": "Resumo", "href": "/resumo"},
     {"id": "avisos", "rotulo": "Avisos", "href": "/avisos"},
-    {"id": "investigacao", "rotulo": "Por quê?", "href": "/investigacao"},
-    {"id": "simulador", "rotulo": "E se?", "href": "/simulador"},
-    {"id": "experimentos", "rotulo": "Testes", "href": "/experimentos"},
+    {"id": "configuracao", "rotulo": "Configuração", "href": "/configuracao"},
     {"id": "ajuda", "rotulo": "Ajuda", "href": "/ajuda"},
 )
 
 MENU_MAIS = (
     {"id": "confianca", "rotulo": "Dá para confiar?", "href": "/confianca"},
     {"id": "o-que-falta", "rotulo": "O que falta", "href": "/o-que-falta"},
-    {"id": "sobre", "rotulo": "Sobre o sistema", "href": "/sobre"},
+)
+
+# O menu da equipe do Radar. Vive atrás de `/admin`, que o middleware fecha para
+# quem não é admin antes de a rota rodar.
+MENU_ADMIN = (
+    {"id": "admin", "rotulo": "Painel", "href": "/admin"},
+    {"id": "admin-clientes", "rotulo": "Clientes", "href": "/admin/clientes"},
+    {"id": "admin-fontes", "rotulo": "Fontes", "href": "/admin/fontes"},
+    {"id": "admin-coletas", "rotulo": "Coletas", "href": "/admin/coletas"},
+    {"id": "admin-auditoria", "rotulo": "Auditoria", "href": "/admin/auditoria"},
+    {"id": "admin-sistema", "rotulo": "Sistema", "href": "/admin/sistema"},
 )
 
 NOMES_CATEGORIA = {
@@ -301,34 +313,38 @@ FAQ = (
      "sistema prefere dizer que não sabe a chutar."),
 )
 
-# Página pública. Linguagem de quem tem o negócio, nada de sigla.
+# Página pública. Linguagem de quem tem o negócio, nada de sigla. Cada bloco
+# descreve algo que o sistema faz hoje: promessa sem código atrás vira a
+# reclamação do primeiro cliente.
 ENTREGAS = (
     {
-        "titulo": "Por quê?",
-        "texto": "Quando uma reclamação começa a crescer, o sistema investiga a causa: confere o "
-                 "que mudou no seu negócio, o calendário, o clima e o que os clientes escrevem. "
-                 "Mostra o que é provável e o que não é.",
+        "titulo": "Separa por assunto",
+        "texto": "Cada avaliação entra em um de cinco assuntos: atendimento, demora, preço, "
+                 "qualidade e ambiente. Quando o texto não deixa claro, o sistema diz que não "
+                 "sabe, em vez de chutar e inflar uma conta.",
     },
     {
-        "titulo": "E se?",
-        "texto": "Antes de contratar ou mudar a escala, você vê quantas reclamações a mudança "
-                 "deve evitar e quanto ela custa por mês.",
+        "titulo": "Estima o mês e mostra a faixa",
+        "texto": "Com os meses anteriores, estima quanto deve fechar o mês e entre que mínimo e "
+                 "máximo. É a faixa que separa subida de verdade de sobe-e-desce normal.",
     },
     {
-        "titulo": "Testar na prática",
-        "texto": "Você faz a mudança em dias sorteados e o sistema compara com os outros dias. "
-                 "No fim, diz se funcionou de verdade ou se foi coincidência.",
+        "titulo": "Avisa com acerto medido",
+        "texto": "Quando um assunto deve crescer, o aviso aparece. O acerto desse aviso é medido "
+                 "e fica na tela: nenhuma promessa sem número atrás.",
     },
 )
 
 PASSOS = (
-    ("01", "Lê o que já está escrito",
-     "As avaliações do seu negócio são públicas. Com a sua autorização, o sistema lê todas e "
-     "separa por assunto."),
-    ("02", "Avisa antes de virar problema",
-     "Com os meses anteriores, estima o próximo e avisa quando um assunto deve crescer."),
-    ("03", "Ajuda a decidir e confere",
-     "Mostra a causa provável, simula a solução e prova, com um teste, se ela funcionou."),
+    ("01", "Liga a sua conta",
+     "As avaliações do seu negócio são públicas. Você autoriza a leitura, ou envia o arquivo "
+     "que exportou do painel da plataforma. Nada é instalado no seu negócio."),
+    ("02", "Separa e conta por mês",
+     "Cada avaliação vai para um assunto, e o sistema monta a contagem mês a mês. Nome de "
+     "pessoa, telefone e documento são apagados antes de qualquer coisa ser guardada."),
+    ("03", "Estima e avisa",
+     "Com os meses fechados, estima o próximo e a faixa dele, e avisa quando um assunto deve "
+     "crescer. O acerto do aviso fica na tela, ao lado do chute mais simples."),
 )
 
 DISPENSADO = (
@@ -340,12 +356,43 @@ DISPENSADO = (
 
 TECNOLOGIAS = (
     ("O site", ("Python 3.12, FastAPI e Uvicorn", "Jinja2, com as telas montadas no servidor",
-                "Gráficos em SVG desenhados em Python", "CSS próprio, sem framework")),
-    ("Dados e inteligência artificial", ("PostgreSQL, SQLAlchemy e Alembic",
-                                         "pandas, NumPy, SciPy e statsmodels",
-                                         "scikit-learn com TF-IDF na separação por assunto",
-                                         "SimPy e teoria de filas no simulador")),
+                "Gráficos em SVG desenhados em Python, sem biblioteca de gráfico",
+                "CSS próprio, sem framework", "JavaScript só para melhorar, nunca para funcionar")),
+    ("Dados", ("PostgreSQL 16 no Render, SQLAlchemy 2 e Alembic",
+               "Toda tabela de dado operacional chega à empresa por chave estrangeira",
+               "Chave única (negócio, id da plataforma) contra contagem dobrada")),
+    ("Inteligência artificial", ("Gemini separa a avaliação por assunto, em formato fechado",
+                                 "scikit-learn com TF-IDF e regressão, de reserva e de régua",
+                                 "Estatística própria na estimativa do mês, conferida por "
+                                 "origem móvel",
+                                 "Nenhum número vem de modelo de linguagem")),
     ("Qualidade e segurança", ("pytest e Playwright, em celular e computador",
                                "axe para acessibilidade", "Ruff, bandit, pip-audit e gitleaks",
-                               "Senha guardada com scrypt e proteção contra formulário falso")),
+                               "Senha com Argon2id, token de fonte cifrado em repouso",
+                               "Isolamento entre empresas provado por teste que tenta vazar")),
+)
+
+# O que falta para cada tela que saiu, e o que ela precisa para voltar sendo
+# verdade. A tela "O que falta" lista isto para o cliente, sem termo técnico.
+PROXIMAS_ETAPAS = (
+    {
+        "titulo": "Por que o assunto cresceu",
+        "texto": "Hoje o sistema diz qual assunto cresce. Dizer o motivo exige o diário de "
+                 "mudanças do negócio (troca de equipe, de preço, de horário) e teste "
+                 "estatístico comparando antes e depois, com correção para quem testa muitas "
+                 "hipóteses.",
+        "falta": "O diário do negócio e o teste de hipótese.",
+    },
+    {
+        "titulo": "E se eu mudar?",
+        "texto": "Simular o efeito de contratar alguém ou mudar a escala exige saber a operação "
+                 "do negócio: turnos, equipe por turno e tempo de atendimento.",
+        "falta": "O cadastro dos turnos e o modelo de fila.",
+    },
+    {
+        "titulo": "Testar na prática",
+        "texto": "Provar que a mudança funcionou exige sortear os dias com e sem a mudança antes "
+                 "de começar, e o dono marcar o que de fato fez em cada dia.",
+        "falta": "O sorteio selado e a marcação diária.",
+    },
 )

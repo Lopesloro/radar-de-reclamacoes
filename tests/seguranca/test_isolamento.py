@@ -10,8 +10,7 @@ from tests.seguranca.ajudas import entrar, token_da_pagina
 
 # Cada molde é uma tela de verdade do site que traz a empresa no endereço.
 TELAS_POR_EMPRESA = [
-    "/comercio/{}", "/previsao/{}", "/previsao/{}?categoria=preco", "/simulador/{}",
-    "/investigacao/{}/demora",
+    "/comercio/{}", "/previsao/{}", "/previsao/{}?categoria=preco",
 ]
 
 

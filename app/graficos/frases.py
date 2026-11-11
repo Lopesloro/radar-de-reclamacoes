@@ -40,6 +40,14 @@ def assuntos_do_mes(series, mes_ref) -> str:
 
 
 def previsao(serie) -> str:
+    if not serie.previsoes:
+        fechados = len(serie.meses)
+        faltam = max(0, 6 - fechados)
+        return (
+            f"Ainda não dá para estimar {com_artigo(serie.categoria)}: a estimativa começa "
+            f"com seis meses fechados, e este negócio tem {fechados}. "
+            f"{'Falta' if faltam == 1 else 'Faltam'} {faltam}."
+        )
     corrente = serie.previsoes[0]
     diferenca = corrente.p50 - serie.ultimo
     mes_atual = mes_longo(corrente.mes)
@@ -72,6 +80,34 @@ def alerta(item) -> str:
         f"{com_artigo(item.categoria).capitalize()} teve {item.atual} reclamações no último mês "
         f"fechado. Em {mes_longo(item.previsto.mes)} devem ser cerca de {item.previsto.p50}, "
         f"entre {item.previsto.p10} e {item.previsto.p90}."
+    )
+
+
+def leitura_da_faixa(serie) -> str:
+    """O que a faixa quer dizer, em uma frase, sem termo técnico.
+
+    É a frase que explica por que a faixa existe: o número do meio sozinho não
+    separa subida de verdade de sobe-e-desce, e o dono decide com a faixa.
+    """
+    if not serie.previsoes:
+        return ""
+    corrente = serie.previsoes[0]
+    largura = corrente.p90 - corrente.p10
+    if corrente.p10 > serie.ultimo:
+        return (
+            f"Mesmo no cenário mais fraco ({corrente.p10}), o mês fecha acima dos "
+            f"{serie.ultimo} do mês passado. É por isso que o sistema avisa."
+        )
+    if corrente.p90 <= serie.ultimo:
+        return (
+            f"Mesmo no cenário mais forte ({corrente.p90}), o mês fecha igual ou abaixo dos "
+            f"{serie.ultimo} do mês passado."
+        )
+    return (
+        f"O mês passado fechou em {serie.ultimo}, e isso cabe dentro da faixa de "
+        f"{corrente.p10} a {corrente.p90}. Ou seja: pode subir, pode cair, e por enquanto "
+        f"a diferença caberia no sobe-e-desce normal de um mês para o outro "
+        f"(a faixa tem {largura} de largura)."
     )
 
 

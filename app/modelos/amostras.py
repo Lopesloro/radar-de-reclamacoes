@@ -1,9 +1,9 @@
-"""Avaliações rotuladas para treinar e conferir o classificador.
+"""Treino e teste do classificador, montados a partir do corpus rotulado.
 
-As frases saem de `app/falsos.py` — a especificação viva do que a tela já
-consome — e passam por uma bagunça determinística: tira uma palavra, embaralha,
-mistura enchimento. Sem isso o teste mediria um problema mais fácil que o real,
-porque cada assunto teria um punhado de frases sempre idênticas.
+As frases saem de `app/modelos/corpus.py` e passam por uma bagunça
+determinística: tira uma palavra, embaralha, mistura enchimento. Sem isso o
+teste mediria um problema mais fácil que o real, porque cada assunto teria um
+punhado de frases sempre idênticas.
 
 Determinístico de propósito: mesma semente, mesmos números, teste sem sorte.
 """
@@ -12,8 +12,7 @@ from __future__ import annotations
 
 import random
 
-from app import falsos
-from app.contratos import CATEGORIAS
+from app.modelos import corpus
 
 SEMENTE = 7
 VARIACOES = 20
@@ -24,14 +23,6 @@ ENCHIMENTO = (
     "olha", "pra ser sincero", "fui hoje", "enfim", "no fim das contas",
     "já é a segunda vez", "fica a dica",
 )
-
-
-def _frases_por_assunto() -> dict[str, tuple[str, ...]]:
-    """As frases base de cada assunto, com as da história de cada negócio."""
-    por_assunto = {categoria: falsos.FRASES[categoria] for categoria in CATEGORIAS}
-    for identificador, *_, categoria, _, _ in falsos.EMPRESAS:
-        por_assunto[categoria] += falsos.FRASES_DA_HISTORIA[identificador]
-    return por_assunto
 
 
 def _variar(texto: str, sorteio: random.Random) -> str:
@@ -53,7 +44,7 @@ def rotuladas() -> tuple[tuple[str, str], ...]:
     sorteio = random.Random(SEMENTE)
     return tuple(
         item
-        for categoria, frases in _frases_por_assunto().items()
+        for categoria, frases in corpus.frases_por_assunto().items()
         for frase in frases
         for item in _variacoes(frase, categoria, sorteio)
     )
@@ -70,7 +61,7 @@ def separar() -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
     sorteio = random.Random(SEMENTE)
     treino: list[tuple[str, str]] = []
     teste: list[tuple[str, str]] = []
-    for categoria, frases in _frases_por_assunto().items():
+    for categoria, frases in corpus.frases_por_assunto().items():
         for posicao, frase in enumerate(frases):
             destino = teste if posicao % 4 == 0 else treino
             destino += _variacoes(frase, categoria, sorteio)
@@ -82,6 +73,6 @@ def sem_assunto() -> tuple[str, ...]:
     sorteio = random.Random(SEMENTE + 1)
     return tuple(
         _variar(frase, sorteio)
-        for frase in falsos.ELOGIOS + falsos.VAGAS
+        for frase in corpus.ELOGIOS + corpus.VAGAS
         for _ in range(10)
     )

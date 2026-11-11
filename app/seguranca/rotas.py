@@ -11,6 +11,7 @@ from fastapi.responses import RedirectResponse
 
 from app.seguranca import sessao
 from app.seguranca.destino import caminho_interno
+from app.seguranca.isolamento import usuario_atual
 from app.seguranca.limite import origem_do_pedido
 
 rotas = APIRouter()
@@ -44,11 +45,48 @@ async def fazer_entrada(
         limite.registrar_falha(origem)
         return _para("/entrar?erro=credencial")
 
-    sessao.iniciar(request, conta.usuario, conta.empresa_id)
+    sessao.iniciar(request, conta.usuario, conta.empresa_id, conta.papel)
+    _anotar(conta, "entrou", origem)
+    # Administrador cai na área dele; cliente, na tela que pediu.
+    if conta.e_admin and not proximo:
+        return _para("/admin")
     return _para(caminho_interno(proximo))
 
 
 @rotas.post("/sair")
 def sair(request: Request):
+    atual = usuario_atual(request)
+    if atual is not None:
+        _anotar_saida(atual)
     sessao.encerrar(request)
     return _para("/")
+
+
+def _anotar(conta, acao: str, origem: str) -> None:
+    """Grava a entrada na trilha. Sem banco, não há trilha: a função sai calada."""
+    from app.banco import sessao as banco
+
+    if not banco.usar_banco():
+        return
+    from app import auditoria
+
+    with banco.Sessao() as transacao:
+        auditoria.registrar(
+            transacao, empresa_id=conta.empresa_id, usuario_id=conta.usuario_id or None,
+            acao=acao, objeto=conta.usuario, detalhe=f"origem {origem}",
+        )
+        transacao.commit()
+
+
+def _anotar_saida(usuario) -> None:
+    from app.banco import sessao as banco
+
+    if not banco.usar_banco():
+        return
+    from app import auditoria
+
+    with banco.Sessao() as transacao:
+        auditoria.registrar(
+            transacao, empresa_id=usuario.empresa_id, acao="saiu", objeto=usuario.nome,
+        )
+        transacao.commit()

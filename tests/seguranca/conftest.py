@@ -12,14 +12,30 @@ from starlette.testclient import TestClient
 
 from app.rotas._telas import paginas
 from app.seguranca import empresa_do_usuario, exigir_empresa, instalar, usuario_atual
-from app.seguranca.contas import VARIAVEL_SENHA_DEMO, Contas
+from app.seguranca.contas import Conta, Contas
 from app.web import app as site_de_verdade
 from tests.seguranca.ajudas import CHAVE, FORMULARIO_DE_ENTRADA, SENHA, entrar, token_da_pagina
 
 
 @pytest.fixture(scope="module")
 def contas():
-    return Contas.da_demonstracao({VARIAVEL_SENHA_DEMO: SENHA})
+    """Três contas em memória: dois donos de empresas diferentes e um administrador.
+
+    Em memória, e não lidas do banco, porque o que estes testes medem é a trava,
+    não a consulta: a senha é sorteada a cada execução (`ajudas.SENHA`) e nenhum
+    teste aqui depende de senha conhecida.
+    """
+    from app.seguranca import senha as _senha
+
+    guardada = _senha.gerar_hash(SENHA)
+    return Contas([
+        Conta(usuario="bella", empresa_id="bella-massa", hash_senha=guardada,
+              papel="dono", usuario_id="u-bella-massa"),
+        Conta(usuario="patinhas", empresa_id="patinhas", hash_senha=guardada,
+              papel="dono", usuario_id="u-patinhas"),
+        Conta(usuario="admin", empresa_id="radar", hash_senha=guardada,
+              papel="admin", usuario_id="admin"),
+    ])
 
 
 def montar_site(contas: Contas) -> FastAPI:
@@ -92,6 +108,12 @@ def bella(site):
 @pytest.fixture
 def patinhas(site):
     return _logado_como(site, "patinhas")
+
+
+@pytest.fixture
+def equipe(site):
+    """O administrador. A área /admin é fechada no middleware, pelo caminho."""
+    return _logado_como(site, "admin")
 
 
 @pytest.fixture

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import os
-
 from fastapi import APIRouter, Request
 
 from app import conteudo, servicos
@@ -11,11 +9,6 @@ from app.rotas._telas import tela
 from app.seguranca.destino import caminho_interno
 
 rotas = APIRouter()
-
-# A conta de demonstração mostrada na tela de entrada. As contas nascem em
-# app/seguranca/contas.py, a partir de RADAR_SENHA_DEMO.
-USUARIO_DEMO = "bella"
-
 
 @rotas.get("/")
 def inicio(request: Request):
@@ -34,7 +27,5 @@ def entrar(request: Request, erro: str | None = None, proximo: str = ""):
         request, "entrar.html", "entrar", publica=True,
         erro=erro,
         proximo=caminho_interno(proximo),
-        usuario_demo=USUARIO_DEMO,
-        senha_e_demo=os.environ.get("RADAR_SENHA_DEMO") == "admin",
     )
 

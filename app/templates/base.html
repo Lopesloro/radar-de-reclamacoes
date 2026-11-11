@@ -18,24 +18,31 @@
 
   <header class="topo {% block topo_classe %}{% endblock %}">
     <div class="container topo__linha">
-      <a class="marca" href="{{ '/resumo' if usuario else '/' }}">{{ projeto.nome }}</a>
+      <a class="marca" href="{{ ('/admin' if usuario.papel == 'admin' else '/resumo') if usuario else '/' }}">{{ projeto.nome }}</a>
+      {% if usuario and usuario.papel == 'admin' %}<span class="selo-admin">Equipe</span>{% endif %}
 
       {% if usuario %}
+      {# `| list` nos dois: menu_admin é tupla e a lista vazia é lista, e somar
+         tupla com lista estoura 500 no menu do celular. Aconteceu. #}
+      {% set lista = (menu_admin if usuario.papel == 'admin' else menu) | list %}
+      {% set lista_mais = ([] if usuario.papel == 'admin' else menu_mais) | list %}
       <nav class="menu" aria-label="Principal">
         <ul class="menu__lista">
-          {% for item in menu %}
+          {% for item in lista %}
           <li><a href="{{ item.href }}"{% if item.id == ativo %} aria-current="page"{% endif %}{% if item.id == 'ajuda' %} data-tour="5"{% endif %}>{{ item.rotulo }}</a></li>
           {% endfor %}
+          {% if lista_mais %}
           <li>
             <details class="menu__mais" data-fecha-fora>
-              <summary{% if ativo in ['confianca', 'o-que-falta', 'sobre'] %} class="menu__mais--ativo"{% endif %}>Mais</summary>
+              <summary{% if ativo in ['confianca', 'o-que-falta'] %} class="menu__mais--ativo"{% endif %}>Mais</summary>
               <ul class="menu__lista-mais">
-                {% for item in menu_mais %}
+                {% for item in lista_mais %}
                 <li><a href="{{ item.href }}"{% if item.id == ativo %} aria-current="page"{% endif %}>{{ item.rotulo }}</a></li>
                 {% endfor %}
               </ul>
             </details>
           </li>
+          {% endif %}
         </ul>
       </nav>
       {% if usuario %}
@@ -49,7 +56,7 @@
         <summary class="menu-movel__botao">Menu</summary>
         <nav class="menu-movel__painel" aria-label="Principal no celular">
           <ul>
-            {% for item in menu + menu_mais %}
+            {% for item in lista + lista_mais %}
             <li><a href="{{ item.href }}"{% if item.id == ativo %} aria-current="page"{% endif %}>{{ item.rotulo }}</a></li>
             {% endfor %}
           </ul>
@@ -60,14 +67,6 @@
       {% endif %}
     </div>
   </header>
-
-  {% if usuario and demonstracao %}
-  <div class="faixa-demo" role="note">
-    <div class="container">
-      Você está vendo <strong>negócios de demonstração</strong>: as avaliações e os números são de mentira, para mostrar como o sistema funciona.
-    </div>
-  </div>
-  {% endif %}
 
   <main id="conteudo" tabindex="-1">
     {% block conteudo %}{% endblock %}
@@ -83,7 +82,7 @@
         <p class="rodape__titulo">Navegar</p>
         <ul class="rodape__lista">
           {% if usuario %}
-          {% for item in menu + menu_mais %}<li><a href="{{ item.href }}">{{ item.rotulo }}</a></li>{% endfor %}
+          {% for item in (menu_admin | list if usuario.papel == 'admin' else (menu | list) + (menu_mais | list)) %}<li><a href="{{ item.href }}">{{ item.rotulo }}</a></li>{% endfor %}
           {% else %}
           <li><a href="/entrar">Entrar</a></li>
           {% endif %}
@@ -91,7 +90,7 @@
       </div>
     </div>
     <div class="container rodape__base">
-      <p>Nenhuma avaliação mostrada aqui foi escrita por um cliente de verdade.</p>
+      <p>Nome de pessoa, telefone e documento são apagados do texto da avaliação antes de qualquer coisa ser guardada.</p>
     </div>
   </footer>
 

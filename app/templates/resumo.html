@@ -40,9 +40,9 @@
         </div>
         <p class="cartao__detalhe">O que mais incomoda: <strong>{{ n.mais_reclamado | assunto }}</strong>, {{ n.mais_reclamado_qtd }} reclamações em {{ n.mes_referencia | mes_longo }}.</p>
         <div class="cartao__acoes">
-          <a class="botao botao--primario" href="/investigacao/{{ n.empresa_id }}/{{ n.vai_crescer }}"{% if loop.first %} data-principal data-tour="4"{% endif %}>Por quê?</a>
-          <a class="botao botao--secundario" href="/simulador/{{ n.empresa_id }}?categoria={{ n.vai_crescer }}">E se eu mudar algo?</a>
-          <a class="botao botao--texto" href="/comercio/{{ n.empresa_id }}">Ver detalhes</a>
+          <a class="botao botao--primario" href="/previsao/{{ n.empresa_id }}?categoria={{ n.vai_crescer }}"{% if loop.first %} data-principal data-tour="4"{% endif %}>Ver o que vem por aí</a>
+          <a class="botao botao--secundario" href="/comercio/{{ n.empresa_id }}">Ver os assuntos</a>
+          <a class="botao botao--texto" href="/conferir">Conferir avaliações</a>
         </div>
       </li>
       {% endfor %}

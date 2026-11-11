@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}Sistema, {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<section class="secao secao--topo">
+  <div class="container">
+    {{ m.cabeca("Ficha técnica do sistema", "O que está ligado neste serviço agora, com o que o sistema foi feito e quem fez cada parte.") }}
+
+    <h2 class="titulo-secao">Estado deste serviço</h2>
+    <ul class="fatos">
+      <li><strong>Banco de dados:</strong> {{ "ligado" if banco_ligado else "desligado" }}.</li>
+      <li><strong>Separando as avaliações com:</strong> {{ modelo_no_ar }}{% if ia_ligada %} (inteligência artificial ligada, com o modelo próprio de reserva){% else %} (inteligência artificial desligada){% endif %}.</li>
+      <li><strong>Cofre dos segredos:</strong> {{ "ligado" if cofre_ligado else "desligado" }}.</li>
+      <li><strong>Acerto da separação agora:</strong> F1 macro {{ acerto.f1_macro }} contra {{ acerto.f1_macro_regua }} da régua, medido em {{ origem_da_medida }} ({{ acerto.amostra }} avaliações).</li>
+    </ul>
+
+    <h2 class="titulo-secao">Com o que foi feito</h2>
+    {% for titulo, itens in tecnologias %}
+    <h3 class="titulo-bloco">{{ titulo }}</h3>
+    <ul class="fatos">{% for i in itens %}<li>{{ i }}</li>{% endfor %}</ul>
+    {% endfor %}
+
+    <h2 class="titulo-secao">Quem fez o quê</h2>
+    <ul class="fatos">
+      {% for pessoa in autoria %}
+      <li><strong>{{ pessoa.nome }}</strong> — {{ pessoa.frente }}. {{ pessoa.faz }}</li>
+      {% endfor %}
+    </ul>
+    <p class="nota">{{ projeto.disciplina }}, {{ projeto.curso }}, {{ projeto.instituicao }}, {{ projeto.semestre }}. Orientação: {{ projeto.orientadora }}.</p>
+    <p class="nota">Esta página fica na área da equipe de propósito: quem contrata quer saber se o sistema acerta, não com o que ele foi feito.</p>
+  </div>
+</section>
+{% endblock %}

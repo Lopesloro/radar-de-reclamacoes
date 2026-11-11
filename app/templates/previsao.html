@@ -3,8 +3,6 @@
 {% block titulo %}O que vem por aí, {{ negocio.nome }}{% endblock %}
 
 {% block conteudo %}
-{% set corrente = serie.previsoes[0] %}
-{% set proximo = serie.previsoes[1] %}
 <section class="secao secao--topo">
   <div class="container">
     {{ m.seletor(negocios, negocio.empresa_id, "/previsao", "?categoria=" ~ escolhida) }}
@@ -15,10 +13,18 @@
     {% if alerta %}
     <div class="aviso aviso--{{ estados[alerta.estado].classe }}">
       {{ m.semaforo(alerta.estado) }}
-      <p>{{ escolhida | com_artigo | capitalize }} deve crescer. Vale descobrir por quê.</p>
+      <p>{{ escolhida | com_artigo | capitalize }} deve crescer neste mês.</p>
     </div>
     {% endif %}
 
+    {% if leitura %}
+    <div class="leitura">
+      <p class="leitura__rotulo">O que isso quer dizer</p>
+      <p class="leitura__texto">{{ leitura }}</p>
+    </div>
+    {% endif %}
+
+    {% if corrente %}
     {{ m.grafico(frase, grafico,
         ["As colunas cinza são os meses que já terminaram, com o número de reclamações em cima.",
          "Em " ~ (corrente.mes | mes_longo) ~ ", a parte cinza é o que já chegou até hoje. A parte tracejada é o que ainda deve chegar até o fim do mês.",
@@ -33,13 +39,22 @@
       {{ m.numero("Em " ~ (proximo.mes | mes_longo), "minimo_maximo", "≈ " ~ proximo.p50, "entre " ~ proximo.p10 ~ " e " ~ proximo.p90) }}
     </div>
 
-    {% set botoes = [] %}
-    {% if alerta %}{% set botoes = botoes + [{"rotulo": "Por que isso está acontecendo?", "href": "/investigacao/" ~ negocio.empresa_id ~ "/" ~ escolhida}] %}{% endif %}
-    {% set botoes = botoes + [
-      {"rotulo": "E se eu mudar algo?", "href": "/simulador/" ~ negocio.empresa_id ~ "?categoria=" ~ escolhida},
+    <details class="dobra">
+      <summary class="dobra__botao">De onde vem esse número, e o que ele não faz</summary>
+      <div class="dobra__corpo">
+        <p>O número do meio é a conta: a média dos dois últimos meses, mais a inclinação dos últimos seis quando ela passa do sobe-e-desce normal da série.</p>
+        <p><strong>Medido e dito com franqueza:</strong> para acertar o número do meio, essa conta empata com simplesmente repetir o mês passado. Em 2.592 meses de teste, o erro foi 2,66 reclamações contra 2,65 de repetir o mês anterior.</p>
+        <p>O que ela acrescenta é a <strong>faixa</strong> e o <strong>aviso</strong>. A faixa acerta 82 vezes em 100 (ela promete 80). E quando o sistema diz "vai piorar", ele acerta 59 vezes em 100, contra 22 de quem avisa só porque o último mês subiu.</p>
+      </div>
+    </details>
+    {% else %}
+    {{ m.estado_vazio(frase, {"rotulo": "Ver os assuntos do negócio", "href": "/comercio/" ~ negocio.empresa_id}) }}
+    {% endif %}
+
+    {{ m.proximo_passo([
+      {"rotulo": "Ver os assuntos do negócio", "href": "/comercio/" ~ negocio.empresa_id},
       {"rotulo": "Voltar ao resumo", "href": "/resumo"},
-    ] %}
-    {{ m.proximo_passo(botoes) }}
+    ]) }}
   </div>
 </section>
 {% endblock %}

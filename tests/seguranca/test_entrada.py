@@ -79,7 +79,7 @@ def test_usuario_que_nao_existe_recebe_a_mesma_resposta_que_senha_errada(anonimo
 
 
 def test_cada_usuario_entra_na_sua_empresa(site):
-    esperado = [("bella", "bella-massa"), ("sorriso", "sorriso-claro"), ("patinhas", "patinhas")]
+    esperado = [("bella", "bella-massa"), ("patinhas", "patinhas"), ("admin", "radar")]
     for usuario, empresa in esperado:
         cliente = TestClient(site, follow_redirects=False)
         entrar(cliente, usuario)
@@ -260,7 +260,8 @@ def test_cookie_adulterado_nao_vale(bella):
 
 def test_cookie_assinado_com_outra_chave_nao_vale(site):
     falso = Assinador("chave-do-atacante").assinar(
-        Sessao(csrf="x", inicio=sessao._agora(), usuario="bella", empresa_id="bella-massa"))
+        Sessao(csrf="x", inicio=sessao._agora(), usuario="bella",
+                   empresa_id="bella-massa", papel="dono"))
     cliente = TestClient(site, follow_redirects=False)
     cliente.cookies.set(NOME_DO_COOKIE, falso)
     assert cliente.get("/resumo").status_code == 303
@@ -269,7 +270,8 @@ def test_cookie_assinado_com_outra_chave_nao_vale(site):
 def test_cookie_assinado_com_a_chave_certa_vale(site):
     """Contraprova do teste de cima: o que falha lá é a chave, não o formato do cookie."""
     verdadeiro = Assinador(CHAVE).assinar(
-        Sessao(csrf="x", inicio=sessao._agora(), usuario="bella", empresa_id="bella-massa"))
+        Sessao(csrf="x", inicio=sessao._agora(), usuario="bella",
+                   empresa_id="bella-massa", papel="dono"))
     cliente = TestClient(site, follow_redirects=False)
     cliente.cookies.set(NOME_DO_COOKIE, verdadeiro)
     assert cliente.get("/resumo").status_code == 200
@@ -303,7 +305,8 @@ def _app_vazio(contas):
 
 
 def _cookie_com(chave: str) -> str:
-    quem = Sessao(csrf="x", inicio=sessao._agora(), usuario="bella", empresa_id="bella-massa")
+    quem = Sessao(csrf="x", inicio=sessao._agora(), usuario="bella",
+                   empresa_id="bella-massa", papel="dono")
     return Assinador(chave).assinar(quem)
 
 

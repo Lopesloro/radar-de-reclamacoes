@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}Conferir avaliações, {{ projeto.nome }}{% endblock %}
+
+{% block conteudo %}
+<section class="secao secao--topo">
+  <div class="container">
+    {{ m.cabeca("Conferir o assunto das avaliações",
+                "O sistema separou cada avaliação em um assunto. Diga se ele acertou. Cada conferência sua melhora o que a tela te mostra depois.") }}
+
+    {% if recado %}<div class="aviso aviso--normal"><p>{{ recado }}</p></div>{% endif %}
+    {% if erro %}<div class="aviso aviso--piorar"><p>{{ erro }}</p></div>{% endif %}
+
+    <div class="com-ajuda com-ajuda--linha"><p class="nota">Você já conferiu <strong>{{ conferidas }}</strong> de {{ minimo }}. Nome de pessoa, telefone e documento já foram apagados do texto abaixo.</p>{{ m.ajuda("assunto") }}</div>
+
+    {% if not itens %}
+    {{ m.estado_vazio("Ainda não há avaliação com texto para conferir neste negócio.",
+                      {"rotulo": "Voltar à configuração", "href": "/configuracao"}) }}
+    {% else %}
+    <ul class="conferir">
+      {% for item in itens %}
+      <li class="conferir__item">
+        <p class="conferir__texto">{{ item.avaliacao.texto }}</p>
+        <p class="conferir__meta">{{ item.avaliacao.data | data_curta }} · {{ item.avaliacao.estrelas | estrelas }}
+          {% if item.assunto %}· o sistema disse <strong>{{ item.assunto | assunto }}</strong>{% else %}· o sistema disse que não sabe{% endif %}
+          {% if item.confirmada %}· <span class="etiqueta etiqueta--sustentada">já conferido</span>{% endif %}
+        </p>
+        <form class="conferir__forma" method="post" action="/conferir">
+          <input type="hidden" name="csrf" value="{{ request.state.csrf }}">
+          <input type="hidden" name="avaliacao_id" value="{{ item.avaliacao.id }}">
+          <label class="campo campo--linha">
+            <span class="campo__rotulo">Assunto certo</span>
+            <select class="campo__entrada" name="categoria">
+              <option value="">nenhum dos cinco</option>
+              {% for c in categorias %}
+              <option value="{{ c }}"{% if c == item.assunto %} selected{% endif %}>{{ c | assunto }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <button class="botao botao--secundario" type="submit">Confirmar</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    {{ m.proximo_passo([{"rotulo": "Voltar à configuração", "href": "/configuracao"},
+                        {"rotulo": "Dá para confiar?", "href": "/confianca"}]) }}
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}Banco não ligado, {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<section class="secao secao--topo">
+  <div class="container">
+    {{ m.cabeca("O banco de dados não está ligado",
+                "Sem ele o sistema não guarda nada, e a área de administração não tem o que mostrar. Nenhum dado foi perdido: o sistema recusa gravar em vez de gravar no lugar errado.") }}
+    <ul class="fatos">
+      <li>Falta a variável <strong>{{ variavel }}</strong> no serviço.</li>
+      <li>Depois de ligá-la, rode a migração do banco: <code>alembic upgrade head</code>.</li>
+      <li>Na partida seguinte o sistema cria a conta de administrador a partir de <strong>RADAR_ADMIN_SENHA</strong>, se nenhuma existir.</li>
+    </ul>
+  </div>
+</section>
+{% endblock %}

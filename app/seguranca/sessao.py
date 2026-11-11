@@ -32,6 +32,9 @@ class Sessao:
     inicio: float
     usuario: str | None = None
     empresa_id: str | None = None
+    # "dono" (o cliente) ou "admin" (a equipe do Radar). Vai assinado dentro do
+    # cookie: trocar o papel no navegador quebra a assinatura e derruba a sessão.
+    papel: str | None = None
     # O que segue não vai para o cookie: diz ao middleware o que fazer com ele nesta resposta.
     nova: bool = False
     alterada: bool = False
@@ -51,9 +54,10 @@ class Assinador:
         self._serializador = URLSafeSerializer(chave, salt="radar-sessao")
 
     def assinar(self, sessao: Sessao) -> str:
-        return self._serializador.dumps(
-            {"c": sessao.csrf, "i": sessao.inicio, "u": sessao.usuario, "e": sessao.empresa_id}
-        )
+        return self._serializador.dumps({
+            "c": sessao.csrf, "i": sessao.inicio, "u": sessao.usuario,
+            "e": sessao.empresa_id, "p": sessao.papel,
+        })
 
     def abrir(self, texto: str) -> Sessao | None:
         """Devolve a sessão se a assinatura, o formato e o prazo estiverem certos; senão, nada."""
@@ -64,7 +68,7 @@ class Assinador:
         if not isinstance(dados, dict):
             return None
         csrf, inicio = dados.get("c"), dados.get("i")
-        usuario, empresa = dados.get("u"), dados.get("e")
+        usuario, empresa, papel = dados.get("u"), dados.get("e"), dados.get("p")
         if not (isinstance(csrf, str) and csrf):
             return None
         if isinstance(inicio, bool) or not isinstance(inicio, int | float):
@@ -75,9 +79,13 @@ class Assinador:
             return None
         if usuario is not None and not (usuario and empresa):
             return None
+        # Sessão de usuário sem papel é cookie de uma versão anterior: cai fora em
+        # vez de valer como "dono" por omissão.
+        if usuario is not None and papel not in ("dono", "admin"):
+            return None
         if not -_FOLGA_DO_RELOGIO <= _agora() - inicio <= VALIDADE_SEGUNDOS:
             return None
-        return Sessao(csrf=csrf, inicio=inicio, usuario=usuario, empresa_id=empresa)
+        return Sessao(csrf=csrf, inicio=inicio, usuario=usuario, empresa_id=empresa, papel=papel)
 
 
 def cabecalho_set_cookie(sessao: Sessao, assinador: Assinador, seguro: bool) -> str:
@@ -100,11 +108,12 @@ def da_requisicao(conexao: HTTPConnection) -> Sessao | None:
     return conexao.scope.get("state", {}).get("sessao")
 
 
-def iniciar(conexao: HTTPConnection, usuario: str, empresa_id: str) -> None:
+def iniciar(conexao: HTTPConnection, usuario: str, empresa_id: str,
+            papel: str = "dono") -> None:
     """Abre a sessão do usuário num cookie e num token novos: os de antes deixam de servir."""
     guardar(conexao.scope, Sessao(
         csrf=secrets.token_urlsafe(32), inicio=_agora(),
-        usuario=usuario, empresa_id=empresa_id, alterada=True,
+        usuario=usuario, empresa_id=empresa_id, papel=papel, alterada=True,
     ))
 
 

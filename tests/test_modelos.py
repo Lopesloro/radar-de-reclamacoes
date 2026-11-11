@@ -9,16 +9,29 @@ from datetime import date
 
 import pytest
 
-from app import falsos
+from app.banco import consultas
+from app.banco import sessao as banco
 from app.contratos import CATEGORIAS, AcuraciaClassificacao, AcuraciaPrevisao
 from app.modelos import LIMITE_CONFIANCA, amostras, classificador, previsao
+from tests import dados
 
-# Doze meses fechados de cinco assuntos em três negócios: a mesma base que a tela usa.
-SERIES = tuple(
-    (f"{s.categoria} em {c.nome}", s.meses)
-    for c in falsos.comercios()
-    for s in falsos.series(c.empresa_id)
-)
+
+@pytest.fixture(scope="module")
+def series(banco_de_teste):
+    """Os meses fechados que estão no banco de teste, postos lá pelo motor de coleta.
+
+    Antes isto vinha de um gerador de séries fictícias. Agora vem da mesma
+    consulta que a tela usa, o que faz este teste medir a régua no caminho de
+    verdade: se o motor contar errado, a medida cai aqui.
+    """
+    with banco.Sessao() as sessao:
+        achadas = tuple(
+            serie
+            for empresa, *_ in dados.EMPRESAS
+            for serie in consultas.series_fechadas(sessao, empresa)
+        )
+    assert achadas, "o banco de teste precisa ter séries para a régua ser medida"
+    return achadas
 
 
 @pytest.fixture(scope="module")
@@ -39,8 +52,8 @@ def acerto(modelo, separadas):
 
 
 @pytest.fixture(scope="module")
-def conferida():
-    return previsao.validar(SERIES)
+def conferida(series):
+    return previsao.validar(series)
 
 
 # ------------------------------------------------------------ a régua, item por item
@@ -104,15 +117,15 @@ def test_a_frase_vaga_e_o_elogio_tendem_a_abstencao(modelo):
 
 # ------------------------------------------------------------ previsão
 
-def test_a_faixa_contem_o_mais_provavel():
-    for _, historico in SERIES:
+def test_a_faixa_contem_o_mais_provavel(series):
+    for _, historico in series:
         faixa = previsao.prever(historico)
         assert faixa.p10 <= faixa.p50 <= faixa.p90
         assert faixa.p10 >= 0
 
 
-def test_a_faixa_abre_quando_o_mes_esta_mais_longe():
-    for _, historico in SERIES:
+def test_a_faixa_abre_quando_o_mes_esta_mais_longe(series):
+    for _, historico in series:
         perto = previsao.prever(historico, passos=1)
         longe = previsao.prever(historico, passos=2)
         assert longe.p90 - longe.p10 >= perto.p90 - perto.p10
@@ -123,18 +136,18 @@ def test_a_faixa_cobre_o_que_promete(conferida):
     assert 0.7 <= conferida.cobertura <= 1.0
 
 
-def test_a_conferencia_usa_origem_movel_e_nao_sorteio(conferida):
+def test_a_conferencia_usa_origem_movel_e_nao_sorteio(conferida, series):
     """Uma janela por mês conferível de cada série, da mais antiga para a mais nova."""
-    por_serie = len(SERIES[0][1]) - previsao.MINIMO_TREINO
-    assert conferida.janelas == por_serie * len(SERIES)
+    esperadas = sum(max(0, len(h) - previsao.MINIMO_TREINO) for _, h in series)
+    assert conferida.janelas == esperadas
     meses = [mes for mes, _, _ in conferida.pontos]
     assert meses == sorted(meses)
-    assert len(meses) == por_serie
+    assert len(meses) == len(series[0][1]) - previsao.MINIMO_TREINO
 
 
-def test_a_conferencia_nao_ve_o_futuro(conferida):
+def test_a_conferencia_nao_ve_o_futuro(conferida, series):
     """Cada ponto tem de sair do histórico até ali, e de nada depois dele."""
-    historico = next(h for nome, h in SERIES if nome == conferida.exemplo)
+    historico = next(h for nome, h in series if nome == conferida.exemplo)
     datas = [mes for mes, _ in historico]
     for mes, previsto, realizado in conferida.pontos:
         i = datas.index(mes)
@@ -146,3 +159,80 @@ def test_a_conferencia_nao_ve_o_futuro(conferida):
 def test_historico_curto_nao_vira_previsao():
     with pytest.raises(ValueError, match="mínimo"):
         previsao.prever([(date(2026, 1, 1), 10), (date(2026, 2, 1), 11)])
+
+
+# ------------------------------------------------------------ a qualidade do aviso
+
+# O estudo que mediu o aviso em seis formas de série. Ele existe porque o erro
+# médio da estimativa empata com a régua, e empatar no número do meio não
+# significa avisar igual: o aviso usa a faixa, que a régua não tem. Reproduzir
+# este teste é reproduzir a tabela que está na tela "Dá para confiar?".
+FORMAS = ("plana", "sobe", "desce", "degrau", "sazonal", "pico")
+
+
+def _serie_de_forma(forma: str, meses: int, semente: int) -> tuple[tuple[date, int], ...]:
+    import math
+    import random
+
+    sorteio = random.Random(semente)
+    base, valores = 12, []
+    for i in range(meses):
+        if forma == "plana":
+            centro = base
+        elif forma == "sobe":
+            centro = base + i * 1.2
+        elif forma == "desce":
+            centro = base + 8 - i * 0.8
+        elif forma == "degrau":
+            centro = base + (10 if i >= meses - 5 else 0)
+        elif forma == "sazonal":
+            centro = base + 6 * math.sin(i / 12 * 2 * math.pi)
+        else:
+            centro = base + (14 if i == meses - 6 else 0)
+        valores.append(max(0, round(centro + sorteio.gauss(0, 2.2))))
+    return tuple((date(2025 + i // 12, i % 12 + 1, 1), q) for i, q in enumerate(valores))
+
+
+@pytest.fixture(scope="module")
+def estudo_do_aviso():
+    series = [
+        (f"{forma}-{semente}-{meses}", _serie_de_forma(forma, meses, semente))
+        for forma in FORMAS
+        for semente in range(1, 13)
+        for meses in (18, 30)
+    ]
+    return previsao.avaliar_avisos(series), previsao.validar(series)
+
+
+def test_o_aviso_ganha_da_regua_de_alarme(estudo_do_aviso):
+    """A régua aqui é "avise sempre que o último mês subiu".
+
+    É o teste que sustenta o que a tela promete. O sistema avisa menos e acerta
+    mais: se um dia ele passar a acertar menos que a régua, a tela está mentindo
+    e esta linha quebra a build.
+    """
+    aviso, _ = estudo_do_aviso
+    assert aviso["acerto"] > aviso["acerto_regua"] * 2, (
+        f"o aviso forte acerta {aviso['acerto']} e a régua {aviso['acerto_regua']}"
+    )
+    assert aviso["acerto_atento"] > aviso["acerto_regua"] * 1.5
+    assert aviso["avisos_atento"] < aviso["avisos_regua"] / 2, (
+        "o aviso intermediário precisa falar menos que a régua, não mais"
+    )
+
+
+def test_a_faixa_cobre_oitenta_por_cento_no_estudo(estudo_do_aviso):
+    """A faixa promete 80%. Entre 0,78 e 0,90 é promessa cumprida; 0,73 não era."""
+    _, acuracia = estudo_do_aviso
+    assert 0.78 <= acuracia.cobertura <= 0.90, f"cobertura de {acuracia.cobertura}"
+
+
+def test_a_estimativa_nao_perde_feio_da_regua(estudo_do_aviso):
+    """Empatar é o resultado honesto; perder por muito seria defeito.
+
+    Está escrito como "não perde feio" e não como "ganha" de propósito: medido,
+    o erro é 2,66 contra 2,65 da régua. Um teste que exigisse ganhar só poderia
+    ser satisfeito mexendo na medida.
+    """
+    _, acuracia = estudo_do_aviso
+    assert acuracia.erro_medio <= acuracia.erro_medio_regua * 1.05

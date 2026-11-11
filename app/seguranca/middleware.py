@@ -20,12 +20,20 @@ from app.seguranca.sessao import Assinador, Sessao
 
 PUBLICAS = frozenset({"/", "/entrar", "/saude"})
 PREFIXO_ESTATICO = "/static/"
+# A área de administração nega por padrão aqui, no caminho, e não rota por rota.
+# Uma tela nova de administração já nasce fechada ao cliente mesmo se quem a
+# escreveu esquecer a dependência `exigir_admin`.
+PREFIXO_ADMINISTRACAO = "/admin"
 METODOS_SEM_EFEITO = frozenset({"GET", "HEAD", "OPTIONS"})
 TAMANHO_MAXIMO_DO_FORMULARIO = 64 * 1024     # os formulários do site têm poucas linhas
 
 
 def _publica(caminho: str) -> bool:
     return caminho in PUBLICAS or caminho.startswith(PREFIXO_ESTATICO)
+
+
+def _da_administracao(caminho: str) -> bool:
+    return caminho == PREFIXO_ADMINISTRACAO or caminho.startswith(PREFIXO_ADMINISTRACAO + "/")
 
 
 class Defesa:
@@ -75,6 +83,9 @@ class Defesa:
 
         if atual.usuario is None and not _publica(caminho):
             return _para_a_entrada(scope), receive
+
+        if _da_administracao(caminho) and atual.papel != "admin":
+            return JSONResponse({"erro": "Essa área é da equipe do Radar."}, status_code=403), receive
 
         if scope["method"] not in METODOS_SEM_EFEITO:
             corpo = None

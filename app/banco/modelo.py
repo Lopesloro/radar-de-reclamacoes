@@ -56,6 +56,11 @@ class Empresa(Base):
 
     id: Mapped[str] = mapped_column(String(60), primary_key=True)
     nome: Mapped[str] = mapped_column(String(160), nullable=False)
+    # O plano contratado. Serve para a conta do Radar saber quantos negócios a
+    # empresa pode ligar; nenhuma tela do dono mostra isto.
+    plano: Mapped[str] = mapped_column(String(30), nullable=False, default="piloto")
+    # Para onde o aviso vai quando um assunto deve crescer. Vazio = só na tela.
+    email_aviso: Mapped[str | None] = mapped_column(String(200))
     criada_em: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.now)
     ativa: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
@@ -80,9 +85,13 @@ class Usuario(Base):
     empresa_id: Mapped[str] = _empresa_id()
     email: Mapped[str] = mapped_column(String(200), nullable=False)
     nome: Mapped[str] = mapped_column(String(160), nullable=False)
+    # "dono" é o cliente, que só vê a empresa dele. "admin" é a equipe do Radar,
+    # que cadastra cliente e liga fonte. Quem é admin fica na trilha de auditoria.
     papel: Mapped[str] = mapped_column(String(30), nullable=False, default="dono")
-    senha_hash: Mapped[str | None] = mapped_column(String(200))
+    # Argon2id guarda os parâmetros dentro do próprio hash e passa de 200 caracteres.
+    senha_hash: Mapped[str | None] = mapped_column(String(400))
     criado_em: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.now)
+    ultimo_acesso: Mapped[datetime | None] = mapped_column(DateTime)
     ativo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
 
@@ -105,6 +114,35 @@ class Comercio(Base):
     categorias_combinadas: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     tem_canal: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     criado_em: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.now)
+
+
+class Fonte(Base):
+    """De onde as avaliações de um negócio são lidas.
+
+    Uma linha por plataforma por negócio: Google, iFood ou arquivo enviado à mão.
+    `segredo_cifrado` guarda o token de acesso **já cifrado** (`app/seguranca/cofre.py`);
+    sem a chave do cofre o sistema recusa gravar, para um token nunca cair em
+    texto no banco. Nada aqui aparece em tela: a tela mostra `plataforma` e
+    `estado`, nunca o segredo.
+    """
+
+    __tablename__ = "fonte"
+    __table_args__ = (
+        UniqueConstraint("comercio_id", "plataforma", name="uq_fonte_comercio_plataforma"),
+    )
+
+    id: Mapped[str] = mapped_column(String(60), primary_key=True)
+    empresa_id: Mapped[str] = _empresa_id()
+    comercio_id: Mapped[str] = mapped_column(String(60), _para_comercio(), nullable=False, index=True)
+    plataforma: Mapped[str] = mapped_column(String(30), nullable=False)
+    # O que a plataforma usa para achar o negócio: o nome do recurso no Google
+    # (accounts/X/locations/Y) ou o merchantId do iFood.
+    identificador_externo: Mapped[str] = mapped_column(String(200), nullable=False, default="")
+    segredo_cifrado: Mapped[str | None] = mapped_column(Text)
+    estado: Mapped[str] = mapped_column(String(20), nullable=False, default="pendente")
+    erro: Mapped[str | None] = mapped_column(Text)
+    ultima_coleta: Mapped[datetime | None] = mapped_column(DateTime)
+    criada_em: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.now)
 
 
 class Avaliacao(Base):

@@ -1,120 +1,144 @@
 """A única porta que as telas usam para pedir dados.
 
-Hoje tudo vem de `app.falsos`. Quando uma parte real ficar pronta, troque só a
-linha da função correspondente; as rotas e os templates não mudam. Exemplo: o
-Gabriel termina o motor e `investigar` passa a chamar
-`app.investigacao.motor.investigar(sessao, ...)`.
+Tudo vem do banco. Não existe mais dado de demonstração: a versão anterior do
+projeto tinha um gerador de avaliações fictícias (`app/falsos.py`) para as telas
+poderem nascer antes do motor, e ele foi removido. O que a tela mostra agora ou
+veio de uma avaliação pública lida de uma plataforma, ou não existe — e quando
+não existe, a tela diz isso em uma frase, em vez de mostrar número inventado.
+
+Três estados possíveis, e cada tela sabe diferenciá-los:
+
+1. **Sem banco** (`DATABASE_URL` vazia): o sistema está de pé mas não guarda
+   nada. `tem_banco()` é falso e toda leitura devolve vazio.
+2. **Banco vazio para esta empresa**: cliente recém-cadastrado, fonte ainda não
+   coletou. `tem_dados(empresa)` é falso.
+3. **Com dados**: o caminho normal.
+
+Toda função recebe `empresa_id` (a empresa dona dos dados, que vem da sessão) e,
+quando é sobre um negócio, `comercio_id`. Função sem o filtro de empresa é
+defeito, não estilo.
 """
 
 from __future__ import annotations
 
-from app import falsos
+from contextlib import contextmanager
+from datetime import date
+
+from app.banco import consultas
+from app.banco import sessao as banco
 from app.contratos import (
     AcuraciaClassificacao,
     AcuraciaPrevisao,
     Alerta,
     AvaliacaoTela,
-    Cenario,
     EtapaParceiro,
-    EventoDiario,
-    Investigacao,
-    MarcacaoDia,
-    PlanoExperimento,
-    ResultadoExperimento,
-    ResultadoLaboratorio,
-    ResultadoSimulacao,
     ResumoComercio,
     SerieMensal,
-    Turno,
 )
 
-# Dados de demonstração: enquanto for verdade, a faixa de aviso aparece em toda tela.
-DADOS_DE_DEMONSTRACAO = True
-HOJE = falsos.HOJE
+
+def hoje() -> date:
+    """O dia de hoje, num lugar só, para o teste poder fixá-lo."""
+    return date.today()
 
 
-def existe(empresa_id: str) -> bool:
-    return falsos.existe(empresa_id)
+def tem_banco() -> bool:
+    return banco.usar_banco()
 
 
-def comercios(empresa_id: str) -> tuple[ResumoComercio, ...]:
-    """Os negócios da empresa. O parâmetro é obrigatório de propósito: sem ele,
-    a tela lista o negócio dos outros, e já listou."""
-    return tuple(c for c in falsos.comercios() if c.empresa_id == empresa_id)
+@contextmanager
+def _aberta():
+    """Uma sessão de leitura. Fora do banco, devolve None e quem chamou responde vazio."""
+    if not banco.usar_banco():
+        yield None
+        return
+    with banco.Sessao() as sessao:
+        yield sessao
+
+
+def tem_dados(empresa_id: str) -> bool:
+    with _aberta() as sessao:
+        return False if sessao is None else consultas.tem_avaliacao(sessao, empresa_id)
+
+
+def ids_de_comercio(empresa_id: str) -> frozenset[str]:
+    with _aberta() as sessao:
+        return frozenset() if sessao is None else consultas.ids_de_comercio(sessao, empresa_id)
 
 
 def quantos_negocios() -> int:
-    """Só a contagem, para a página pública, que não tem sessão nem dado de ninguém."""
-    return len(falsos.comercios())
+    with _aberta() as sessao:
+        return 0 if sessao is None else consultas.quantos_negocios(sessao)
 
 
-def comercio(empresa_id: str) -> ResumoComercio | None:
-    return falsos.comercio(empresa_id)
+# ------------------------------------------------------------ telas do dono
+
+def comercios(empresa_id: str) -> tuple[ResumoComercio, ...]:
+    with _aberta() as sessao:
+        return () if sessao is None else consultas.comercios(sessao, empresa_id)
 
 
-def series(empresa_id: str) -> tuple[SerieMensal, ...]:
-    return falsos.series(empresa_id)
+def comercio(empresa_id: str, comercio_id: str) -> ResumoComercio | None:
+    with _aberta() as sessao:
+        return None if sessao is None else consultas.comercio(sessao, empresa_id, comercio_id)
 
 
-def serie(empresa_id: str, categoria: str) -> SerieMensal:
-    return falsos.serie(empresa_id, categoria)
+def series(empresa_id: str, comercio_id: str) -> tuple[SerieMensal, ...]:
+    with _aberta() as sessao:
+        return () if sessao is None else consultas.series(sessao, empresa_id, comercio_id, hoje())
 
 
-def avaliacoes(empresa_id: str, limite: int = 12) -> tuple[AvaliacaoTela, ...]:
-    return falsos.avaliacoes(empresa_id, limite)
+def serie(empresa_id: str, comercio_id: str, categoria: str) -> SerieMensal | None:
+    with _aberta() as sessao:
+        if sessao is None:
+            return None
+        return consultas.serie(sessao, empresa_id, comercio_id, categoria, hoje())
+
+
+def avaliacoes(empresa_id: str, comercio_id: str, limite: int = 12) -> tuple[AvaliacaoTela, ...]:
+    with _aberta() as sessao:
+        if sessao is None:
+            return ()
+        return consultas.avaliacoes(sessao, empresa_id, comercio_id, limite)
 
 
 def alertas(empresa_id: str) -> tuple[Alerta, ...]:
-    return tuple(a for a in falsos.alertas() if a.empresa_id == empresa_id)
+    with _aberta() as sessao:
+        return () if sessao is None else consultas.alertas(sessao, empresa_id)
 
+
+def etapas(empresa_id: str, comercio_id: str) -> tuple[EtapaParceiro, ...]:
+    with _aberta() as sessao:
+        return () if sessao is None else consultas.etapas(sessao, empresa_id, comercio_id)
+
+
+# ------------------------------------------------------------ dá para confiar?
 
 def acuracia_classificacao() -> AcuraciaClassificacao:
-    return falsos.acuracia_classificacao()
+    """O acerto do classificador que está no ar, medido agora.
+
+    A medida é do conjunto de conferência; `origem_da_medida` diz qual.
+    """
+    from app.modelos import conferencia
+
+    return conferencia.acerto_da_separacao()
 
 
-def acuracia_previsao() -> AcuraciaPrevisao:
-    return falsos.acuracia_previsao()
+def origem_da_medida() -> str:
+    from app.modelos import conferencia
+
+    return conferencia.origem()
 
 
-def etapas(empresa_id: str) -> tuple[EtapaParceiro, ...]:
-    return falsos.etapas(empresa_id)
+def acuracia_previsao(empresa_id: str) -> AcuraciaPrevisao | None:
+    """O acerto da estimativa nas séries reais da empresa, por origem móvel.
 
+    None quando nenhuma série da empresa tem meses suficientes: é o caso do
+    cliente novo, e a tela diz isso em vez de mostrar erro zero.
+    """
+    from app.modelos import conferencia
 
-def investigar(empresa_id: str, categoria: str, alerta_id: str | None = None) -> Investigacao:
-    return falsos.investigar(None, empresa_id, categoria, alerta_id)
-
-
-def eventos_diario(empresa_id: str) -> tuple[EventoDiario, ...]:
-    return falsos.eventos_diario(empresa_id)
-
-
-def operacao(empresa_id: str) -> tuple[Turno, ...]:
-    return falsos.operacao(empresa_id)
-
-
-def simular(empresa_id: str, cenario: Cenario) -> ResultadoSimulacao:
-    return falsos.simular(None, empresa_id, cenario)
-
-
-def cenario_sugerido(investigacao: Investigacao) -> Cenario | None:
-    return falsos.cenario_sugerido(investigacao)
-
-
-def experimentos(empresa_id: str) -> tuple[PlanoExperimento, ...]:
-    return falsos.experimentos(empresa_id)
-
-
-def experimento(plano_id: str) -> PlanoExperimento | None:
-    return falsos.experimento(plano_id)
-
-
-def marcacoes(plano_id: str) -> tuple[MarcacaoDia, ...]:
-    return falsos.marcacoes(plano_id)
-
-
-def analisar(plano_id: str) -> ResultadoExperimento | None:
-    return falsos.analisar(None, plano_id)
-
-
-def laboratorio() -> ResultadoLaboratorio:
-    return falsos.laboratorio()
+    with _aberta() as sessao:
+        if sessao is None:
+            return None
+        return conferencia.acerto_da_estimativa(consultas.series_fechadas(sessao, empresa_id))

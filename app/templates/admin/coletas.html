@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}Coletas, {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<section class="secao secao--topo">
+  <div class="container">
+    {{ m.cabeca("Coletas", "Cada rodada de leitura, com quantas avaliações foram lidas e quantas eram novas. Rodar duas vezes no mesmo dia não dobra número: a segunda vinda da mesma avaliação é recusada pelo banco.") }}
+    {% if linhas %}
+    <div class="tabela-rolagem">
+      <table class="tabela">
+        <thead><tr><th scope="col">Negócio</th><th scope="col">Começou</th><th scope="col">Terminou</th><th scope="col" class="num">Lidas</th><th scope="col" class="num">Novas</th><th scope="col">Estado</th></tr></thead>
+        <tbody>
+          {% for execucao, negocio in linhas %}
+          <tr>
+            <th scope="row">{{ negocio.nome }}</th>
+            <td>{{ execucao.iniciada_em | data_longa }}</td>
+            <td>{{ execucao.terminada_em | data_longa if execucao.terminada_em else "—" }}</td>
+            <td class="num">{{ execucao.lidas }}</td><td class="num">{{ execucao.novas }}</td>
+            <td>{{ execucao.estado }}{% if execucao.erro %} <span class="nota">{{ execucao.erro }}</span>{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    {{ m.estado_vazio("Nenhuma coleta rodou ainda.", {"rotulo": "Ligar fonte", "href": "/admin/fontes"}) }}
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

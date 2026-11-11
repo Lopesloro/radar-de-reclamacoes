@@ -5,6 +5,11 @@ from app.seguranca.sessao import VALIDADE_SEGUNDOS, Assinador, Sessao
 
 
 def _sessao(**campos) -> Sessao:
+    """Sessão de teste. Sessão COM usuário precisa de papel: o `abrir` recusa
+    cookie de usuário sem papel, para um cookie de versão anterior não valer
+    como "dono" por omissão."""
+    if campos.get("usuario") and "papel" not in campos:
+        campos["papel"] = "dono"
     return Sessao(csrf="token", inicio=sessao._agora(), **campos)
 
 

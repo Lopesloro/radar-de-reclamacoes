@@ -23,15 +23,16 @@ from app.contratos import (
     AvaliacaoTela,
     Certeza,
     Estado,
+    EtapaParceiro,
     PrevisaoMes,
     ResumoComercio,
     SerieMensal,
 )
 from app.modelos import LIMITE_CONFIANCA
+from app.modelos.previsao import CRESCIMENTO_QUE_IMPORTA
 
-# Três das sete etapas do combinado não dependem do parceiro: histórico, conferência
-# da separação por assunto e conferência da estimativa. Ver `app/falsos.etapas`.
-ETAPAS_SEM_PARCEIRO = 3
+# As sete etapas do combinado. Cada uma é conferida contra um fato do banco em
+# `etapas()`, no fim deste arquivo.
 ETAPAS_TOTAL = 7
 
 
@@ -48,25 +49,30 @@ def _faixa(linha: modelo.Previsao) -> PrevisaoMes:
 
 
 def _estado(ultimo: int, previsto: PrevisaoMes | None) -> Estado:
-    """Mesma régua de `app/falsos._estado`: a tela já aprendeu a ler estes três estados."""
+    """Os três estados que a tela mostra, com a mesma régua que foi medida.
+
+    O limite é `previsao.CRESCIMENTO_QUE_IMPORTA`, importado e não copiado: a
+    medição de acerto do aviso em `previsao.avaliar_avisos` usa esse mesmo
+    número, e dois números diferentes para a mesma pergunta fariam a tela avisar
+    numa régua e o relatório medir em outra.
+
+    - `vai_piorar`: o mínimo esperado já passa do mês fechado. Acerto medido 0,59.
+    - `fique_de_olho`: o mais provável sobe o bastante para importar. Acerto 0,43.
+    - `normal`: o resto, inclusive subida que cabe no sobe-e-desde normal.
+    """
     if previsto is None:
         return "normal"
-    crescimento = previsto.p50 - ultimo
-    if crescimento < 1.5 or crescimento / max(ultimo, 1) < 0.04:
-        return "normal"
-    return "vai_piorar" if previsto.p10 > ultimo else "fique_de_olho"
+    if previsto.p10 > ultimo:
+        return "vai_piorar"
+    if previsto.p50 - ultimo >= CRESCIMENTO_QUE_IMPORTA:
+        return "fique_de_olho"
+    return "normal"
 
 
 def _certeza(confianca: float) -> Certeza:
     if confianca >= 0.8:
         return "alta"
     return "media" if confianca >= LIMITE_CONFIANCA else "baixa"
-
-
-def _etapas(comercio: modelo.Comercio) -> int:
-    combinado = (comercio.tem_termo, comercio.tem_fonte,
-                 comercio.categorias_combinadas, comercio.tem_canal)
-    return ETAPAS_SEM_PARCEIRO + sum(combinado)
 
 
 # ------------------------------------------------------------ séries e previsões
@@ -242,7 +248,11 @@ def comercios(sessao: Session, empresa_id: str) -> tuple[ResumoComercio, ...]:
                 em_alta, PrevisaoMes(referencia, fechado[em_alta], fechado[em_alta],
                                      fechado[em_alta])
             ),
-            etapas_concluidas=_etapas(comercio),
+            # A contagem sai da mesma função que desenha a tela "O que falta":
+            # dois números diferentes para a mesma pergunta já aconteceu aqui.
+            etapas_concluidas=sum(
+                1 for e in etapas(sessao, empresa_id, comercio.id) if e.estado == "feito"
+            ),
             etapas_total=ETAPAS_TOTAL,
         ))
     return tuple(cartoes)
@@ -282,3 +292,140 @@ def alertas(sessao: Session, empresa_id: str) -> tuple[Alerta, ...]:
     ]
     avisos.sort(key=lambda a: (a.previsto.p50 - a.atual, a.id), reverse=True)
     return tuple(avisos)
+
+
+# ------------------------------------------------------------ o que as telas pedem direto
+
+def ids_de_comercio(sessao: Session, empresa_id: str) -> frozenset[str]:
+    """Os negócios da empresa. É o conjunto que a trava de isolamento compara."""
+    return frozenset(sessao.scalars(
+        select(modelo.Comercio.id).where(modelo.Comercio.empresa_id == empresa_id)
+    ).all())
+
+
+def comercio(sessao: Session, empresa_id: str, comercio_id: str) -> ResumoComercio | None:
+    """O cartão de um negócio. None quando não é da empresa ou não tem mês fechado."""
+    return next(
+        (c for c in comercios(sessao, empresa_id) if c.empresa_id == comercio_id),
+        None,
+    )
+
+
+def series(sessao: Session, empresa_id: str, comercio_id: str,
+           hoje: date) -> tuple[SerieMensal, ...]:
+    """Uma série por assunto que tem histórico neste negócio."""
+    assuntos = sessao.scalars(
+        select(modelo.SerieMensal.categoria_id)
+        .where(modelo.SerieMensal.empresa_id == empresa_id,
+               modelo.SerieMensal.comercio_id == comercio_id)
+        .distinct()
+    ).all()
+    achadas = (serie(sessao, empresa_id, comercio_id, assunto, hoje) for assunto in sorted(assuntos))
+    return tuple(s for s in achadas if s is not None and s.meses)
+
+
+def series_fechadas(sessao: Session, empresa_id: str) -> tuple[tuple[str, tuple[tuple[date, int], ...]], ...]:
+    """Os meses fechados de cada (negócio, assunto). É o que a conferência da
+    previsão usa para rodar a origem móvel em cima do dado real da empresa."""
+    linhas = sessao.execute(
+        select(modelo.SerieMensal.comercio_id, modelo.SerieMensal.categoria_id,
+               modelo.SerieMensal.mes, modelo.SerieMensal.quantidade)
+        .where(modelo.SerieMensal.empresa_id == empresa_id,
+               modelo.SerieMensal.fechado.is_(True))
+        .order_by(modelo.SerieMensal.comercio_id, modelo.SerieMensal.categoria_id,
+                  modelo.SerieMensal.mes)
+    ).all()
+    agrupadas: dict[tuple[str, str], list[tuple[date, int]]] = {}
+    for comercio_id, categoria, mes, quantidade in linhas:
+        agrupadas.setdefault((comercio_id, categoria), []).append((mes, quantidade))
+    return tuple(
+        (f"{comercio_id} / {categoria}", tuple(meses))
+        for (comercio_id, categoria), meses in agrupadas.items()
+    )
+
+
+def quantos_negocios(sessao: Session) -> int:
+    """A contagem para a página pública: um número, de empresa nenhuma em particular."""
+    return sessao.scalar(
+        select(func.count(modelo.Comercio.id)).join(
+            modelo.Empresa, modelo.Empresa.id == modelo.Comercio.empresa_id
+        ).where(modelo.Empresa.ativa.is_(True), modelo.Empresa.plano != "interno")
+    ) or 0
+
+
+def tem_avaliacao(sessao: Session, empresa_id: str) -> bool:
+    return sessao.scalar(
+        select(func.count(modelo.Avaliacao.id)).where(modelo.Avaliacao.empresa_id == empresa_id)
+    ) > 0
+
+
+# ------------------------------------------------------------ etapas do combinado
+
+_TITULOS_DAS_ETAPAS = (
+    (1, "Autorização assinada", "O dono autorizou por escrito a leitura das avaliações públicas dele."),
+    (2, "Fonte ligada", "A conta da plataforma está ligada e o sistema consegue ler as avaliações."),
+    (3, "Assuntos combinados", "O dono conferiu que os cinco assuntos descrevem o negócio dele."),
+    (4, "Canal de aviso", "Para onde o aviso vai quando um assunto deve crescer."),
+    (5, "Histórico suficiente", "Seis meses fechados: abaixo disso a estimativa não sai."),
+    (6, "Separação conferida", "Uma amostra de avaliações foi conferida à mão para medir o acerto."),
+    (7, "Estimativa conferida", "A estimativa foi comparada com o que de fato aconteceu."),
+)
+
+
+def etapas(sessao: Session, empresa_id: str, comercio_id: str) -> tuple[EtapaParceiro, ...]:
+    """As sete etapas entre o combinado e o aviso chegando ao dono.
+
+    Cada estado sai de um fato do banco, não de uma marcação à mão: é por isso
+    que a tela "O que falta" não mente quando alguém esquece de atualizar algo.
+    """
+    negocio = sessao.get(modelo.Comercio, comercio_id)
+    if negocio is None or negocio.empresa_id != empresa_id:
+        return ()
+    empresa = sessao.get(modelo.Empresa, empresa_id)
+
+    fonte = sessao.scalar(
+        select(modelo.Fonte).where(modelo.Fonte.comercio_id == comercio_id,
+                                   modelo.Fonte.estado == "ligada")
+    )
+    meses = sessao.scalar(
+        select(func.count(modelo.SerieMensal.mes)).where(
+            modelo.SerieMensal.comercio_id == comercio_id,
+            modelo.SerieMensal.fechado.is_(True),
+            modelo.SerieMensal.categoria_id == "atendimento",
+        )
+    ) or 0
+    conferidas = sessao.scalar(
+        select(func.count(modelo.Classificacao.id))
+        .join(modelo.Avaliacao, modelo.Avaliacao.id == modelo.Classificacao.avaliacao_id)
+        .where(modelo.Avaliacao.comercio_id == comercio_id,
+               modelo.Classificacao.motivo_sem_assunto == "conferida pelo dono")
+    ) or 0
+    previsoes = sessao.scalar(
+        select(func.count(modelo.Previsao.id)).where(modelo.Previsao.comercio_id == comercio_id)
+    ) or 0
+
+    fatos = (
+        (negocio.tem_termo, "Autorização no arquivo do projeto.", "Falta o dono assinar a autorização."),
+        (fonte is not None, f"Lendo de {fonte.plataforma if fonte else ''}.",
+         "Falta ligar a conta da plataforma."),
+        (negocio.categorias_combinadas, "Os cinco assuntos foram conferidos com o dono.",
+         "Falta o dono conferir se os assuntos descrevem o negócio."),
+        (bool(empresa and empresa.email_aviso) or negocio.tem_canal,
+         "O aviso vai por e-mail.", "Falta dizer para onde o aviso vai."),
+        (meses >= 6, f"{meses} meses fechados.", f"Faltam {max(0, 6 - meses)} meses de histórico."),
+        (conferidas >= 30, f"{conferidas} avaliações conferidas à mão.",
+         f"Faltam {max(0, 30 - conferidas)} avaliações conferidas para medir o acerto."),
+        (previsoes > 0, "Estimativa gerada e comparada com o realizado.",
+         "Falta a primeira estimativa deste negócio."),
+    )
+    return tuple(
+        EtapaParceiro(
+            numero=numero, titulo=titulo,
+            estado="feito" if pronto else "pendente",
+            detalhe=detalhe if pronto else descricao,
+            falta=None if pronto else falta,
+        )
+        for (numero, titulo, descricao), (pronto, detalhe, falta) in zip(
+            _TITULOS_DAS_ETAPAS, fatos, strict=True
+        )
+    )

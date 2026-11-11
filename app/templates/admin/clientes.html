@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}Clientes, {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<section class="secao secao--topo">
+  <div class="container">
+    {{ m.cabeca("Clientes", "Cada cliente é uma empresa, com os negócios dela e as contas de quem entra. Um cliente nunca vê o dado do outro.") }}
+    {% if recado %}<div class="aviso aviso--normal"><p>{{ recado }}</p><p class="nota">A senha aparece uma vez só. Copie agora: ela não é guardada em texto e não dá para ver depois.</p></div>{% endif %}
+    {% if erro %}<div class="aviso aviso--piorar"><p>{{ erro }}</p></div>{% endif %}
+
+    <article class="cartao">
+      <h2 class="cartao__titulo">Cadastrar cliente</h2>
+      <p class="cartao__text">O cadastro cria a empresa, o primeiro negócio dela e a conta de entrada do dono, tudo de uma vez.</p>
+      <form class="forma forma--grade" method="post" action="/admin/clientes">
+        <input type="hidden" name="csrf" value="{{ request.state.csrf }}">
+        <label class="campo"><span class="campo__rotulo">Identificador</span>
+          <input class="campo__entrada" name="identificador" required maxlength="60" placeholder="cantina-do-centro" pattern="[a-z0-9][a-z0-9-]*[a-z0-9]">
+          <span class="campo__nota">só minúscula, número e hífen; aparece no endereço</span></label>
+        <label class="campo"><span class="campo__rotulo">Nome da empresa</span>
+          <input class="campo__entrada" name="nome" required maxlength="160"></label>
+        <label class="campo"><span class="campo__rotulo">Plano</span>
+          <select class="campo__entrada" name="plano"><option value="piloto">piloto</option><option value="mensal">mensal</option></select></label>
+        <label class="campo"><span class="campo__rotulo">E-mail de aviso</span>
+          <input class="campo__entrada" type="email" name="email_aviso" maxlength="200"></label>
+        <label class="campo"><span class="campo__rotulo">Nome do primeiro negócio</span>
+          <input class="campo__entrada" name="negocio_nome" required maxlength="160"></label>
+        <label class="campo"><span class="campo__rotulo">Ramo</span>
+          <input class="campo__entrada" name="ramo" required maxlength="80" placeholder="Restaurante"></label>
+        <label class="campo"><span class="campo__rotulo">Cidade</span>
+          <input class="campo__entrada" name="cidade" required maxlength="120" placeholder="Campinas, SP"></label>
+        <label class="campo"><span class="campo__rotulo">Entrada do dono</span>
+          <input class="campo__entrada" name="entrada" required maxlength="200" placeholder="cantina">
+          <span class="campo__nota">o que ele digita para entrar; a senha é sorteada</span></label>
+        <button class="botao botao--primario" type="submit" data-principal>Cadastrar</button>
+      </form>
+    </article>
+
+    {% if linhas %}
+    <div class="tabela-rolagem">
+      <table class="tabela">
+        <thead><tr><th scope="col">Cliente</th><th scope="col">Plano</th><th scope="col" class="num">Negócios</th><th scope="col" class="num">Contas</th><th scope="col" class="num">Avaliações</th></tr></thead>
+        <tbody>
+          {% for l in linhas %}
+          <tr>
+            <th scope="row"><a href="/admin/clientes/{{ l.empresa.id }}">{{ l.empresa.nome }}</a>{% if not l.empresa.ativa %} <span class="nota">desligado</span>{% endif %}</th>
+            <td>{{ l.empresa.plano }}</td><td class="num">{{ l.negocios }}</td><td class="num">{{ l.usuarios }}</td><td class="num">{{ l.avaliacoes | inteiro }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    {{ m.estado_vazio("Nenhum cliente cadastrado ainda.") }}
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

@@ -206,18 +206,28 @@ def test_o_aviso_carrega_a_faixa_da_previsao(sessao):
 
 # ------------------------------------------------------------ troca em tempo de execução
 
-def test_sem_database_url_nada_muda(monkeypatch):
-    """Requisito duro: o site no ar continua lendo app/falsos.py."""
+def test_sem_database_url_o_sistema_devolve_vazio_e_nao_inventa(monkeypatch):
+    """Requisito duro: sem banco, toda leitura é vazia.
+
+    Na versão anterior o sistema caía num gerador de dados fictícios quando não
+    havia banco. Isso foi removido: tela com número inventado é pior que tela
+    vazia, porque o dono decide em cima dela. Agora a falta de banco aparece
+    como falta de banco.
+    """
     monkeypatch.delenv("DATABASE_URL", raising=False)
+    fonte.esquecer()
     assert fonte.usar_banco() is False
     with pytest.raises(RuntimeError, match="DATABASE_URL"):
         fonte.motor()
 
     from app import servicos
-    assert servicos.DADOS_DE_DEMONSTRACAO
-    # A contagem sem empresa é a da página pública; a lista por empresa exige o filtro.
-    assert servicos.quantos_negocios() == 3
-    assert len(servicos.comercios("bella-massa")) == 1
+    assert servicos.tem_banco() is False
+    assert servicos.quantos_negocios() == 0
+    assert servicos.comercios("bella-massa") == ()
+    assert servicos.alertas("bella-massa") == ()
+    assert servicos.serie("bella-massa", "bella-massa", "demora") is None
+    assert servicos.tem_dados("bella-massa") is False
+    fonte.esquecer()
 
 
 def test_com_database_url_o_banco_entra(monkeypatch, tmp_path):

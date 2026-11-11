@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}{{ empresa.nome }}, {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<section class="secao secao--topo">
+  <div class="container">
+    {{ m.cabeca(empresa.nome, "Plano " ~ empresa.plano ~ ". Identificador " ~ empresa.id ~ ".") }}
+    {% if recado %}<div class="aviso aviso--normal"><p>{{ recado }}</p><p class="nota">A senha aparece uma vez só. Copie agora.</p></div>{% endif %}
+    {% if erro %}<div class="aviso aviso--piorar"><p>{{ erro }}</p></div>{% endif %}
+
+    <h2 class="titulo-secao">Negócios</h2>
+    <div class="tabela-rolagem">
+      <table class="tabela">
+        <thead><tr><th scope="col">Negócio</th><th scope="col">Onde</th><th scope="col" class="num">Avaliações</th><th scope="col">Combinado</th></tr></thead>
+        <tbody>
+          {% for n in negocios %}
+          <tr>
+            <th scope="row">{{ n.nome }} <span class="nota">{{ n.id }}</span></th>
+            <td>{{ n.cidade }}</td>
+            <td class="num">{{ contagem.get(n.id, 0) | inteiro }}</td>
+            <td>
+              <form class="forma forma--linha" method="post" action="/admin/clientes/{{ empresa.id }}/combinado">
+                <input type="hidden" name="csrf" value="{{ request.state.csrf }}">
+                <input type="hidden" name="comercio_id" value="{{ n.id }}">
+                <label class="caixa"><input type="checkbox" name="tem_termo" value="sim"{% if n.tem_termo %} checked{% endif %}> autorização assinada</label>
+                <label class="caixa"><input type="checkbox" name="categorias_combinadas" value="sim"{% if n.categorias_combinadas %} checked{% endif %}> assuntos conferidos</label>
+                <button class="botao botao--mini" type="submit">Salvar</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <article class="cartao">
+      <h3 class="cartao__titulo">Adicionar negócio</h3>
+      <form class="forma forma--grade" method="post" action="/admin/clientes/{{ empresa.id }}/negocio">
+        <input type="hidden" name="csrf" value="{{ request.state.csrf }}">
+        <label class="campo"><span class="campo__rotulo">Identificador</span><input class="campo__entrada" name="identificador" required maxlength="60" pattern="[a-z0-9][a-z0-9-]*[a-z0-9]"></label>
+        <label class="campo"><span class="campo__rotulo">Nome</span><input class="campo__entrada" name="nome" required maxlength="160"></label>
+        <label class="campo"><span class="campo__rotulo">Ramo</span><input class="campo__entrada" name="ramo" required maxlength="80"></label>
+        <label class="campo"><span class="campo__rotulo">Cidade</span><input class="campo__entrada" name="cidade" required maxlength="120"></label>
+        <button class="botao botao--secundario" type="submit">Adicionar</button>
+      </form>
+    </article>
+
+    <h2 class="titulo-secao">Contas de entrada</h2>
+    <div class="tabela-rolagem">
+      <table class="tabela">
+        <thead><tr><th scope="col">Entrada</th><th scope="col">Nome</th><th scope="col">Papel</th><th scope="col">Último acesso</th><th scope="col">Ação</th></tr></thead>
+        <tbody>
+          {% for u in usuarios %}
+          <tr>
+            <th scope="row">{{ u.email }}</th><td>{{ u.nome }}</td><td>{{ u.papel }}</td>
+            <td>{{ u.ultimo_acesso | data_longa if u.ultimo_acesso else "nunca entrou" }}</td>
+            <td>
+              {% if u.ativo %}
+              <form method="post" action="/admin/clientes/{{ empresa.id }}/desligar">
+                <input type="hidden" name="csrf" value="{{ request.state.csrf }}">
+                <input type="hidden" name="usuario_id" value="{{ u.id }}">
+                <button class="botao botao--mini" type="submit">Desligar</button>
+              </form>
+              {% else %}<span class="nota">desligada</span>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <article class="cartao">
+      <h3 class="cartao__titulo">Criar conta de entrada</h3>
+      <form class="forma forma--grade" method="post" action="/admin/clientes/{{ empresa.id }}/usuario">
+        <input type="hidden" name="csrf" value="{{ request.state.csrf }}">
+        <label class="campo"><span class="campo__rotulo">Entrada</span><input class="campo__entrada" name="entrada" required maxlength="200"></label>
+        <label class="campo"><span class="campo__rotulo">Nome da pessoa</span><input class="campo__entrada" name="nome" required maxlength="160"></label>
+        <button class="botao botao--secundario" type="submit">Criar</button>
+      </form>
+    </article>
+
+    <h2 class="titulo-secao">Fontes deste cliente</h2>
+    {% if fontes %}
+    <ul class="fatos">
+      {% for f in fontes %}
+      <li><strong>{{ f.comercio_id }} / {{ f.plataforma }}:</strong> {{ f.estado }}{% if f.ultima_coleta %}, última leitura {{ f.ultima_coleta | data_longa }}{% endif %}{% if f.erro %} <span class="nota">{{ f.erro }}</span>{% endif %}</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="nota">Nenhuma fonte ligada. <a href="/admin/fontes">Ligar fonte</a>.</p>
+    {% endif %}
+
+    {{ m.proximo_passo([{"rotulo": "Voltar aos clientes", "href": "/admin/clientes"},
+                        {"rotulo": "Fontes e coleta", "href": "/admin/fontes"}]) }}
+  </div>
+</section>
+{% endblock %}
