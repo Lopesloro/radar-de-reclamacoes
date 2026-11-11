@@ -236,3 +236,36 @@ def test_a_estimativa_nao_perde_feio_da_regua(estudo_do_aviso):
     """
     _, acuracia = estudo_do_aviso
     assert acuracia.erro_medio <= acuracia.erro_medio_regua * 1.05
+
+
+# ------------------------------------------------------------ a tela não pode travar
+
+def test_a_medida_no_corpus_nunca_chama_a_ia(monkeypatch):
+    """Defeito real de produção: a tela "Dá para confiar?" estourava o tempo.
+
+    Com a IA ligada, medir as 500 frases do corpus vira 63 chamadas de rede e mais
+    de cinco minutos dentro do pedido web. O cliente via a página não carregar.
+    A medida no corpus é sempre do modelo local.
+    """
+    from app.modelos import ativo, conferencia
+
+    monkeypatch.setenv("RADAR_IA_CHAVE", "chave-de-mentira-para-o-teste")
+    assert ativo.usando_ia() is True
+
+    chamou_a_ia = []
+    original = ativo.classificador_em_uso
+    monkeypatch.setattr(ativo, "classificador_em_uso",
+                        lambda: chamou_a_ia.append(1) or original())
+    conferencia._medir_no_corpus.cache_clear()
+    acerto = conferencia._medir_no_corpus()
+
+    assert not chamou_a_ia, "a medida no corpus pediu o classificador em uso, que é a IA"
+    assert acerto.amostra > 0
+    assert acerto.f1_macro > acerto.f1_macro_regua
+
+
+def test_a_medida_nas_conferidas_tem_teto(monkeypatch):
+    """Sem teto, a tela fica mais lenta a cada conferência que o dono faz."""
+    from app.modelos import conferencia
+
+    assert conferencia.MAXIMO_CONFERIDAS_NA_MEDIDA <= 200

@@ -67,7 +67,9 @@ def da_previsao(negocio: str, serie) -> str:
     if guardada is not None:
         return guardada
 
-    cliente = _ia.do_ambiente()
+    # Orçamento de tela: uma tentativa, oito segundos. A frase própria já está
+    # pronta em `reserva`, então IA lenta custa nada à pessoa.
+    cliente = _ia.para_tela()
     try:
         frase = cliente.explicar(_pergunta(negocio, serie.categoria, serie))
     except Exception:       # noqa: BLE001 - tela não cai por causa da IA

@@ -199,3 +199,56 @@ def test_o_limite_por_minuto_existe_e_e_respeitado():
     assert balde.esperar() == 0.0
     # A quarta teria de esperar; o teste não dorme, só confere a contagem.
     assert len(balde._marcas) == 3
+
+
+# ------------------------------------------------------------ a IA não trava a tela
+
+def test_a_ia_de_tela_tem_orcamento_curto():
+    """Defeito real de produção: a tela "Dá para confiar?" não carregava.
+
+    O orçamento padrão (20 s de espera, 3 tentativas com pausa dobrando) passa de
+    um minuto quando a IA está fora do ar. Numa tela isso é a página não
+    carregar. Numa tela, a resposta certa para a IA lenta é não ter resposta da
+    IA: a frase própria entra no lugar.
+    """
+    import time
+
+    def nunca_responde(_pedido):
+        raise httpx.ConnectTimeout("de mentira")
+
+    motor = ia.IA("chave", "modelo",
+                  cliente=httpx.Client(transport=httpx.MockTransport(nunca_responde)),
+                  espera_base=0.0, tentativas=ia.TENTATIVAS_DE_TELA)
+    comeco = time.monotonic()
+    assert motor.explicar("qualquer coisa") is None
+    assert time.monotonic() - comeco < 2.0, "a IA de tela demorou demais para desistir"
+    assert ia.TENTATIVAS_DE_TELA == 1
+    assert ia.TEMPO_LIMITE_DE_TELA <= 10
+
+
+def test_a_leitura_cai_na_frase_propria_quando_a_ia_nao_responde(monkeypatch):
+    from datetime import date
+
+    from app.contratos import PrevisaoMes, SerieMensal
+    from app.graficos import frases
+    from app.modelos import leitura
+
+    serie = SerieMensal(
+        empresa_id="c", categoria="demora",
+        meses=((date(2026, 9, 1), 16), (date(2026, 10, 1), 19)),
+        parcial=(date(2026, 11, 1), 8), parcial_fracao=0.5,
+        previsoes=(PrevisaoMes(date(2026, 11, 1), 16, 19, 23),
+                   PrevisaoMes(date(2026, 12, 1), 17, 21, 27)),
+    )
+
+    def _quebrada():
+        def nunca_responde(_pedido):
+            raise httpx.ConnectTimeout("de mentira")
+
+        return ia.IA("chave", "modelo",
+                     cliente=httpx.Client(transport=httpx.MockTransport(nunca_responde)),
+                     espera_base=0.0, tentativas=1)
+
+    monkeypatch.setattr(ia, "para_tela", _quebrada)
+    leitura.esquecer()
+    assert leitura.da_previsao("Negócio", serie) == frases.leitura_da_faixa(serie)

@@ -35,8 +35,17 @@ from app.modelos import amostras, ativo, classificador, previsao
 MINIMO_CONFERIDAS = 30
 MARCA_DE_CONFERIDA = "conferida pelo dono"
 
+# Teto de avaliações conferidas que entram numa medida. Com a IA ligada, cada 8
+# viram uma chamada de rede, e a medida roda dentro de um pedido web: 60 são 8
+# chamadas, que cabem no balde de 12 por minuto e levam poucos segundos, uma vez
+# por processo. Duzentas levariam mais de dois minutos e a tela não carregaria.
+#
+# O preço é uma amostra pequena, e a tela diz o tamanho dela ao lado do número.
+# Amostra pequena e dita é honesto; tela que não carrega não é.
+MAXIMO_CONFERIDAS_NA_MEDIDA = 60
+
 ORIGEM_DO_DONO = "avaliações conferidas pelo dono"
-ORIGEM_DO_CORPUS = "corpus da equipe"
+ORIGEM_DO_CORPUS = "corpus da equipe, medindo o modelo próprio"
 
 _origem = ORIGEM_DO_CORPUS
 
@@ -66,27 +75,42 @@ def conferidas_no_banco() -> tuple[tuple[str, str], ...]:
 
 
 def acerto_da_separacao() -> AcuraciaClassificacao:
-    """Mede o classificador que está no ar no melhor conjunto disponível."""
+    """Mede o classificador no melhor conjunto disponível, sem derrubar a tela.
+
+    Duas regras de tamanho, e as duas existem porque a medida roda **dentro de um
+    pedido web**:
+
+    - No corpus da equipe, a medida é sempre do **modelo local**, nunca da IA. São
+      500 frases, que com a IA viram 63 chamadas de rede e mais de cinco minutos:
+      a tela estourava o tempo em produção, e o cliente via a página não carregar.
+      Medir a IA no corpus também não diria muito, porque o corpus é o conjunto de
+      teste do modelo local.
+    - Nas avaliações conferidas pelo dono, a medida é do modelo que está no ar,
+      porque é a medida que interessa a ele. O teto de
+      `MAXIMO_CONFERIDAS_NA_MEDIDA` existe para a tela não ficar mais lenta a cada
+      conferência que o dono faz.
+    """
     global _origem
 
     conferidas = conferidas_no_banco()
     if len(conferidas) >= MINIMO_CONFERIDAS:
         _origem = ORIGEM_DO_DONO
-        return classificador.medir(ativo.classificador_em_uso(), conferidas)
+        return _medir_nas_conferidas(conferidas[:MAXIMO_CONFERIDAS_NA_MEDIDA])
     _origem = ORIGEM_DO_CORPUS
     return _medir_no_corpus()
 
 
+@lru_cache(maxsize=4)
+def _medir_nas_conferidas(conferidas: tuple[tuple[str, str], ...]) -> AcuraciaClassificacao:
+    """Guardada em memória pela própria amostra: conferência nova muda a chave."""
+    return classificador.medir(ativo.classificador_em_uso(), conferidas)
+
+
 @lru_cache(maxsize=1)
 def _medir_no_corpus() -> AcuraciaClassificacao:
-    """Medida no corpus da equipe.
-
-    Guardada em memória de propósito: com IA ligada, medir são 500 frases, ou
-    ~63 chamadas de rede, e a tela "Dá para confiar?" seria lenta e caríssima.
-    Com o modelo local é rápido, mas o resultado é o mesmo em todo pedido.
-    """
+    """Medida do modelo local no corpus da equipe. Nunca da IA: ver acima."""
     _, teste = amostras.separar()
-    return classificador.medir(ativo.classificador_em_uso(), teste)
+    return classificador.medir(ativo.local(), teste)
 
 
 def acerto_da_estimativa(

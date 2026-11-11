@@ -107,12 +107,13 @@ class _Balde:
 class IA:
     def __init__(self, chave_de_acesso: str, nome_do_modelo: str | None = None,
                  por_minuto: int = POR_MINUTO, cliente: httpx.Client | None = None,
-                 espera_base: float = ESPERA_BASE):
+                 espera_base: float = ESPERA_BASE, tentativas: int = TENTATIVAS):
         self._chave = chave_de_acesso
         self._modelo = nome_do_modelo or modelo()
         self._balde = _Balde(por_minuto)
         self._cliente = cliente
         self._espera_base = espera_base
+        self._tentativas = tentativas
 
     @property
     def nome(self) -> str:
@@ -124,7 +125,7 @@ class IA:
         endereco = ENDERECO.format(modelo=self._modelo)
         cliente = self._cliente or httpx.Client(timeout=TEMPO_LIMITE)
         try:
-            for tentativa in range(TENTATIVAS):
+            for tentativa in range(self._tentativas):
                 self._balde.esperar()
                 try:
                     resposta = cliente.post(
@@ -260,7 +261,25 @@ class IA:
         return frase[:400] or None
 
 
+# Orçamento curto, para quem chama de dentro de uma tela. O padrão (20 s de
+# espera, 3 tentativas com pausa dobrando) chega a mais de um minuto quando a IA
+# está fora do ar, e isso numa tela é a página não carregar. Numa tela, a
+# resposta certa para a IA lenta é não ter resposta da IA: a frase própria entra
+# no lugar e a pessoa nem percebe.
+TEMPO_LIMITE_DE_TELA = 8.0
+TENTATIVAS_DE_TELA = 1
+
+
 def do_ambiente() -> IA | None:
     """A IA configurada, ou None. Quem chama decide o que fazer sem ela."""
     valor = chave()
     return None if valor is None else IA(valor)
+
+
+def para_tela() -> IA | None:
+    """A IA com orçamento de tela: uma tentativa e oito segundos."""
+    valor = chave()
+    if valor is None:
+        return None
+    return IA(valor, cliente=httpx.Client(timeout=TEMPO_LIMITE_DE_TELA),
+              espera_base=0.0, tentativas=TENTATIVAS_DE_TELA)
