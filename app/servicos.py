@@ -74,8 +74,20 @@ def quantos_negocios() -> int:
 # ------------------------------------------------------------ telas do dono
 
 def comercios(empresa_id: str) -> tuple[ResumoComercio, ...]:
+    """Os cartões do Resumo. Só negócio com pelo menos um mês fechado entra aqui."""
     with _aberta() as sessao:
         return () if sessao is None else consultas.comercios(sessao, empresa_id)
+
+
+def negocios_cadastrados(empresa_id: str) -> tuple[tuple[str, str, str], ...]:
+    """(id, nome, cidade) de todo negócio da empresa, com dado ou sem.
+
+    Existe porque `comercios()` devolve só quem tem mês fechado, e a tela do vazio
+    precisa saber a diferença entre "você não tem negócio ligado" e "o seu negócio
+    está ligado e as avaliações ainda não chegaram". Com uma função só, um cliente
+    recém-cadastrado lia na tela que não tinha negócio nenhum, o que era falso."""
+    with _aberta() as sessao:
+        return () if sessao is None else consultas.negocios_cadastrados(sessao, empresa_id)
 
 
 def comercio(empresa_id: str, comercio_id: str) -> ResumoComercio | None:

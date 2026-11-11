@@ -25,7 +25,18 @@ PREFIXO_ESTATICO = "/static/"
 # escreveu esquecer a dependência `exigir_admin`.
 PREFIXO_ADMINISTRACAO = "/admin"
 METODOS_SEM_EFEITO = frozenset({"GET", "HEAD", "OPTIONS"})
-TAMANHO_MAXIMO_DO_FORMULARIO = 64 * 1024     # os formulários do site têm poucas linhas
+# Os formulários do site têm poucas linhas, e um corpo gigante é jeito baixo de
+# encher a memória do serviço. O limite é por caminho porque UM formulário é
+# legitimamente grande: o de importar avaliações.
+#
+# O número saiu de uma medida, não de um palpite: um primeiro arquivo de 15 meses
+# de um negócio pequeno tem ~450 avaliações, que depois de codificado passa de
+# 64 KiB. Com o limite único, a importação era **recusada em silêncio** — o
+# navegador recebia 413 e o operador via a tela voltar sem recado. Aconteceu no
+# primeiro teste em produção.
+TAMANHO_MAXIMO_DO_FORMULARIO = 64 * 1024
+TAMANHO_MAXIMO_DA_IMPORTACAO = 2 * 1024 * 1024
+CAMINHOS_DE_IMPORTACAO = frozenset({"/admin/importar"})
 
 
 def _publica(caminho: str) -> bool:
@@ -91,9 +102,12 @@ class Defesa:
             corpo = None
             formulario: dict[str, list[str]] = {}
             if _e_formulario(scope):
-                corpo = await _ler_formulario(receive)
+                corpo = await _ler_formulario(receive, _limite_do_caminho(caminho))
                 if corpo is None:
-                    return JSONResponse({"erro": "Formulário grande demais."}, status_code=413), receive
+                    return JSONResponse({
+                        "erro": "Formulário grande demais.",
+                        "limite_em_kib": _limite_do_caminho(caminho) // 1024,
+                    }, status_code=413), receive
                 formulario = parse_qs(corpo.decode("utf-8", "replace"), keep_blank_values=True)
             enviado = _cabecalho(scope, b"x-csrf-token") or (formulario.get("csrf") or [""])[0]
             if not hmac.compare_digest(atual.csrf.encode(), enviado.encode()):
@@ -132,7 +146,13 @@ def _e_formulario(scope: Scope) -> bool:
     return _cabecalho(scope, b"content-type").strip().lower().startswith("application/x-www-form-urlencoded")
 
 
-async def _ler_formulario(receive: Receive) -> bytes | None:
+def _limite_do_caminho(caminho: str) -> int:
+    return (TAMANHO_MAXIMO_DA_IMPORTACAO if caminho in CAMINHOS_DE_IMPORTACAO
+            else TAMANHO_MAXIMO_DO_FORMULARIO)
+
+
+async def _ler_formulario(receive: Receive,
+                          limite: int = TAMANHO_MAXIMO_DO_FORMULARIO) -> bytes | None:
     """O corpo inteiro, ou None se passar do limite."""
     pedacos: list[bytes] = []
     total = 0
@@ -142,7 +162,7 @@ async def _ler_formulario(receive: Receive) -> bytes | None:
             return b""
         pedacos.append(mensagem.get("body", b""))
         total += len(pedacos[-1])
-        if total > TAMANHO_MAXIMO_DO_FORMULARIO:
+        if total > limite:
             return None
         if not mensagem.get("more_body", False):
             return b"".join(pedacos)

@@ -303,6 +303,18 @@ def ids_de_comercio(sessao: Session, empresa_id: str) -> frozenset[str]:
     ).all())
 
 
+def negocios_cadastrados(sessao: Session, empresa_id: str) -> tuple[tuple[str, str, str], ...]:
+    """Todo negócio da empresa, independente de ter histórico."""
+    return tuple(
+        (linha.id, linha.nome, linha.cidade)
+        for linha in sessao.scalars(
+            select(modelo.Comercio)
+            .where(modelo.Comercio.empresa_id == empresa_id)
+            .order_by(modelo.Comercio.nome)
+        ).all()
+    )
+
+
 def comercio(sessao: Session, empresa_id: str, comercio_id: str) -> ResumoComercio | None:
     """O cartão de um negócio. None quando não é da empresa ou não tem mês fechado."""
     return next(

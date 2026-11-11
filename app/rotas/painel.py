@@ -23,11 +23,17 @@ rotas = APIRouter()
 
 
 def _vazio(request: Request, ativo: str, **contexto):
-    """A tela de "ainda não há dado", com o motivo certo."""
+    """A tela de "ainda não há dado", com o motivo certo.
+
+    `negocios` vem de `negocios_cadastrados` e não de `comercios`: o segundo
+    devolve só quem tem mês fechado, e com ele um cliente recém-cadastrado lia
+    "você não tem negócio ligado" quando o negócio dele estava ligado e só
+    faltavam as avaliações chegarem.
+    """
     return tela(
         request, "sem_dados.html", ativo,
         tem_banco=servicos.tem_banco(),
-        negocios=servicos.comercios(empresa_do_usuario(request)),
+        negocios=servicos.negocios_cadastrados(empresa_do_usuario(request)),
         **contexto,
     )
 

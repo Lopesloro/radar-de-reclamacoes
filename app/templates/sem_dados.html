@@ -23,7 +23,9 @@
     {{ m.cabeca("Os negócios estão cadastrados, as avaliações ainda não chegaram",
                 "A fonte de avaliações deste cliente ainda não leu nada. Enquanto não ler, a tela fica assim de propósito: número inventado é pior que tela vazia.") }}
     <ul class="fatos">
-      {% for n in negocios %}<li><strong>{{ n.nome }}</strong> · {{ n.cidade }}</li>{% endfor %}
+      {% for identificador, nome, cidade in negocios %}
+      <li><strong>{{ nome }}</strong> · {{ cidade }}</li>
+      {% endfor %}
     </ul>
     {% else %}
     {{ m.cabeca("Ainda não há negócio ligado à sua conta",
