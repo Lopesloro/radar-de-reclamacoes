@@ -1,3 +1,7 @@
+# A configuração do serviço como código. O serviço no ar foi criado à mão e
+# ficou diferente deste arquivo em dois pontos que importam: o `startCommand`
+# estava sem `--forwarded-allow-ips` e o `healthCheckPath` estava vazio. Adotar
+# este arquivo no Render alinha os dois e passa a ligar o banco sozinho.
 services:
   - type: web
     name: radar-de-reclamacoes-pi6
@@ -6,7 +10,10 @@ services:
     region: oregon
     buildCommand: pip install -r requirements.txt
     # --forwarded-allow-ips: o serviço só recebe tráfego pelo proxy do Render.
-    # O Matheus confere essa linha na Fase 0 dele (plano/02-matheus.md, item 0.2).
+    # Sem isso o uvicorn ignora o X-Forwarded-For, e o endereço de quem pede
+    # passa a ser o do proxy. O limite de tentativas de entrada lê o ÚLTIMO item
+    # desse cabeçalho (app/seguranca/limite.py), que é o que o proxy escreveu e
+    # o cliente não escolhe.
     startCommand: uvicorn app.web:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips='*'
     healthCheckPath: /saude
     envVars:
@@ -19,12 +26,14 @@ services:
       # token, em vez de gravar em texto no banco.
       - key: RADAR_COFRE_CHAVE
         generateValue: true
-      # Preenchidas no painel do Render, nunca aqui.
-      # DATABASE_URL: a ligação interna do Postgres do próprio Render.
+      # O banco é ligado pelo próprio Render, a partir do Postgres que já existe
+      # na conta. A senha nunca passa por mão nenhuma nem por arquivo nenhum.
       - key: DATABASE_URL
-        sync: false
-      # Senha do administrador do primeiro arranque. Sem ela ninguém entra: o
-      # sistema não tem senha escrita no código.
+        fromDatabase:
+          name: radar-reclamacoes-db
+          property: connectionString
+      # Senha do administrador do primeiro arranque. Preenchida no painel, nunca
+      # aqui. Sem ela ninguém entra: o sistema não tem senha escrita no código.
       - key: RADAR_ADMIN_SENHA
         sync: false
       # Chave da IA que separa as avaliações por assunto. Sem ela o sistema usa

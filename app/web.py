@@ -21,17 +21,21 @@ from app.seguranca import instalar
 
 @asynccontextmanager
 async def partida(_app: FastAPI):
-    """Na partida: cria a conta do administrador se nenhuma existir.
+    """Na partida: sobe o banco para a última migração e cria a conta do administrador.
 
     Sem isto, um serviço novo com banco vazio não tem por onde entrar, e a única
     alternativa seria senha escrita no código. É idempotente e não sobrescreve
     conta que já exista, para uma variável esquecida no painel não reabrir uma
     conta fechada.
     """
+    from app.banco import migracao
     from app.banco import sessao as banco
     from app.seguranca.contas import garantir_administrador
 
     if banco.usar_banco():
+        # Nesta ordem: a migração cria as tabelas, e só então a conta pode ser
+        # gravada. Ao contrário, o primeiro arranque falharia.
+        migracao.subir()
         with banco.Sessao() as sessao:
             garantir_administrador(sessao)
     yield
