@@ -160,6 +160,17 @@ memória por (negócio, assunto, mês): a mesma tela aberta vinte vezes faz uma
 chamada, não vinte. Sem a IA, uma frase determinística entra no lugar e a tela
 não muda de forma.
 
+**A conclusão da frase não é da IA.** Ela é calculada em Python, a mesma que a
+frase determinística usa, e a IA recebe essa conclusão pronta com a instrução de
+reescrevê-la sem mudar o sentido. Sem isso as duas discordavam na mesma tela: a
+frase própria dizia "acima do esperado" e a IA escrevia "ainda é normal", lado a
+lado. Duas conclusões opostas deixam o dono sem saber o que fazer, e a saída
+certa não foi afinar o texto do pedido, foi tirar a decisão da mão do modelo.
+
+**Os tetos de tempo da IA** estão em `docs/producao.md`, seção 5. Resumo: nenhum
+caminho que alguém espera olhando uma tela faz mais de uma chamada, e todos têm
+resposta de reserva pronta.
+
 ---
 
 ## 4. Como reproduzir cada número

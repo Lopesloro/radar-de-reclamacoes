@@ -58,11 +58,35 @@ Para vinte clientes isso vira trabalho manual, e o próximo passo é um
 `cron job` do Render chamando a coleta de cada fonte ligada uma vez por dia.
 Está escrito aqui porque é a diferença entre "funciona" e "funciona sozinho".
 
-## 5. O que ainda falta para ser produção de verdade
+## 5. A IA dentro de um pedido web: três lugares, três tetos
+
+Esta seção existe porque o mesmo erro apareceu três vezes, em lugares
+diferentes, e todas as três só ficaram visíveis com dado de verdade no Render.
+
+A conta que governa tudo: a IA vai em **lotes de 8** e a conta gratuita aceita
+**12 chamadas por minuto**. Então cada 96 avaliações custam um minuto de relógio,
+e isso dentro de um pedido web significa o operador achando que travou, o proxy
+desistindo no meio e a transação morrendo pela metade.
+
+| Onde | Quantas avaliações | Teto posto | O que acontece acima do teto |
+|---|---|---|---|
+| Importar arquivo | o histórico inteiro, ~450 | 120 | acima disso, classifica com o modelo local |
+| Medir o acerto no corpus | 500 frases | — | **nunca** usa a IA; o corpus é o teste do modelo local |
+| Medir nas conferidas pelo dono | quantas ele conferir | 60 | entram as 60 primeiras |
+| Escrever a frase da estimativa | 1 | 1 tentativa, 8 s | cai na frase própria, que já está pronta |
+
+A regra geral, para quem escrever código novo: **se o caminho é esperado por
+alguém olhando uma tela, ou ele não chama a IA, ou chama uma vez com orçamento
+curto e com resposta de reserva pronta.** O lugar certo para trabalho de IA em
+volume é a coleta agendada, que roda fora do pedido web e é o primeiro item da
+lista abaixo.
+
+## 6. O que ainda falta para ser produção de verdade
 
 Em ordem de importância, com o motivo:
 
-1. **Coleta agendada.** Sem ela, alguém tem de clicar todo dia.
+1. **Coleta agendada.** Sem ela, alguém tem de clicar todo dia — e é também o
+   lugar certo para a IA classificar o histórico inteiro, fora do pedido web.
 2. **Sessão revogável no servidor.** Hoje sair apaga o cookie do navegador, mas
    uma cópia roubada valeria até o prazo de oito horas.
 3. **Envio do aviso por e-mail.** O canal já é configurável na tela do cliente e
