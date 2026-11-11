@@ -30,7 +30,7 @@ from app.coleta import ErroDeFonte, arquivo, fontes, motor
 from app.modelos import ativo
 from app.rotas import formularios
 from app.rotas._telas import tela
-from app.seguranca import cofre, exigir_admin
+from app.seguranca import cofre, contas, exigir_admin
 from app.seguranca import senha as _senha
 
 rotas = APIRouter(prefix="/admin")
@@ -293,6 +293,57 @@ def marcar_combinado(request: Request, empresa: str, comercio_id: str = Form("")
         )
         sessao.commit()
     return _voltar(destino, recado="Combinado atualizado.")
+
+
+@rotas.post("/clientes/{empresa}/apagar")
+def apagar_cliente(request: Request, empresa: str, confirmacao: str = Form(""),
+                   csrf: str = Form("")):
+    """Apaga a empresa e tudo que é dela. Não tem volta.
+
+    Existe por dois motivos, e o segundo é o que obriga:
+
+    1. Cliente que sai do piloto não pode continuar ocupando lugar na lista.
+    2. A LGPD dá ao titular o direito de eliminação dos dados. Sem este botão, a
+       resposta a um pedido de exclusão seria "abra o banco e apague à mão", o
+       que não é resposta.
+
+    Três cuidados:
+
+    - **Confirmação escrita.** Quem apaga digita o identificador do cliente. Um
+      botão de apagar ao lado de um botão de salvar, sem confirmação, é um
+      acidente esperando a hora.
+    - **A trilha fica.** A linha de auditoria é gravada na empresa da equipe, e
+      não na que está sendo apagada: as linhas da empresa apagada vão com ela,
+      por cascata, e o registro de que alguém apagou um cliente é justamente o
+      que não pode desaparecer.
+    - **A cascata é do banco.** Toda tabela de dado operacional aponta para
+      `empresa` com ON DELETE CASCADE, então nada fica órfão. Apagar com uma
+      lista de tabelas escrita à mão esqueceria a tabela que alguém criar amanhã.
+    """
+    usuario = exigir_admin(request)
+    destino = f"/admin/clientes/{empresa}"
+    if confirmacao.strip() != empresa:
+        return _voltar(destino, erro=(
+            "para apagar, escreva o identificador do cliente exatamente como ele é."
+        ))
+    with banco.Sessao() as sessao:
+        linha = sessao.get(modelo.Empresa, empresa)
+        if linha is None:
+            return _voltar("/admin/clientes", erro="esse cliente não existe.")
+        if empresa == contas.EMPRESA_DO_RADAR:
+            return _voltar(destino, erro="a empresa da própria equipe não se apaga.")
+        quantas = sessao.scalar(select(func.count(modelo.Avaliacao.id)).where(
+            modelo.Avaliacao.empresa_id == empresa)) or 0
+        nome = linha.nome
+        auditoria.registrar(
+            sessao, empresa_id=contas.EMPRESA_DO_RADAR, usuario_id=usuario.identificador,
+            acao="empresa_apagada", objeto=empresa,
+            detalhe=f"{nome}, com {quantas} avaliações",
+        )
+        sessao.delete(linha)
+        sessao.commit()
+    return _voltar("/admin/clientes",
+                   recado=f"{nome} foi apagado, com as {quantas} avaliações dele.")
 
 
 # ------------------------------------------------------------ fontes

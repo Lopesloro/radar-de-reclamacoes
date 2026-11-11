@@ -224,3 +224,74 @@ def test_a_trilha_do_cliente_grava_o_identificador_e_nao_o_nome_de_entrada(clien
             modelo.Classificacao.avaliacao_id == identificador,
             modelo.Classificacao.motivo_sem_assunto == "conferida pelo dono"))
         assert marcada is not None and marcada.categoria_id == "demora"
+
+
+# ------------------------------------------------------------ apagar cliente
+
+def test_apagar_cliente_leva_tudo_que_e_dele(equipe):
+    """A cascata é do banco, então nada fica órfão quando a empresa sai."""
+    equipe.post("/admin/clientes", data={
+        "csrf": _token(equipe), "identificador": "apagar-teste", "nome": "Para Apagar",
+        "negocio_nome": "Loja", "ramo": "Teste", "cidade": "Campinas, SP",
+        "entrada": "apagar-teste",
+    }, follow_redirects=False)
+    conteudo = "id;data;nota;comentario\n" + "\n".join(
+        f"a{n};0{1 + n % 9}/10/2026;1;Esperei muito tempo" for n in range(1, 6))
+    equipe.post("/admin/importar", data={
+        "csrf": _token(equipe, "/admin/fontes"),
+        "comercio_id": "apagar-teste-1", "conteudo_do_arquivo": conteudo,
+    }, follow_redirects=False)
+
+    with banco.Sessao() as sessao:
+        assert sessao.query(modelo.Avaliacao).filter(
+            modelo.Avaliacao.empresa_id == "apagar-teste").count() == 5
+
+    resposta = equipe.post("/admin/clientes/apagar-teste/apagar", data={
+        "csrf": _token(equipe, "/admin/clientes/apagar-teste"), "confirmacao": "apagar-teste",
+    }, follow_redirects=False)
+    assert resposta.status_code == 303
+    assert "recado=" in resposta.headers["location"]
+
+    with banco.Sessao() as sessao:
+        assert sessao.get(modelo.Empresa, "apagar-teste") is None
+        for tabela in (modelo.Comercio, modelo.Usuario, modelo.Avaliacao,
+                       modelo.Classificacao, modelo.SerieMensal, modelo.ExecucaoColeta):
+            sobrou = sessao.query(tabela).filter(tabela.empresa_id == "apagar-teste").count()
+            assert sobrou == 0, f"sobrou linha em {tabela.__tablename__}"
+        # A trilha do apagamento fica, na empresa da equipe.
+        linha = sessao.scalar(select(modelo.Auditoria).where(
+            modelo.Auditoria.acao == "empresa_apagada",
+            modelo.Auditoria.objeto == "apagar-teste"))
+        assert linha is not None and linha.empresa_id == "radar"
+        assert "5 avaliações" in (linha.detalhe or "")
+
+
+def test_apagar_sem_escrever_o_identificador_nao_apaga(equipe):
+    """Botão de apagar sem confirmação escrita é acidente esperando a hora."""
+    resposta = equipe.post("/admin/clientes/patinhas/apagar", data={
+        "csrf": _token(equipe, "/admin/clientes/patinhas"), "confirmacao": "patinha",
+    }, follow_redirects=False)
+    assert "erro=" in resposta.headers["location"]
+    with banco.Sessao() as sessao:
+        assert sessao.get(modelo.Empresa, "patinhas") is not None
+
+
+def test_a_empresa_da_propria_equipe_nao_se_apaga(equipe):
+    """Apagar a empresa da equipe apagaria a conta de administrador junto."""
+    resposta = equipe.post("/admin/clientes/radar/apagar", data={
+        "csrf": _token(equipe, "/admin/clientes/radar"), "confirmacao": "radar",
+    }, follow_redirects=False)
+    assert "erro=" in resposta.headers["location"]
+    with banco.Sessao() as sessao:
+        assert sessao.get(modelo.Empresa, "radar") is not None
+
+
+def test_o_cliente_nao_apaga_ninguem(cliente):
+    token = re.search(r'name="csrf" value="([^"]+)"',
+                      cliente.get("/configuracao").text).group(1)
+    resposta = cliente.post("/admin/clientes/patinhas/apagar", data={
+        "csrf": token, "confirmacao": "patinhas",
+    }, follow_redirects=False)
+    assert resposta.status_code == 403
+    with banco.Sessao() as sessao:
+        assert sessao.get(modelo.Empresa, "patinhas") is not None

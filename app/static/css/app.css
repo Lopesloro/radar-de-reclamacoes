@@ -706,3 +706,10 @@ progress::-moz-progress-bar { background: var(--acento); border-radius: 99px; }
   .forma--grade { grid-template-columns: 1fr; }
   .conferir__forma { flex-direction: column; align-items: stretch; }
 }
+
+/* O cartão de apagar cliente. A cor existe para a mão parar antes de clicar. */
+.cartao--perigo { border-color: #B4531F; background: #F8ECE4; }
+.botao--perigo {
+  background: #B4531F; color: #fff; border: 1px solid #93421A;
+}
+.botao--perigo:hover { background: #93421A; }

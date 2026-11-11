@@ -90,6 +90,21 @@
     <p class="nota">Nenhuma fonte ligada. <a href="/admin/fontes">Ligar fonte</a>.</p>
     {% endif %}
 
+    <article class="cartao cartao--perigo">
+      <h3 class="cartao__titulo">Apagar este cliente</h3>
+      <p class="cartao__texto">
+        Apaga a empresa, os negócios, as contas de entrada, as avaliações, as classificações, as
+        séries, as estimativas e os avisos. <strong>Não tem volta.</strong> É também a resposta a
+        um pedido de exclusão de dados pela LGPD. O registro de que alguém apagou fica na trilha.
+      </p>
+      <form class="forma forma--linha" method="post" action="/admin/clientes/{{ empresa.id }}/apagar">
+        <input type="hidden" name="csrf" value="{{ request.state.csrf }}">
+        <label class="campo"><span class="campo__rotulo">Escreva <code>{{ empresa.id }}</code> para confirmar</span>
+          <input class="campo__entrada" name="confirmacao" autocomplete="off" required></label>
+        <button class="botao botao--perigo" type="submit">Apagar para sempre</button>
+      </form>
+    </article>
+
     {{ m.proximo_passo([{"rotulo": "Voltar aos clientes", "href": "/admin/clientes"},
                         {"rotulo": "Fontes e coleta", "href": "/admin/fontes"}]) }}
   </div>
