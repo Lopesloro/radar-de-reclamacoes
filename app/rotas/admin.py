@@ -167,7 +167,7 @@ def criar_cliente(request: Request, identificador: str = Form(""), nome: str = F
             if sessao.get(modelo.Categoria, categoria) is None:
                 sessao.add(modelo.Categoria(id=categoria, nome=rotulo, ordem=1))
         auditoria.registrar(
-            sessao, empresa_id=dados.identificador, usuario_id=usuario.nome,
+            sessao, empresa_id=dados.identificador, usuario_id=usuario.identificador,
             acao="empresa_criada", objeto=dados.identificador,
             detalhe=f"plano {dados.plano}, entrada {dados.entrada}",
         )
@@ -225,7 +225,7 @@ def criar_negocio(request: Request, empresa: str, identificador: str = Form(""),
             id=dados.identificador, empresa_id=empresa, nome=dados.nome,
             ramo=dados.ramo, cidade=dados.cidade,
         ))
-        auditoria.registrar(sessao, empresa_id=empresa, usuario_id=usuario.nome,
+        auditoria.registrar(sessao, empresa_id=empresa, usuario_id=usuario.identificador,
                             acao="comercio_criado", objeto=dados.identificador)
         sessao.commit()
     return _voltar(destino, recado=f"Negócio {dados.nome} criado.")
@@ -251,7 +251,7 @@ def criar_usuario(request: Request, empresa: str, entrada: str = Form(""),
             id=f"u-{uuid.uuid4().hex[:16]}", empresa_id=empresa, email=dados.entrada,
             nome=dados.nome, papel="dono", senha_hash=_senha.gerar_hash(chave),
         ))
-        auditoria.registrar(sessao, empresa_id=empresa, usuario_id=usuario.nome,
+        auditoria.registrar(sessao, empresa_id=empresa, usuario_id=usuario.identificador,
                             acao="usuario_criado", objeto=dados.entrada)
         sessao.commit()
     return _voltar(destino, recado=f"Conta criada. Entrada {dados.entrada}, senha {chave}")
@@ -267,7 +267,7 @@ def desligar_usuario(request: Request, empresa: str, usuario_id: str = Form(""),
         if linha is None or linha.empresa_id != empresa:
             return _voltar(destino, erro="essa conta não é desse cliente.")
         linha.ativo = False
-        auditoria.registrar(sessao, empresa_id=empresa, usuario_id=usuario.nome,
+        auditoria.registrar(sessao, empresa_id=empresa, usuario_id=usuario.identificador,
                             acao="usuario_desligado", objeto=linha.email)
         sessao.commit()
     return _voltar(destino, recado="Conta desligada. Ela não entra mais.")
@@ -287,7 +287,7 @@ def marcar_combinado(request: Request, empresa: str, comercio_id: str = Form("")
         negocio.tem_termo = tem_termo == "sim"
         negocio.categorias_combinadas = categorias_combinadas == "sim"
         auditoria.registrar(
-            sessao, empresa_id=empresa, usuario_id=usuario.nome, acao="combinado_atualizado",
+            sessao, empresa_id=empresa, usuario_id=usuario.identificador, acao="combinado_atualizado",
             objeto=comercio_id,
             detalhe=f"combinado: termo={negocio.tem_termo} assuntos={negocio.categorias_combinadas}",
         )
@@ -360,7 +360,7 @@ def ligar_fonte(request: Request, comercio_id: str = Form(""), plataforma: str =
         achada.estado = "ligada" if (dados.plataforma == fontes.ARQUIVO or cifrado) else "pendente"
         achada.erro = None
         auditoria.registrar(
-            sessao, empresa_id=negocio.empresa_id, usuario_id=usuario.nome,
+            sessao, empresa_id=negocio.empresa_id, usuario_id=usuario.identificador,
             acao="fonte_ligada", objeto=f"{dados.comercio_id}/{dados.plataforma}",
             # O segredo não entra na trilha. Só o fato de haver um.
             detalhe="com segredo" if cifrado else "sem segredo",
@@ -385,7 +385,7 @@ def coletar_fonte(request: Request, fonte_id: str = Form(""), csrf: str = Form("
             return _voltar("/admin/fontes", erro=str(erro))
         resultado = motor.coletar(
             sessao, empresa_id, comercio_id, brutas,
-            fonte_id=fonte_id, usuario_id=usuario.nome,
+            fonte_id=fonte_id, usuario_id=usuario.identificador,
         )
         sessao.commit()
     return _voltar("/admin/fontes", recado=resultado.em_uma_frase())
@@ -411,7 +411,7 @@ def importar(request: Request, comercio_id: str = Form(""), conteudo_do_arquivo:
             return _voltar("/admin/fontes", erro="esse negócio não existe.")
         resultado = motor.coletar(
             sessao, negocio.empresa_id, negocio.id, list(lido.avaliacoes),
-            usuario_id=usuario.nome,
+            usuario_id=usuario.identificador,
         )
         sessao.commit()
     recado = resultado.em_uma_frase()

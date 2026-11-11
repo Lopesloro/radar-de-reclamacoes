@@ -37,7 +37,7 @@
       <h3 class="cartao__titulo">Adicionar negócio</h3>
       <form class="forma forma--grade" method="post" action="/admin/clientes/{{ empresa.id }}/negocio">
         <input type="hidden" name="csrf" value="{{ request.state.csrf }}">
-        <label class="campo"><span class="campo__rotulo">Identificador</span><input class="campo__entrada" name="identificador" required maxlength="60" pattern="[a-z0-9][a-z0-9-]*[a-z0-9]"></label>
+        <label class="campo"><span class="campo__rotulo">Identificador</span><input class="campo__entrada" name="identificador" required maxlength="60" pattern="[a-z0-9][a-z0-9\-]*[a-z0-9]"></label>
         <label class="campo"><span class="campo__rotulo">Nome</span><input class="campo__entrada" name="nome" required maxlength="160"></label>
         <label class="campo"><span class="campo__rotulo">Ramo</span><input class="campo__entrada" name="ramo" required maxlength="80"></label>
         <label class="campo"><span class="campo__rotulo">Cidade</span><input class="campo__entrada" name="cidade" required maxlength="120"></label>

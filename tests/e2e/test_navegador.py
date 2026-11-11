@@ -2,23 +2,22 @@
 
 from __future__ import annotations
 
-import os
 import re
 
 import pytest
 from axe_playwright_python.sync_playwright import Axe
 
+from tests.conftest import SENHA
 from tests.e2e.conftest import LARGURAS
 
 pytestmark = pytest.mark.e2e
 
 TELAS = [
-    "/", "/entrar", "/resumo", "/comercio/bella-massa", "/previsao/bella-massa", "/avisos",
+    "/", "/entrar", "/resumo", "/comercio/bella-massa", "/previsao/bella-massa",
+    "/previsao/bella-massa?categoria=preco", "/avisos",
     # A sessão do teste é da Bella Massa. Tela de outra empresa devolve 403 de
     # propósito, e isso é verificado em tests/seguranca/test_isolamento.py.
-    "/investigacao", "/investigacao/bella-massa/demora", "/investigacao/bella-massa/ambiente",
-    "/simulador", "/simulador/bella-massa", "/experimentos", "/experimentos/exp-bella-entregador",
-     "/confianca", "/o-que-falta", "/ajuda", "/sobre",
+    "/configuracao", "/conferir", "/confianca", "/o-que-falta", "/ajuda",
 ]
 
 # Mede, em cada gráfico visível, o tamanho em que a letra aparece de fato na tela.
@@ -55,8 +54,8 @@ def test_tela_abre_sem_erro_e_sem_rolagem_lateral(abrir, pasta_evidencias, rota,
 
 
 @pytest.mark.parametrize("largura", LARGURAS)
-@pytest.mark.parametrize("rota", ["/resumo", "/comercio/bella-massa", "/investigacao/bella-massa/demora",
-                                  "/simulador/bella-massa", "/confianca"])
+@pytest.mark.parametrize("rota", ["/resumo", "/comercio/bella-massa",
+                                  "/previsao/bella-massa", "/conferir", "/confianca"])
 def test_todo_botao_de_ajuda_abre_dentro_da_tela_e_fecha(abrir, rota, largura):
     pagina = abrir(largura)
     pagina.ir(rota)
@@ -86,8 +85,8 @@ def test_acessibilidade_sem_problema_grave(abrir, rota):
     assert not graves, resultado.generate_snapshot()
 
 
-@pytest.mark.parametrize("rota", ["/", "/resumo", "/investigacao/bella-massa/demora",
-                                  "/simulador/bella-massa", "/experimentos", "/ajuda"])
+@pytest.mark.parametrize("rota", ["/", "/resumo", "/previsao/bella-massa",
+                                  "/configuracao", "/conferir", "/ajuda"])
 def test_botao_principal_se_alcanca_so_com_o_teclado(abrir, rota):
     pagina = abrir(1280)
     pagina.ir(rota)
@@ -112,26 +111,32 @@ def test_tour_passa_pelos_cinco_passos(abrir, largura):
 
 
 @pytest.mark.parametrize("largura", LARGURAS)
-def test_jornada_do_aviso_ate_o_teste(abrir, largura):
-    """Resumo → Por quê? → E se? → Testar na prática → o teste."""
+def test_jornada_do_resumo_ate_a_conferencia(abrir, largura):
+    """Resumo → o que vem por aí → conferir uma avaliação → volta conferida.
+
+    É a jornada que o dono de negócio faz de verdade hoje, clique por clique. O
+    último passo grava no banco: se a conferência parar de funcionar, este teste
+    quebra antes de o cliente descobrir.
+    """
     pagina = abrir(largura)
     pagina.ir("/resumo")
-    pagina.locator(".cartao--negocio").first.get_by_role("link", name="Por quê?").click()
-    pagina.wait_for_url("**/investigacao/bella-massa/demora")
-    assert pagina.get_by_text("Provável causa").first.is_visible()
+    pagina.locator(".cartao--negocio").first.get_by_role(
+        "link", name="Ver o que vem por aí").click()
+    pagina.wait_for_url("**/previsao/bella-massa**")
+    assert pagina.get_by_text("O que isso quer dizer").is_visible()
+    # A faixa é o que o sistema acrescenta à régua: ela precisa estar na tela.
+    assert "entre" in pagina.locator(".numeros").inner_text()
 
-    pagina.get_by_role("link", name="E se eu mudar algo?").click()
-    pagina.wait_for_url("**/simulador/bella-massa?categoria=demora")
-    pagina.fill("#t-4-noite", "4")
-    pagina.fill("#t-5-noite", "4")
-    pagina.get_by_role("button", name="Ver o que acontece").click()
-    pagina.wait_for_url("**t-4-noite=4**")
-    assert "devem cair de" in pagina.locator(".grafico__frase").first.inner_text()
+    pagina.get_by_role("link", name="Ver os assuntos do negócio").click()
+    pagina.wait_for_url("**/comercio/bella-massa")
+    pagina.get_by_role("link", name="Conferir os assuntos das avaliações").click()
+    pagina.wait_for_url("**/conferir")
 
-    pagina.get_by_role("link", name="Testar na prática").click()
-    pagina.wait_for_url("**/experimentos")
-    pagina.get_by_role("link", name="Ver o teste").first.click()
-    assert pagina.get_by_role("heading", name="Os dias sorteados").is_visible()
+    primeiro = pagina.locator(".conferir__item").first
+    primeiro.locator("select[name=categoria]").select_option("demora")
+    primeiro.get_by_role("button", name="Confirmar").click()
+    pagina.wait_for_url("**/conferir**")
+    assert "Conferido" in pagina.locator(".aviso").first.inner_text()
     assert pagina.erros == []
 
 
@@ -151,25 +156,34 @@ def test_sem_javascript_o_site_continua_funcionando(browser, endereco):
     # devolve a página de entrada, e o teste mediria a tela errada.
     pagina.goto(endereco + "/entrar")
     pagina.fill('input[name="usuario"]', "bella")
-    pagina.fill('input[name="senha"]', os.environ["RADAR_SENHA_DEMO"])
+    pagina.fill('input[name="senha"]', SENHA)
     pagina.click('form.formulario button[type="submit"]')
-    pagina.goto(endereco + "/simulador/bella-massa?categoria=demora&t-4-noite=4")
-    assert "devem cair de" in pagina.locator(".grafico__frase").first.inner_text()
+    pagina.goto(endereco + "/previsao/bella-massa?categoria=demora")
+    assert "reclamações de demora" in pagina.locator(".grafico__frase").first.inner_text()
+    # A conferência é um formulário comum: funciona sem JavaScript, porque é
+    # assim que a tela foi feita.
+    pagina.goto(endereco + "/conferir")
+    primeiro = pagina.locator(".conferir__item").first
+    primeiro.locator("select[name=categoria]").select_option("preco")
+    primeiro.get_by_role("button", name="Confirmar").click()
+    assert "Conferido" in pagina.locator(".aviso").first.inner_text()
     pagina.locator("details.ajuda summary").first.click()
     assert pagina.locator("details.ajuda .ajuda__balao").first.is_visible()
     contexto.close()
 
 
 @pytest.mark.parametrize("largura", LARGURAS)
-def test_entrada_da_demonstracao(abrir, largura):
+def test_entrada_recusa_senha_errada_e_aceita_a_certa(abrir, largura):
     pagina = abrir(largura)
     pagina.ir("/")
     pagina.get_by_role("link", name="Entrar no painel").click()
     pagina.wait_for_url("**/entrar")
+    pagina.fill("input[name=usuario]", "bella")
     pagina.fill("input[name=senha]", "errada")
     pagina.get_by_role("button", name="Entrar").click()
     assert pagina.get_by_role("alert").inner_text() == "Usuário ou senha não conferem."
-    pagina.fill("input[name=senha]", "admin")
+    pagina.fill("input[name=usuario]", "bella")
+    pagina.fill("input[name=senha]", SENHA)
     pagina.get_by_role("button", name="Entrar").click()
     pagina.wait_for_url("**/resumo")
 

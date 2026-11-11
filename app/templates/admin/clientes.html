@@ -14,7 +14,7 @@
       <form class="forma forma--grade" method="post" action="/admin/clientes">
         <input type="hidden" name="csrf" value="{{ request.state.csrf }}">
         <label class="campo"><span class="campo__rotulo">Identificador</span>
-          <input class="campo__entrada" name="identificador" required maxlength="60" placeholder="cantina-do-centro" pattern="[a-z0-9][a-z0-9-]*[a-z0-9]">
+          <input class="campo__entrada" name="identificador" required maxlength="60" placeholder="cantina-do-centro" pattern="[a-z0-9][a-z0-9\-]*[a-z0-9]">
           <span class="campo__nota">só minúscula, número e hífen; aparece no endereço</span></label>
         <label class="campo"><span class="campo__rotulo">Nome da empresa</span>
           <input class="campo__entrada" name="nome" required maxlength="160"></label>

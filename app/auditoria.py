@@ -42,9 +42,18 @@ TAMANHO_MAXIMO_DO_DETALHE = 500
 
 def registrar(sessao: Session, *, empresa_id: str, acao: str, objeto: str,
               usuario_id: str | None = None, detalhe: str | None = None) -> None:
-    """Põe uma linha na trilha. Não dá commit: quem chamou fecha a transação."""
+    """Põe uma linha na trilha. Não dá commit: quem chamou fecha a transação.
+
+    `usuario_id` que não existe na tabela `usuario` entra como nulo, e não como
+    chave estrangeira quebrada. O motivo é duro: a trilha é gravada na mesma
+    transação da ação, então um identificador errado aqui desfaz a ação inteira.
+    Perder o "quem" de uma linha de trilha é ruim; perder a ação do cliente por
+    causa disso é pior. A linha continua existindo, com empresa, hora e objeto.
+    """
     if acao not in ACOES:
         raise ValueError(f"ação fora da lista de auditoria: {acao!r}")
+    if usuario_id is not None and sessao.get(modelo.Usuario, usuario_id) is None:
+        usuario_id = None
     sessao.add(modelo.Auditoria(
         empresa_id=empresa_id,
         usuario_id=usuario_id,

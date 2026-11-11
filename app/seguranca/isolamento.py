@@ -36,6 +36,9 @@ class Usuario:
     nome: str
     empresa_id: str
     papel: str = "dono"
+    # O identificador na tabela `usuario`. É ele que a auditoria grava, e não
+    # `nome`, que é o que a pessoa digita para entrar.
+    identificador: str | None = None
 
     @property
     def e_admin(self) -> bool:
@@ -47,7 +50,7 @@ def usuario_atual(requisicao: HTTPConnection) -> Usuario | None:
     if atual is None or atual.usuario is None or atual.empresa_id is None:
         return None
     return Usuario(nome=atual.usuario, empresa_id=atual.empresa_id,
-                   papel=atual.papel or "dono")
+                   papel=atual.papel or "dono", identificador=atual.usuario_id)
 
 
 def empresa_do_usuario(requisicao: HTTPConnection) -> str:

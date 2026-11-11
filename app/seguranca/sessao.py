@@ -35,6 +35,11 @@ class Sessao:
     # "dono" (o cliente) ou "admin" (a equipe do Radar). Vai assinado dentro do
     # cookie: trocar o papel no navegador quebra a assinatura e derruba a sessão.
     papel: str | None = None
+    # O identificador do usuário na tabela `usuario`, que é diferente do nome de
+    # entrada. A trilha de auditoria aponta para ele por chave estrangeira:
+    # gravar o nome de entrada no lugar do identificador viola a chave e derruba
+    # a ação inteira. Aconteceu, e foi o teste de navegador que pegou.
+    usuario_id: str | None = None
     # O que segue não vai para o cookie: diz ao middleware o que fazer com ele nesta resposta.
     nova: bool = False
     alterada: bool = False
@@ -56,7 +61,7 @@ class Assinador:
     def assinar(self, sessao: Sessao) -> str:
         return self._serializador.dumps({
             "c": sessao.csrf, "i": sessao.inicio, "u": sessao.usuario,
-            "e": sessao.empresa_id, "p": sessao.papel,
+            "e": sessao.empresa_id, "p": sessao.papel, "n": sessao.usuario_id,
         })
 
     def abrir(self, texto: str) -> Sessao | None:
@@ -85,7 +90,11 @@ class Assinador:
             return None
         if not -_FOLGA_DO_RELOGIO <= _agora() - inicio <= VALIDADE_SEGUNDOS:
             return None
-        return Sessao(csrf=csrf, inicio=inicio, usuario=usuario, empresa_id=empresa, papel=papel)
+        identificador = dados.get("n")
+        if identificador is not None and not isinstance(identificador, str):
+            return None
+        return Sessao(csrf=csrf, inicio=inicio, usuario=usuario, empresa_id=empresa,
+                      papel=papel, usuario_id=identificador)
 
 
 def cabecalho_set_cookie(sessao: Sessao, assinador: Assinador, seguro: bool) -> str:
@@ -109,11 +118,11 @@ def da_requisicao(conexao: HTTPConnection) -> Sessao | None:
 
 
 def iniciar(conexao: HTTPConnection, usuario: str, empresa_id: str,
-            papel: str = "dono") -> None:
+            papel: str = "dono", usuario_id: str | None = None) -> None:
     """Abre a sessão do usuário num cookie e num token novos: os de antes deixam de servir."""
     guardar(conexao.scope, Sessao(
-        csrf=secrets.token_urlsafe(32), inicio=_agora(),
-        usuario=usuario, empresa_id=empresa_id, papel=papel, alterada=True,
+        csrf=secrets.token_urlsafe(32), inicio=_agora(), usuario=usuario,
+        empresa_id=empresa_id, papel=papel, usuario_id=usuario_id or None, alterada=True,
     ))
 
 

@@ -86,7 +86,7 @@ def salvar_aviso(request: Request, email_aviso: str = Form(""), csrf: str = Form
             return _voltar("/configuracao", erro="não achei a sua empresa.")
         linha.email_aviso = dados.email_aviso or None
         auditoria.registrar(
-            sessao, empresa_id=empresa, usuario_id=usuario_atual(request).nome,
+            sessao, empresa_id=empresa, usuario_id=usuario_atual(request).identificador,
             acao="canal_definido", objeto="canal de aviso",
             detalhe="e-mail de aviso definido" if dados.email_aviso else "e-mail de aviso retirado",
         )
@@ -173,7 +173,7 @@ def salvar_conferencia(request: Request, avaliacao_id: str = Form(""),
         atual.categoria_id = dados.categoria or None
         atual.motivo_sem_assunto = conferencia.MARCA_DE_CONFERIDA
         auditoria.registrar(
-            sessao, empresa_id=empresa, usuario_id=usuario_atual(request).nome,
+            sessao, empresa_id=empresa, usuario_id=usuario_atual(request).identificador,
             acao="assunto_conferido", objeto=avaliacao.id,
             detalhe=f"assunto conferido pelo dono: {dados.categoria or 'nenhum'}",
         )

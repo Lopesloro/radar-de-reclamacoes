@@ -45,7 +45,8 @@ async def fazer_entrada(
         limite.registrar_falha(origem)
         return _para("/entrar?erro=credencial")
 
-    sessao.iniciar(request, conta.usuario, conta.empresa_id, conta.papel)
+    sessao.iniciar(request, conta.usuario, conta.empresa_id, conta.papel,
+                   conta.usuario_id or None)
     _anotar(conta, "entrou", origem)
     # Administrador cai na área dele; cliente, na tela que pediu.
     if conta.e_admin and not proximo:

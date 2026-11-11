@@ -191,3 +191,36 @@ def test_ligar_fonte_sem_chave_de_cofre_recusa_em_vez_de_gravar_em_texto(equipe,
             modelo.Fonte.comercio_id == "bella-massa",
             modelo.Fonte.plataforma == "google"))
     assert fonte is None or fonte.segredo_cifrado is None
+
+
+def test_a_trilha_do_cliente_grava_o_identificador_e_nao_o_nome_de_entrada(cliente):
+    """Defeito real: a coluna aponta para `usuario.id` por chave estrangeira.
+
+    Gravar o nome de entrada ("bella") no lugar do identificador
+    ("u-bella-massa") viola a chave e, porque a trilha é escrita na mesma
+    transação da ação, desfaz a ação do cliente inteira. Para o administrador os
+    dois valores coincidem, então nenhum teste de administração pegava isso; foi
+    o teste de navegador que pegou, conferindo uma avaliação pela tela.
+    """
+    html = cliente.get("/conferir").text
+    token = re.search(r'name="csrf" value="([^"]+)"', html).group(1)
+    identificador = re.search(r'name="avaliacao_id" value="([^"]+)"', html).group(1)
+
+    resposta = cliente.post("/conferir", data={
+        "csrf": token, "avaliacao_id": identificador, "categoria": "demora",
+    }, follow_redirects=False)
+    assert resposta.status_code == 303
+    assert "erro=" not in resposta.headers["location"], resposta.headers["location"]
+
+    with banco.Sessao() as sessao:
+        linha = sessao.scalar(select(modelo.Auditoria).where(
+            modelo.Auditoria.empresa_id == "bella-massa",
+            modelo.Auditoria.acao == "assunto_conferido",
+        ).order_by(modelo.Auditoria.quando.desc()))
+        assert linha is not None, "a conferência não deixou rastro"
+        assert linha.usuario_id == "u-bella-massa"
+        # E a conferência de fato ficou gravada.
+        marcada = sessao.scalar(select(modelo.Classificacao).where(
+            modelo.Classificacao.avaliacao_id == identificador,
+            modelo.Classificacao.motivo_sem_assunto == "conferida pelo dono"))
+        assert marcada is not None and marcada.categoria_id == "demora"
