@@ -81,15 +81,31 @@
       </form>
     </article>
 
+    <h2 class="titulo-secao">Ficha do cliente</h2>
+    <article class="cartao">
+      <p class="cartao__texto">Gravada cifrada no banco: uma cópia do banco não mostra nenhum destes dados. Só a equipe do Radar vê esta ficha.</p>
+      {% if not cofre_ligado %}<div class="aviso aviso--piorar"><p>RADAR_COFRE_CHAVE não está configurada: sem ela a ficha não é gravada.</p></div>{% endif %}
+      <form class="forma forma--grade" method="post" action="/admin/clientes/{{ empresa.id }}/ficha">
+        <input type="hidden" name="csrf" value="{{ request.state.csrf }}">
+        {% for campo, rotulo in rotulos_da_ficha.items() %}
+        <label class="campo"><span class="campo__rotulo">{{ rotulo }}</span>
+          <input class="campo__entrada" name="{{ campo }}" value="{{ ficha.get(campo, '') }}" maxlength="500" autocomplete="off"></label>
+        {% endfor %}
+        <button class="botao botao--secundario" type="submit">Salvar ficha</button>
+      </form>
+    </article>
+
     <h2 class="titulo-secao">Fontes deste cliente</h2>
+    {% set estados_fonte = {"aguardando": "aguardando autorização da plataforma", "ligada": "lendo", "pendente": "pendente", "erro": "com erro"} %}
     {% if fontes %}
     <ul class="fatos">
       {% for f in fontes %}
-      <li><strong>{{ f.comercio_id }} / {{ f.plataforma }}:</strong> {{ f.estado }}{% if f.ultima_coleta %}, última leitura {{ f.ultima_coleta | data_longa }}{% endif %}{% if f.erro %} <span class="nota">{{ f.erro }}</span>{% endif %}</li>
+      <li><strong>{{ {"google": "Google", "ifood": "iFood", "arquivo": "Arquivo enviado"}.get(f.plataforma, f.plataforma) }}:</strong> {{ estados_fonte.get(f.estado, f.estado) }}{% if f.ultima_coleta %}, última leitura {{ f.ultima_coleta | data_longa }}{% endif %}{% if f.erro %} <span class="nota">{{ f.erro }}</span>{% endif %}</li>
       {% endfor %}
     </ul>
+    <p class="nota">Google e iFood leem sozinhos quando a plataforma autorizar. Até lá, as avaliações entram por arquivo em <a href="/admin/fontes">Fontes</a>.</p>
     {% else %}
-    <p class="nota">Nenhuma fonte ligada. <a href="/admin/fontes">Ligar fonte</a>.</p>
+    <p class="nota">Nenhuma fonte registrada. Preencha o Google ou o iFood na ficha, ou envie arquivo em <a href="/admin/fontes">Fontes</a>.</p>
     {% endif %}
 
     <article class="cartao cartao--perigo">

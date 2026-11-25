@@ -27,8 +27,13 @@ CREATE TABLE IF NOT EXISTS empresa (
 	email_aviso VARCHAR(200),
 	criada_em TIMESTAMP WITHOUT TIME ZONE NOT NULL,
 	ativa BOOLEAN NOT NULL,
+	ficha_cifrada TEXT,
 	PRIMARY KEY (id)
 );
+
+-- Coluna que chegou depois da primeira versão: num banco que já existia, o
+-- CREATE TABLE acima não faz nada, e é este ALTER que a acrescenta.
+ALTER TABLE empresa ADD COLUMN IF NOT EXISTS ficha_cifrada TEXT;
 
 CREATE TABLE IF NOT EXISTS comercio (
 	id VARCHAR(60) NOT NULL,

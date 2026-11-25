@@ -33,7 +33,7 @@
           <tr>
             <th scope="row">{{ negocio.nome }} <span class="nota">{{ empresa.nome }}</span></th>
             <td>{{ fonte.plataforma }}{% if fonte.identificador_externo %} <span class="nota">{{ fonte.identificador_externo }}</span>{% endif %}</td>
-            <td>{{ fonte.estado }}{% if fonte.erro %} <span class="nota">{{ fonte.erro }}</span>{% endif %}</td>
+            <td>{{ {"aguardando": "aguardando autorização", "ligada": "lendo"}.get(fonte.estado, fonte.estado) }}{% if fonte.erro %} <span class="nota">{{ fonte.erro }}</span>{% endif %}</td>
             <td>{{ fonte.ultima_coleta | data_longa if fonte.ultima_coleta else "nunca" }}</td>
           </tr>
           {% endfor %}

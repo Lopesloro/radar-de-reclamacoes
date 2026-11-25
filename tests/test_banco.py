@@ -356,3 +356,19 @@ def test_o_assunto_em_alta_desempata_pelo_tamanho_e_nao_pelo_alfabeto(banco_vazi
     )
     assert cartao.vai_crescer_de == 19
     assert cartao.mais_reclamado == "demora"
+
+
+def test_o_script_acrescenta_coluna_nova_num_banco_que_ja_existia():
+    """O banco de produção já tem a tabela empresa. CREATE TABLE IF NOT EXISTS não
+    mexe nela; a coluna nova da ficha precisa de ALTER TABLE ... ADD COLUMN IF NOT EXISTS."""
+    with postgres.banco_novo() as endereco:
+        motor = create_engine(endereco)
+        with motor.begin() as conexao:
+            conexao.execute(text(
+                "CREATE TABLE empresa (id VARCHAR(60) PRIMARY KEY, nome VARCHAR(160) NOT NULL, "
+                "plano VARCHAR(30) NOT NULL, email_aviso VARCHAR(200), "
+                "criada_em TIMESTAMP NOT NULL, ativa BOOLEAN NOT NULL)"))
+        esquema.criar(motor)
+        colunas = {c["name"] for c in inspect(motor).get_columns("empresa")}
+        motor.dispose()
+    assert "ficha_cifrada" in colunas

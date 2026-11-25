@@ -31,6 +31,21 @@
           <input class="campo__entrada" type="email" name="email_aviso" maxlength="200"></label>
         <label class="campo"><span class="campo__rotulo">Plano</span>
           <select class="campo__entrada" name="plano"><option value="piloto">piloto</option><option value="mensal">mensal</option></select></label>
+        <p class="forma__separador">Ficha do cliente, gravada cifrada no banco (opcional)</p>
+        <label class="campo"><span class="campo__rotulo">CNPJ</span>
+          <input class="campo__entrada" name="cnpj" maxlength="20" placeholder="00.000.000/0000-00" autocomplete="off"></label>
+        <label class="campo"><span class="campo__rotulo">Responsável</span>
+          <input class="campo__entrada" name="responsavel" maxlength="160" autocomplete="off"></label>
+        <label class="campo"><span class="campo__rotulo">Telefone</span>
+          <input class="campo__entrada" name="telefone" maxlength="20" placeholder="(19) 99999-0000" autocomplete="off"></label>
+        <label class="campo"><span class="campo__rotulo">E-mail de contato</span>
+          <input class="campo__entrada" type="email" name="email_contato" maxlength="200" autocomplete="off"></label>
+        <label class="campo"><span class="campo__rotulo">Endereço no Google Maps</span>
+          <input class="campo__entrada" name="google_local" maxlength="500" placeholder="link do negócio no Maps" autocomplete="off">
+          <span class="campo__nota">registra a fonte do Google, que lê sozinha quando o Google autorizar</span></label>
+        <label class="campo"><span class="campo__rotulo">Loja no iFood</span>
+          <input class="campo__entrada" name="ifood_loja" maxlength="120" placeholder="identificador da loja" autocomplete="off">
+          <span class="campo__nota">registra a fonte do iFood, que lê sozinha quando o iFood liberar</span></label>
         <button class="botao botao--primario" type="submit" data-principal>Cadastrar</button>
       </form>
     </article>

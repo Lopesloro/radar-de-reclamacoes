@@ -82,6 +82,9 @@ class Empresa(Base):
     email_aviso: Mapped[str | None] = mapped_column(String(200))
     criada_em: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.now)
     ativa: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    # CNPJ, responsável, contato e onde o negócio está no Google e no iFood, num
+    # JSON cifrado pelo cofre. Nunca em texto: ver app/seguranca/ficha.py.
+    ficha_cifrada: Mapped[str | None] = mapped_column(Text)
 
 
 class Categoria(Base):

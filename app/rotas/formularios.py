@@ -64,6 +64,41 @@ class NovoCliente(Estrito):
         return valor
 
 
+class FichaDoCliente(Estrito):
+    """Os dados de quem contrata. Todos opcionais; os que vierem são conferidos."""
+
+    cnpj: str = Field(default="", max_length=20)
+    responsavel: str = Field(default="", max_length=160)
+    telefone: str = Field(default="", max_length=20)
+    email_contato: str = Field(default="", max_length=200)
+    google_local: str = Field(default="", max_length=500)
+    ifood_loja: str = Field(default="", max_length=120)
+
+    @field_validator("cnpj")
+    @classmethod
+    def _cnpj(cls, valor: str) -> str:
+        if not valor.strip():
+            return ""
+        digitos = re.sub(r"\D", "", valor)
+        if len(digitos) != 14:
+            raise ValueError("o CNPJ tem 14 números")
+        return f"{digitos[:2]}.{digitos[2:5]}.{digitos[5:8]}/{digitos[8:12]}-{digitos[12:]}"
+
+    @field_validator("telefone")
+    @classmethod
+    def _telefone(cls, valor: str) -> str:
+        if valor.strip() and len(re.sub(r"\D", "", valor)) not in (10, 11):
+            raise ValueError("o telefone tem DDD e 8 ou 9 números")
+        return valor.strip()
+
+    @field_validator("email_contato")
+    @classmethod
+    def _email_contato(cls, valor: str) -> str:
+        if valor.strip() and "@" not in valor:
+            raise ValueError("o e-mail de contato precisa ter @")
+        return valor.strip()
+
+
 class NovoNegocio(Estrito):
     identificador: str = Field(min_length=3, max_length=60)
     nome: str = Field(min_length=2, max_length=160)

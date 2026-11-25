@@ -724,3 +724,5 @@ progress::-moz-progress-bar { background: var(--acento); border-radius: 99px; }
 .legenda__cor--passado { background: #7A8790; }
 .legenda__cor--estimativa { background: #0F6E7B; }
 .legenda__cor--faixa { background: #CFE5E7; }
+
+.forma__separador { grid-column: 1 / -1; margin: 8px 0 0; padding-top: 12px; border-top: 1px solid var(--filete-forte); font-weight: 600; }

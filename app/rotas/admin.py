@@ -30,7 +30,7 @@ from app.coleta import ErroDeFonte, arquivo, fontes, motor
 from app.modelos import ativo
 from app.rotas import formularios
 from app.rotas._telas import tela
-from app.seguranca import cofre, contas, exigir_admin
+from app.seguranca import cofre, contas, exigir_admin, ficha
 from app.seguranca import senha as _senha
 
 rotas = APIRouter(prefix="/admin")
@@ -131,15 +131,27 @@ def clientes(request: Request, recado: str = "", erro: str = ""):
 def criar_cliente(request: Request, identificador: str = Form(""), nome: str = Form(""),
                   plano: str = Form("piloto"), negocio_nome: str = Form(""),
                   ramo: str = Form(""), cidade: str = Form(""), entrada: str = Form(""),
-                  email_aviso: str = Form(""), csrf: str = Form("")):
+                  email_aviso: str = Form(""), cnpj: str = Form(""),
+                  responsavel: str = Form(""), telefone: str = Form(""),
+                  email_contato: str = Form(""), google_local: str = Form(""),
+                  ifood_loja: str = Form(""), csrf: str = Form("")):
     usuario = exigir_admin(request)
     try:
         dados = formularios.NovoCliente(
             identificador=identificador, nome=nome, plano=plano, negocio_nome=negocio_nome,
             ramo=ramo, cidade=cidade, entrada=entrada, email_aviso=email_aviso,
         )
+        dados_da_ficha = formularios.FichaDoCliente(
+            cnpj=cnpj, responsavel=responsavel, telefone=telefone,
+            email_contato=email_contato, google_local=google_local, ifood_loja=ifood_loja,
+        ).model_dump()
     except ValidationError as erro:
         return _voltar("/admin/clientes", erro=erro.errors()[0]["msg"])
+    try:
+        # Cifra antes de abrir a transação: sem cofre, nada é criado.
+        ficha_cifrada = ficha.cifrar(dados_da_ficha)
+    except ficha.FichaSemCofre as erro:
+        return _voltar("/admin/clientes", erro=str(erro))
 
     chave = _senha_nova()
     with banco.Sessao() as sessao:
@@ -151,13 +163,16 @@ def criar_cliente(request: Request, identificador: str = Form(""), nome: str = F
 
         sessao.add(modelo.Empresa(
             id=dados.identificador, nome=dados.nome, plano=dados.plano,
-            email_aviso=dados.email_aviso or None,
+            email_aviso=dados.email_aviso or None, ficha_cifrada=ficha_cifrada,
         ))
         sessao.flush()      # sem relationship(), quem aponta para a empresa precisa dela gravada
         sessao.add(modelo.Comercio(
             id=f"{dados.identificador}-1", empresa_id=dados.identificador,
             nome=dados.negocio_nome, ramo=dados.ramo, cidade=dados.cidade,
         ))
+        sessao.flush()
+        _registrar_fontes_futuras(sessao, dados.identificador, f"{dados.identificador}-1",
+                                  dados_da_ficha)
         sessao.add(modelo.Usuario(
             id=f"u-{uuid.uuid4().hex[:16]}", empresa_id=dados.identificador,
             email=dados.entrada, nome=dados.nome, papel="dono",
@@ -169,12 +184,67 @@ def criar_cliente(request: Request, identificador: str = Form(""), nome: str = F
         auditoria.registrar(
             sessao, empresa_id=dados.identificador, usuario_id=usuario.identificador,
             acao="empresa_criada", objeto=dados.identificador,
-            detalhe=f"plano {dados.plano}, entrada {dados.entrada}",
+            # O que está na ficha não entra na trilha. Só o fato de haver uma.
+            detalhe=f"plano {dados.plano}, entrada {dados.entrada}"
+                    + (", com ficha cifrada" if ficha_cifrada else ""),
         )
         sessao.commit()
     # A senha vai na volta porque é a única vez que ela existe em texto.
     return _com_senha_nova(request, dados.identificador, "Cliente criado.",
                            dados.entrada, chave)
+
+
+def _registrar_fontes_futuras(sessao, empresa_id: str, comercio_id: str,
+                              dados_da_ficha: dict) -> None:
+    """Google e iFood ficam registrados para o cliente, aguardando a autorização.
+
+    O identificador na plataforma é dado do cliente e fica na ficha cifrada; a
+    fonte guarda só a plataforma e o estado. A leitura automática não roda: ver
+    app/coleta/fontes.py.
+    """
+    for plataforma, campo in (("google", "google_local"), ("ifood", "ifood_loja")):
+        if not dados_da_ficha.get(campo):
+            continue
+        existente = sessao.scalar(select(modelo.Fonte).where(
+            modelo.Fonte.comercio_id == comercio_id, modelo.Fonte.plataforma == plataforma))
+        if existente is None:
+            sessao.add(modelo.Fonte(
+                id=f"f-{uuid.uuid4().hex[:16]}", empresa_id=empresa_id,
+                comercio_id=comercio_id, plataforma=plataforma, identificador_externo="",
+                estado="aguardando",
+            ))
+
+
+@rotas.post("/clientes/{empresa}/ficha")
+def editar_ficha(request: Request, empresa: str, cnpj: str = Form(""),
+                 responsavel: str = Form(""), telefone: str = Form(""),
+                 email_contato: str = Form(""), google_local: str = Form(""),
+                 ifood_loja: str = Form(""), csrf: str = Form("")):
+    usuario = exigir_admin(request)
+    destino = f"/admin/clientes/{empresa}"
+    try:
+        dados_da_ficha = formularios.FichaDoCliente(
+            cnpj=cnpj, responsavel=responsavel, telefone=telefone,
+            email_contato=email_contato, google_local=google_local, ifood_loja=ifood_loja,
+        ).model_dump()
+        ficha_cifrada = ficha.cifrar(dados_da_ficha)
+    except ValidationError as erro:
+        return _voltar(destino, erro=erro.errors()[0]["msg"])
+    except ficha.FichaSemCofre as erro:
+        return _voltar(destino, erro=str(erro))
+    with banco.Sessao() as sessao:
+        linha = sessao.get(modelo.Empresa, empresa)
+        if linha is None:
+            return _voltar("/admin/clientes", erro="esse cliente não existe.")
+        linha.ficha_cifrada = ficha_cifrada
+        primeiro = sessao.scalar(select(modelo.Comercio).where(
+            modelo.Comercio.empresa_id == empresa).order_by(modelo.Comercio.criado_em))
+        if primeiro is not None:
+            _registrar_fontes_futuras(sessao, empresa, primeiro.id, dados_da_ficha)
+        auditoria.registrar(sessao, empresa_id=empresa, usuario_id=usuario.identificador,
+                            acao="ficha_alterada", objeto=empresa)
+        sessao.commit()
+    return _voltar(destino, recado="Ficha salva, cifrada.")
 
 
 @rotas.get("/clientes/{empresa}")
@@ -220,6 +290,8 @@ def _tela_do_cliente(request: Request, empresa: str, *, recado: str = "", erro: 
             empresa=linha, negocios=negocios, usuarios=usuarios, fontes=suas_fontes,
             contagem=contagem, plataformas=fontes.PLATAFORMAS,
             recado=recado, erro=erro, senha_nova=senha_nova,
+            ficha=ficha.abrir(linha.ficha_cifrada), rotulos_da_ficha=ficha.ROTULOS,
+            cofre_ligado=cofre.disponivel(),
         )
 
 

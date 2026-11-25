@@ -47,8 +47,8 @@
           <tbody>
             {% for f in suas %}
             <tr>
-              <th scope="row">{{ f.plataforma }}</th>
-              <td>{{ {"ligada": "Lendo", "pendente": "Esperando liberação", "erro": "Com erro"}.get(f.estado, f.estado) }}{% if f.erro %} <span class="nota">{{ f.erro }}</span>{% endif %}</td>
+              <th scope="row">{{ {"google": "Google", "ifood": "iFood", "arquivo": "Arquivo enviado"}.get(f.plataforma, f.plataforma) }}</th>
+              <td>{{ {"ligada": "Lendo", "pendente": "Esperando liberação", "aguardando": "Esperando a autorização da plataforma", "erro": "Com erro"}.get(f.estado, f.estado) }}{% if f.erro %} <span class="nota">{{ f.erro }}</span>{% endif %}</td>
               <td>{{ f.ultima_coleta | data_longa if f.ultima_coleta else "ainda não leu" }}</td>
             </tr>
             {% endfor %}

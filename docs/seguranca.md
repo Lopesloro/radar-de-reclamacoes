@@ -212,3 +212,15 @@ exercício:
   empresa e quando.
 - **O limite honesto da máscara** está escrito no próprio código e neste
   documento: nome solto no meio da frase passa.
+
+## Ficha do cliente cifrada (24/11/2026)
+
+CNPJ, responsável, telefone, e-mail de contato e onde o negócio está no Google e
+no iFood vão para o banco numa coluna só, `empresa.ficha_cifrada`, como JSON
+cifrado pelo cofre (Fernet, `app/seguranca/ficha.py`). Sem `RADAR_COFRE_CHAVE`
+o cadastro com ficha é recusado e nada é criado. Só a área da equipe abre a
+ficha; a trilha registra `ficha_alterada`, nunca o conteúdo. Prova:
+`tests/test_ficha.py`.
+
+A senha sorteada de cliente novo aparece uma única vez, no corpo da resposta do
+cadastro (`Cache-Control: no-store`), e nunca no endereço da página.

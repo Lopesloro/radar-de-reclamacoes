@@ -24,6 +24,7 @@ ACOES = (
     "saiu",
     "empresa_criada",
     "empresa_apagada",
+    "ficha_alterada",
     "comercio_criado",
     "usuario_criado",
     "usuario_desligado",

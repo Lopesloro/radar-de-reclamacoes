@@ -178,3 +178,12 @@ Vale deixar escrito, porque é o que o termo que o parceiro assina promete:
   nome solto no meio da frase passa, porque não existe regra que ache todo nome
   próprio em português sem um dicionário de nomes, e um dicionário erraria no
   outro sentido, apagando palavra comum.
+
+## 7. Cada cliente com as próprias fontes
+
+No cadastro, a equipe pode informar o endereço do negócio no Google Maps e o
+identificador da loja no iFood. Isso registra, para aquele cliente e só para
+ele, uma fonte do Google e uma do iFood no estado `aguardando`: a tela mostra
+"aguardando autorização da plataforma". O identificador fica na ficha cifrada do
+cliente, não em texto na tabela de fontes. Quando a autorização sair, a leitura
+automática entra no lugar do arquivo sem novo cadastro.
