@@ -67,7 +67,7 @@ desistindo no meio e a transação morrendo pela metade.
 
 | Onde | Quantas avaliações | Teto posto | O que acontece acima do teto |
 |---|---|---|---|
-| Importar arquivo | o histórico inteiro, ~450 | 120 | acima disso, classifica com o modelo local |
+| Importar arquivo | o histórico inteiro, ~450 | 96 (12 chamadas de 8) | acima disso, classifica com o modelo local |
 | Medir o acerto no corpus | 500 frases | — | **nunca** usa a IA; o corpus é o teste do modelo local |
 | Medir nas conferidas pelo dono | quantas ele conferir | 60 | entram as 60 primeiras |
 | Escrever a frase da estimativa | 1 | 1 tentativa, 8 s | cai na frase própria, que já está pronta |

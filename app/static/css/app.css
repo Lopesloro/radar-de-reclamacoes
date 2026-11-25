@@ -683,6 +683,12 @@ progress::-moz-progress-bar { background: var(--acento); border-radius: 99px; }
 .campo--linha { grid-template-columns: auto 1fr; align-items: center; gap: 10px; }
 .campo__nota { font-size: 13px; color: var(--texto-3); }
 .campo__entrada--area { font: 400 14px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; resize: vertical; }
+/* `.campo` é grid, e display de classe vence o `hidden` do navegador. */
+[hidden] { display: none !important; }
+[data-arquivo-recado]:empty { display: none; }
+/* O seletor de arquivo tem largura mínima própria, que esticava o formulário inteiro no celular. */
+[data-escolher-arquivo] { min-width: 0; }
+[data-escolher-arquivo] input[type="file"] { min-width: 0; width: 100%; }
 
 .caixa { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; white-space: nowrap; }
 

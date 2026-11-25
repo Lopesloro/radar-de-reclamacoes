@@ -37,6 +37,7 @@ from app.banco import modelo
 from app.coleta import AvaliacaoBruta
 from app.coleta.mascara import aplicar as mascarar
 from app.contratos import CATEGORIAS
+from app.investigacao import ia as _ia
 from app.modelos import LIMITE_CONFIANCA, ativo, previsao
 
 MOTIVO_SEM_CONFIANCA = "o texto não deixou claro o assunto"
@@ -55,7 +56,14 @@ MOTIVO_SEM_TEXTO = "a avaliação é só nota, sem texto"
 # a coleta do dia a dia, que é pequena. Quem quiser a IA no histórico tem o
 # caminho certo, que é a coleta agendada rodando fora do pedido web — está em
 # docs/producao.md como o próximo passo.
-LIMITE_PARA_IA = 120
+#
+# O teto é o que cabe em um minuto, e sai da conta em vez de ser escrito à mão.
+# Com 120 escrito à mão, um arquivo de 97 a 120 avaliações com texto fazia 13 a
+# 15 chamadas: as 12 primeiras saíam na hora e a 13ª esperava o minuto virar,
+# parada dentro do pedido. Foi com um arquivo assim (98 com texto) que a
+# importação do Poco Loco deu erro em produção, em 25/11/2026; o mesmo arquivo
+# importa sem erro fora dela.
+LIMITE_PARA_IA = _ia.POR_MINUTO * _ia.TAMANHO_DO_LOTE
 
 
 @dataclass(frozen=True)

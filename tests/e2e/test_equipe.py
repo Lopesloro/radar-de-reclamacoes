@@ -72,6 +72,30 @@ def test_a_equipe_cadastra_cliente_e_importa_avaliacoes(abrir, largura):
     assert pagina.erros == []
 
 
+@pytest.mark.parametrize("largura", LARGURAS)
+def test_a_equipe_escolhe_o_arquivo_em_vez_de_colar(abrir, largura):
+    """Abrir o arquivo, copiar e colar a cada parte era ida e volta à toa.
+
+    Escolher o arquivo põe o texto no campo de colar (sem a marca invisível que o
+    Excel e o Bloco de Notas põem no começo), e o envio segue o formulário comum,
+    com o token no corpo.
+    """
+    pagina = abrir(largura, EQUIPE)
+    pagina.ir("/admin/fontes")
+    conteudo = _avaliacoes_em_csv(3)
+    seletor = pagina.locator("form[data-importacao] input[type=file]")
+    assert seletor.is_visible()
+    seletor.set_input_files(files=[{
+        "name": "avaliacoes.csv", "mimeType": "text/csv",
+        "buffer": ("﻿" + conteudo).encode("utf-8"),
+    }])
+    recado = pagina.locator("[data-arquivo-recado]")
+    recado.wait_for(state="visible")
+    assert "avaliacoes.csv" in recado.inner_text()
+    assert pagina.locator("textarea[name=conteudo_do_arquivo]").input_value() == conteudo
+    assert pagina.erros == []
+
+
 def test_a_equipe_ve_a_trilha_da_propria_acao(abrir):
     pagina = abrir(1280, EQUIPE)
     pagina.ir("/admin/auditoria")

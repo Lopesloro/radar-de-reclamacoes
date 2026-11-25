@@ -61,4 +61,45 @@
       if (d.open && !d.contains(evento.target)) d.open = false;
     });
   });
+
+  // Área da equipe, tela Fontes: escolher o arquivo em vez de abrir, copiar e colar.
+  // O texto vai para o campo de colar, e o envio continua o formulário comum.
+  var importacao = document.querySelector("form[data-importacao]");
+  if (importacao) {
+    var escolha = importacao.querySelector("[data-escolher-arquivo]");
+    var area = importacao.querySelector("textarea[name=conteudo_do_arquivo]");
+    var recado = importacao.querySelector("[data-arquivo-recado]");
+    var botao = importacao.querySelector("button[type=submit]");
+    var rotulo = botao.textContent;
+
+    if (escolha && window.FileReader) {
+      var seletor = escolha.querySelector("input[type=file]");
+      escolha.hidden = false;
+      seletor.addEventListener("change", function () {
+        var arquivo = seletor.files && seletor.files[0];
+        if (!arquivo) return;
+        var leitor = new FileReader();
+        leitor.onload = function () {
+          area.value = String(leitor.result).replace(/^﻿/, "");
+          recado.textContent = "Arquivo " + arquivo.name + " carregado. Confira o negócio e clique em " + rotulo + ".";
+        };
+        leitor.onerror = function () {
+          recado.textContent = "Não deu para ler esse arquivo. Cole o conteúdo no campo abaixo.";
+        };
+        leitor.readAsText(arquivo, "utf-8");
+      });
+    }
+
+    // A importação leva de segundos a um minuto. Sem isto o botão parece morto, a
+    // pessoa clica de novo e o mesmo arquivo entra em dois pedidos ao mesmo tempo.
+    importacao.addEventListener("submit", function () {
+      botao.disabled = true;
+      botao.textContent = "Importando, pode levar até um minuto…";
+    });
+    // Voltar pelo navegador devolve a página guardada, com o botão ainda travado.
+    window.addEventListener("pageshow", function () {
+      botao.disabled = false;
+      botao.textContent = rotulo;
+    });
+  }
 })();

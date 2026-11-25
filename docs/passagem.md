@@ -81,11 +81,13 @@ socket curto: `LC_ALL=C pg_ctl -D <pasta> -o "-p 5432 -k /tmp/rpg" start`.
 
 **Cadastrar cliente.** Área da equipe → Clientes. A senha do dono aparece uma vez.
 
-**Importar avaliações.** Formato: `id;data;nota;comentario`, data `dd/mm/aaaa`,
-nota de 1 a 5, sem o nome do autor. Envie em partes de até 100 linhas: a IA
-classifica até 120 por envio, acima disso entra o modelo próprio. Reenviar a
-mesma parte não duplica (chave única por negócio e id). A estimativa só aparece
-com 6 meses fechados.
+**Importar avaliações.** Área da equipe → Fontes → escolher o arquivo (ou colar
+o conteúdo) → Importar e classificar. Formato: `id;data;nota;comentario`, data
+`dd/mm/aaaa`, nota de 1 a 5, sem o nome do autor. Envie em partes de até 90
+linhas: a IA classifica até 96 avaliações com texto por envio (12 chamadas de 8,
+o que a conta gratuita aceita em um minuto), acima disso entra o modelo próprio.
+Reenviar a mesma parte não duplica (chave única por negócio e id). A estimativa
+só aparece com 6 meses fechados.
 
 **Montar o CSV do Google sem exportar à mão.** Ferramenta do Nicolas, fora do
 site: `python -m ferramentas.serpapi_para_arquivo "Poco Loco Bar Campinas" --saida dados_reais/poco-loco.csv`.
@@ -114,6 +116,7 @@ propósito); nem o MCP do Render consulta. Olhe pelas telas da equipe.
 | "cannot have more than one active free tier database" | Limite do Render | Apagar o antigo antes (seção 4) |
 | Site leva 1 min para abrir | Plano grátis dormindo | Abrir 5 min antes de qualquer demonstração |
 | "Bloqueado" ao entrar | 8 senhas erradas em 5 min por origem | Esperar 5 min; não demonstrar isso na banca |
+| "Erro interno do servidor." ao importar (Poco Loco, 357 linhas, 98 com texto) | Provável (o log do Render não foi lido): o teto da IA era 120, acima das 96 que cabem em um minuto, e a 13ª chamada esperava o minuto virar dentro do pedido. O mesmo arquivo importa sem erro num Postgres local | Teto agora sai da conta (96). Envie em partes de até 90 linhas |
 
 ## 6. O que falta (em ordem)
 

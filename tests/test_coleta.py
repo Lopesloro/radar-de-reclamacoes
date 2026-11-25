@@ -216,6 +216,16 @@ def test_lote_grande_usa_o_modelo_local_mesmo_com_ia_ligada(monkeypatch, negocio
     assert nome_pequeno.startswith("ia:")
 
 
+def test_o_lote_da_ia_cabe_em_um_minuto():
+    """Defeito real: com o teto em 120, 98 avaliações faziam 13 chamadas e a 13ª
+    esperava o minuto virar dentro do pedido. A importação deu erro em produção."""
+    from app.investigacao import ia
+
+    chamadas = -(-motor.LIMITE_PARA_IA // ia.TAMANHO_DO_LOTE)
+    assert chamadas <= ia.POR_MINUTO
+    assert motor.LIMITE_PARA_IA == 96
+
+
 def test_sem_ia_o_tamanho_do_lote_nao_muda_nada(monkeypatch):
     monkeypatch.delenv("RADAR_IA_CHAVE", raising=False)
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)

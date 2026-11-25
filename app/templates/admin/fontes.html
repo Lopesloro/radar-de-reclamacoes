@@ -9,13 +9,20 @@
     {% if erro %}<div class="aviso aviso--piorar"><p>{{ erro }}</p></div>{% endif %}
     <article class="cartao">
       <h2 class="cartao__titulo">Enviar avaliações em arquivo</h2>
-      <p class="cartao__texto">Cole o conteúdo do CSV ou do JSON exportado do painel da plataforma. Aceita as colunas <code>id</code>, <code>data</code>, <code>nota</code> e <code>comentario</code>, com variações de nome. Linha inválida é recusada sozinha e o resto entra.</p>
-      <form class="forma" method="post" action="/admin/importar">
+      <p class="cartao__texto">Escolha o CSV ou o JSON exportado do painel da plataforma, ou cole o conteúdo dele. Aceita as colunas <code>id</code>, <code>data</code>, <code>nota</code> e <code>comentario</code>, com variações de nome. Linha inválida é recusada sozinha e o resto entra.</p>
+      <p class="cartao__texto">A inteligência artificial separa até {{ limite_para_ia }} avaliações com texto por envio; acima disso, quem separa é o modelo próprio. Para um histórico grande, envie em partes. Reenviar a mesma parte não duplica nada.</p>
+      <form class="forma" method="post" action="/admin/importar" data-importacao>
         <input type="hidden" name="csrf" value="{{ request.state.csrf }}">
         <label class="campo"><span class="campo__rotulo">Negócio</span>
           <select class="campo__entrada" name="comercio_id" required>
             {% for n in negocios %}<option value="{{ n.id }}">{{ n.nome }} ({{ n.id }})</option>{% endfor %}
           </select></label>
+        {# Sem `name`: o arquivo não vai no envio. O JavaScript lê e põe o texto no campo
+           abaixo, e o formulário segue comum, com o token no corpo. Sem JavaScript, o
+           botão fica escondido e o campo de colar continua funcionando. #}
+        <label class="campo" data-escolher-arquivo hidden><span class="campo__rotulo">Arquivo</span>
+          <input class="campo__entrada" type="file" accept=".csv,.json,.txt,text/csv,application/json"></label>
+        <p class="nota" data-arquivo-recado aria-live="polite"></p>
         <label class="campo"><span class="campo__rotulo">Conteúdo do arquivo</span>
           <textarea class="campo__entrada campo__entrada--area" name="conteudo_do_arquivo" rows="8" required
                     placeholder="id;data;nota;comentario&#10;r1;13/10/2026;1;Esperei 50 minutos"></textarea></label>

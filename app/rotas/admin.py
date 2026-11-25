@@ -455,7 +455,7 @@ def listar_fontes(request: Request, recado: str = "", erro: str = ""):
         return tela(
             request, "admin/fontes.html", "admin-fontes",
             linhas=linhas, negocios=negocios, futuras=fontes.FUTURAS,
-            sem_api=fontes.SEM_API,
+            sem_api=fontes.SEM_API, limite_para_ia=motor.LIMITE_PARA_IA,
             recado=recado, erro=erro,
         )
 
