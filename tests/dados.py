@@ -18,7 +18,7 @@ from __future__ import annotations
 import random
 from datetime import date, timedelta
 
-from app.banco import modelo
+from app.banco import esquema, modelo
 from app.banco import sessao as banco
 from app.coleta import AvaliacaoBruta, motor
 from app.contratos import CATEGORIAS
@@ -74,13 +74,11 @@ def montar(senha_hash: str) -> None:
     import uuid
 
     banco.esquecer()
-    modelo.Base.metadata.create_all(banco.motor())
+    esquema.criar(banco.motor())
 
     with banco.Sessao() as sessao:
         if sessao.get(modelo.Empresa, "bella-massa") is not None:
             return
-        for categoria in CATEGORIAS:
-            sessao.add(modelo.Categoria(id=categoria, nome=categoria, ordem=1))
         for identificador, nome, ramo, cidade, _cresce, entrada in EMPRESAS:
             sessao.add(modelo.Empresa(
                 id=identificador, nome=nome, plano="piloto",

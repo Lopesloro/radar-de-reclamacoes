@@ -19,7 +19,7 @@ que a banca faz.
 
 | Área | Dono | Pastas |
 |---|---|---|
-| Banco, modelos, estatística, coleta e medição | Gabriel | `app/banco/`, `app/modelos/`, `app/coleta/` (menos `mascara.py`), `app/servicos.py`, `app/mundo/`, `app/decisao/`, `alembic/` |
+| Banco, modelos, estatística, coleta e medição | Gabriel | `app/banco/`, `app/modelos/`, `app/coleta/` (menos `mascara.py`), `app/servicos.py` |
 | Entrada, contas, isolamento entre empresas, IA segura, LGPD, auditoria, CI de segurança | Matheus | `app/seguranca/`, `app/investigacao/ia.py`, `app/investigacao/protecao.py`, `app/coleta/mascara.py`, `app/auditoria.py`, `app/rotas/formularios.py`, `.github/workflows/seguranca.yml`, `docs/seguranca.md` |
 | Telas, textos, gráficos, rotas de página, testes de ponta a ponta, documentação acadêmica | Nicolas | `app/rotas/` (menos `formularios.py`), `app/templates/`, `app/static/`, `app/graficos/`, `app/conteudo.py`, `tests/e2e/`, `docs/` (menos `seguranca.md`) |
 | Contratos entre as partes | os três | `app/contratos.py` |
@@ -30,8 +30,7 @@ em PR aprovado pelos três.
 ## Regras que valem para todo mundo
 
 - **Régua sempre.** Todo modelo é comparado com um palpite simples. Um teste
-  quebra a build se o modelo perder da régua. Isso vale também para o agente, o
-  simulador e o experimento.
+  quebra a build se o modelo perder da régua.
 - **Avaliação é dado, nunca ordem.** Texto escrito por cliente nunca vira
   instrução para a IA, nunca vai para o HTML sem escape e nunca sai do sistema
   sem antes passar pelo mascaramento de dados pessoais.
@@ -43,8 +42,8 @@ em PR aprovado pelos três.
   `<details class="tecnico">`, que existem para a banca.
 - **CSP sem `unsafe-inline`.** Nada de `<script>` inline, `onclick=` ou
   atributo `style=`. JavaScript e CSS só em arquivos de `app/static/`.
-- **Mundo simulado é determinístico.** Mesma semente, mesmos números. Teste nunca
-  depende de sorte.
+- **Teste é determinístico.** Mesma semente, mesmos números. Teste nunca depende
+  de sorte, e nunca fala com a internet (a IA é testada com cliente de mentira).
 - **Não existe dado de demonstração.** O gerador de avaliações fictícias foi
   removido. Toda tela lê o banco, e quando não há dado ela diz isso em uma frase.
   Tela com número inventado é pior que tela vazia, porque o dono decide em cima
@@ -75,6 +74,12 @@ No Windows, troque `.venv/bin/` por `.venv\Scripts\`.
 .venv/bin/uvicorn app.web:app --reload --port 8000
 ```
 
+Os testes precisam de um PostgreSQL onde possam criar e apagar bancos:
+
+```bash
+export RADAR_TESTE_POSTGRES=postgresql://radar@127.0.0.1:5432/postgres
+```
+
 ```bash
 .venv/bin/python -m pytest -q
 ```
@@ -88,11 +93,12 @@ Chromium instalado (`python -m playwright install chromium`):
 
 ## Como o código está organizado
 
-- As telas pedem dados só a `app/servicos.py`. Hoje ele chama `app/falsos.py`;
-  quando uma parte real fica pronta, troca-se a linha da função ali, e as telas
-  não mudam.
-- `app/rotas/acesso_provisorio.py` deixa a demonstração abrir sem senha. Some
-  quando a entrada do Matheus ficar pronta.
+- As telas pedem dados só a `app/servicos.py`, que lê o banco por
+  `app/banco/consultas.py`. Tela nenhuma abre o banco direto.
+- O banco é PostgreSQL em todo lugar, produção e teste. As tabelas estão num
+  script só, `app/banco/esquema.sql`, que o serviço roda na partida
+  (`app/banco/esquema.py`). Mudou `app/banco/modelo.py`? Mude o script também;
+  um teste quebra se os dois divergirem.
 - Todo botão "?" usa o `GLOSSARIO` de `app/conteudo.py`. Todo gráfico tem
   "Como ler este gráfico" e "Ver os números em tabela" (macro `grafico` em
   `app/templates/_macros.html`).

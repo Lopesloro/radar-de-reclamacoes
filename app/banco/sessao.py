@@ -1,15 +1,17 @@
 """De onde os dados vêm, decidido em tempo de execução.
 
-Requisito duro: **sem `DATABASE_URL`, nada aqui é aberto** e o site continua
-lendo `app/falsos.py`, exatamente como hoje. Importar este módulo não conecta em
-nada; o motor nasce na primeira chamada de `motor()`.
+Requisito duro: **sem `DATABASE_URL`, nada aqui é aberto**, e toda tela diz que
+não há banco ligado, em vez de inventar número. Importar este módulo não conecta
+em nada; o motor nasce na primeira chamada de `motor()`.
+
+O banco é sempre PostgreSQL, na produção e no teste.
 """
 
 from __future__ import annotations
 
 import os
 
-from sqlalchemy import Engine, create_engine, event
+from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 _motor: Engine | None = None
@@ -33,23 +35,8 @@ def url() -> str | None:
 
 
 def usar_banco() -> bool:
-    """True quando há banco configurado. False é o estado de hoje, e está tudo bem."""
+    """True quando há banco configurado."""
     return url() is not None
-
-
-def ligar_chaves_estrangeiras(motor_alvo: Engine) -> None:
-    """No SQLite a chave estrangeira é desligada por padrão.
-
-    Sem isto, o isolamento por empresa passaria no teste e falharia no Postgres.
-    """
-    if motor_alvo.dialect.name != "sqlite":
-        return
-
-    @event.listens_for(motor_alvo, "connect")
-    def _ligar(conexao, _registro):  # pragma: no cover - callback do driver
-        cursor = conexao.cursor()
-        cursor.execute("PRAGMA foreign_keys=ON")
-        cursor.close()
 
 
 def motor() -> Engine:
@@ -57,12 +44,8 @@ def motor() -> Engine:
     if _motor is None:
         endereco = url()
         if endereco is None:
-            raise RuntimeError(
-                "Sem DATABASE_URL não existe banco: o sistema lê app/falsos.py. "
-                "Chame usar_banco() antes."
-            )
+            raise RuntimeError("Sem DATABASE_URL não existe banco. Chame usar_banco() antes.")
         _motor = create_engine(endereco, pool_pre_ping=True, future=True)
-        ligar_chaves_estrangeiras(_motor)
     return _motor
 
 

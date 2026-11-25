@@ -1,7 +1,8 @@
 """O banco guarda o dado real: isolado por empresa e sem contar avaliação duas vezes.
 
-Tudo em SQLite na memória ou em arquivo temporário. Nenhum teste depende de um
-Postgres de pé.
+Tudo em PostgreSQL, o mesmo banco da produção: cada teste que precisa de banco
+ganha um banco novo e vazio (`tests/postgres.py`), criado pelo script
+`app/banco/esquema.sql`, que é o mesmo que o serviço roda na partida.
 """
 
 from datetime import date, datetime
@@ -11,9 +12,10 @@ from sqlalchemy import create_engine, inspect, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.banco import consultas, modelo
+from app.banco import consultas, esquema, modelo
 from app.banco import sessao as fonte
 from app.contratos import CATEGORIAS, Alerta, AvaliacaoTela, ResumoComercio, SerieMensal
+from tests import postgres
 
 HOJE = date(2026, 10, 13)
 
@@ -33,12 +35,12 @@ def _popular(sessao: Session) -> None:
     """Duas empresas com o mesmo formato, para o isolamento ter o que separar.
 
     Os `flush()` são de propósito: sem `relationship()`, o SQLAlchemy não deduz a
-    ordem de INSERT entre tabelas, e a chave estrangeira do SQLite está ligada.
+    ordem de INSERT entre tabelas, e a chave estrangeira do Postgres recusa a
+    linha que chega antes da tabela de que depende.
     """
     for identificador, nome in (("alfa", "Parceira Alfa"), ("beta", "Parceira Beta")):
         sessao.add(modelo.Empresa(id=identificador, nome=nome))
-    for ordem, categoria in enumerate(CATEGORIAS):
-        sessao.add(modelo.Categoria(id=categoria, nome=categoria.capitalize(), ordem=ordem))
+    # Os cinco assuntos já vêm do script do banco (app/banco/esquema.sql).
     sessao.flush()
 
     for empresa_id, comercio_id, nivel in (("alfa", "alfa-pizza", 30), ("beta", "beta-pet", 12)):
@@ -95,11 +97,18 @@ def _popular(sessao: Session) -> None:
 
 
 @pytest.fixture
-def sessao():
-    motor = create_engine("sqlite://")
-    fonte.ligar_chaves_estrangeiras(motor)
-    modelo.Base.metadata.create_all(motor)
-    with Session(motor) as aberta:
+def banco_vazio():
+    """Um banco Postgres novo, com as tabelas do script e nenhum dado além dos assuntos."""
+    with postgres.banco_novo() as endereco:
+        motor = create_engine(endereco)
+        esquema.criar(motor)
+        yield motor
+        motor.dispose()
+
+
+@pytest.fixture
+def sessao(banco_vazio):
+    with Session(banco_vazio) as aberta:
         _popular(aberta)
         yield aberta
 
@@ -230,15 +239,17 @@ def test_sem_database_url_o_sistema_devolve_vazio_e_nao_inventa(monkeypatch):
     fonte.esquecer()
 
 
-def test_com_database_url_o_banco_entra(monkeypatch, tmp_path):
-    monkeypatch.setenv("DATABASE_URL", f"sqlite:///{tmp_path / 'radar.sqlite3'}")
+def test_com_database_url_o_banco_entra(monkeypatch):
+    endereco = postgres.criar()
+    monkeypatch.setenv("DATABASE_URL", endereco)
     fonte.esquecer()
     assert fonte.usar_banco() is True
-    modelo.Base.metadata.create_all(fonte.motor())
+    esquema.criar(fonte.motor())
     with fonte.Sessao() as aberta:
         _popular(aberta)
         assert len(consultas.comercios(aberta, "alfa")) == 1
     fonte.esquecer()
+    postgres.apagar(endereco)
 
 
 def test_postgres_do_render_vira_url_que_o_sqlalchemy_entende(monkeypatch):
@@ -247,52 +258,54 @@ def test_postgres_do_render_vira_url_que_o_sqlalchemy_entende(monkeypatch):
     assert fonte.url().startswith("postgresql+psycopg://")
 
 
-# ------------------------------------------------------------ migração
+# ------------------------------------------------------------ o script do banco
 
-def test_a_migracao_cria_o_mesmo_esquema_das_entidades(tmp_path, monkeypatch):
-    """Se a entidade mudar e ninguém gerar a migração, este teste quebra."""
-    from alembic.config import Config
-
-    from alembic import command
-    from app.banco import RAIZ
-
-    arquivo = tmp_path / "migrado.sqlite3"
-    configuracao = Config(str(RAIZ / "alembic.ini"))
-    configuracao.set_main_option("script_location", str(RAIZ / "alembic"))
-    configuracao.set_main_option("sqlalchemy.url", f"sqlite:///{arquivo}")
-    monkeypatch.delenv("DATABASE_URL", raising=False)
-    command.upgrade(configuracao, "head")
-
-    migrado = inspect(create_engine(f"sqlite:///{arquivo}"))
-    esperado = create_engine("sqlite://")
-    modelo.Base.metadata.create_all(esperado)
-    direto = inspect(esperado)
-
-    assert set(migrado.get_table_names()) - {"alembic_version"} == set(direto.get_table_names())
-    for tabela in direto.get_table_names():
-        assert ({c["name"] for c in migrado.get_columns(tabela)}
-                == {c["name"] for c in direto.get_columns(tabela)}), tabela
+def test_o_script_sql_cria_o_mesmo_esquema_do_modelo(banco_vazio):
+    """Se a tabela mudar em app/banco/modelo.py e ninguém mudar o esquema.sql, este teste quebra."""
+    criado = inspect(banco_vazio)
+    assert set(criado.get_table_names()) == set(modelo.Base.metadata.tables)
+    for nome, tabela in modelo.Base.metadata.tables.items():
+        colunas = {c["name"]: c for c in criado.get_columns(nome)}
+        assert set(colunas) == {c.name for c in tabela.columns}, nome
+        for coluna in tabela.columns:
+            assert colunas[coluna.name]["nullable"] == coluna.nullable, f"{nome}.{coluna.name}"
+            tamanho = getattr(coluna.type, "length", None)
+            if tamanho:
+                assert colunas[coluna.name]["type"].length == tamanho, f"{nome}.{coluna.name}"
 
 
-def test_a_migracao_deixa_o_vocabulario_de_assuntos_pronto(tmp_path, monkeypatch):
-    from alembic.config import Config
-
-    from alembic import command
-    from app.banco import RAIZ
-
-    arquivo = tmp_path / "assuntos.sqlite3"
-    configuracao = Config(str(RAIZ / "alembic.ini"))
-    configuracao.set_main_option("script_location", str(RAIZ / "alembic"))
-    configuracao.set_main_option("sqlalchemy.url", f"sqlite:///{arquivo}")
-    monkeypatch.delenv("DATABASE_URL", raising=False)
-    command.upgrade(configuracao, "head")
-
-    with create_engine(f"sqlite:///{arquivo}").connect() as conexao:
+def test_o_script_deixa_os_cinco_assuntos_prontos(banco_vazio):
+    with banco_vazio.connect() as conexao:
         assuntos = conexao.execute(text("SELECT id FROM categoria ORDER BY ordem")).scalars().all()
     assert tuple(assuntos) == CATEGORIAS
 
 
-def test_o_assunto_em_alta_desempata_pelo_tamanho_e_nao_pelo_alfabeto(tmp_path, monkeypatch):
+def test_rodar_o_script_de_novo_nao_apaga_nem_duplica_nada(banco_vazio):
+    """O serviço roda o script a cada partida: a segunda vez não pode mexer no que existe."""
+    with Session(banco_vazio) as aberta:
+        _popular(aberta)
+    esquema.criar(banco_vazio)
+    esquema.criar(banco_vazio)
+    with banco_vazio.connect() as conexao:
+        assert conexao.execute(text("SELECT count(*) FROM empresa")).scalar() == 2
+        assert conexao.execute(text("SELECT count(*) FROM categoria")).scalar() == 5
+
+
+def test_o_tamanho_da_coluna_de_senha_cabe_o_hash_argon2(banco_vazio):
+    """Defeito real: com VARCHAR(200) o hash era cortado e ninguém entrava. Só o Postgres mostra."""
+    from app.seguranca import senha
+
+    with Session(banco_vazio) as aberta:
+        aberta.add(modelo.Empresa(id="e1", nome="Empresa"))
+        aberta.flush()
+        aberta.add(modelo.Usuario(id="u1", empresa_id="e1", email="dono", nome="Dono",
+                                  papel="dono", senha_hash=senha.gerar_hash("uma senha longa o bastante")))
+        aberta.commit()
+        gravado = aberta.get(modelo.Usuario, "u1").senha_hash
+    assert senha.conferir("uma senha longa o bastante", gravado)
+
+
+def test_o_assunto_em_alta_desempata_pelo_tamanho_e_nao_pelo_alfabeto(banco_vazio, monkeypatch):
     """Defeito real de produção, visto na tela antes de ser visto no código.
 
     Dois assuntos crescendo a mesma quantidade: um com 19 reclamações no mês e
@@ -300,9 +313,8 @@ def test_o_assunto_em_alta_desempata_pelo_tamanho_e_nao_pelo_alfabeto(tmp_path, 
     "qualidade" (1 reclamação) ganhava de "demora" (19). A tela dizia "a demora é
     o que mais incomoda" no gráfico e abria a estimativa em qualidade.
     """
-    monkeypatch.setenv("DATABASE_URL", f"sqlite:///{tmp_path / 'alta.sqlite3'}")
+    monkeypatch.setenv("DATABASE_URL", banco_vazio.url.render_as_string(hide_password=False))
     fonte.esquecer()
-    modelo.Base.metadata.create_all(fonte.motor())
 
     with fonte.Sessao() as sessao:
         sessao.add(modelo.Empresa(id="e1", nome="Empresa"))
@@ -311,8 +323,6 @@ def test_o_assunto_em_alta_desempata_pelo_tamanho_e_nao_pelo_alfabeto(tmp_path, 
                                    ramo="Teste", cidade="Campinas, SP"))
         sessao.add(modelo.VersaoModelo(id="v1", empresa_id="e1", tipo="previsao",
                                        nome="teste", treinada_em=datetime.now(), ativa=True))
-        for categoria in CATEGORIAS:
-            sessao.add(modelo.Categoria(id=categoria, nome=categoria, ordem=1))
         # O flush aqui não é zelo: sem `relationship()` no modelo, o SQLAlchemy não
         # conhece a dependência entre as tabelas e não garante a ordem dos INSERT.
         # Sem este flush, `serie_mensal` pode entrar antes de `categoria` e a chave

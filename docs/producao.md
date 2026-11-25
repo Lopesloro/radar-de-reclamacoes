@@ -18,11 +18,9 @@ As três primeiras são obrigatórias. O `render.yaml` gera `RADAR_CHAVE` e
 ## 2. Ordem de subida
 
 ```bash
-# 1. o banco, antes do serviço
-alembic upgrade head
-
-# 2. o serviço sobe e cria a conta de administrador se nenhuma existir
-#    (idempotente: não sobrescreve conta que já exista)
+# O serviço sobe, roda app/banco/esquema.sql (cria só as tabelas que faltam)
+# e cria a conta de administrador se nenhuma existir.
+# Os dois passos são idempotentes: não apagam nem sobrescrevem nada.
 uvicorn app.web:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips='*'
 ```
 
@@ -91,7 +89,6 @@ Em ordem de importância, com o motivo:
    uma cópia roubada valeria até o prazo de oito horas.
 3. **Envio do aviso por e-mail.** O canal já é configurável na tela do cliente e
    o aviso aparece na tela; o envio em si não está ligado.
-4. **Postgres no CI.** Os testes rodam em SQLite. Dois defeitos deste projeto só
-   apareceriam no Postgres: o tamanho da coluna de senha e a ordem de inserção
-   sem `relationship()`.
+4. ~~Postgres no CI.~~ Feito: a CI e a máquina de cada um rodam os testes em
+   PostgreSQL (`RADAR_TESTE_POSTGRES`), o mesmo banco da produção.
 5. **Backup do banco.** O plano gratuito do Render não faz.

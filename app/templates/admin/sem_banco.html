@@ -8,7 +8,7 @@
                 "Sem ele o sistema não guarda nada, e a área de administração não tem o que mostrar. Nenhum dado foi perdido: o sistema recusa gravar em vez de gravar no lugar errado.") }}
     <ul class="fatos">
       <li>Falta a variável <strong>{{ variavel }}</strong> no serviço.</li>
-      <li>Depois de ligá-la, rode a migração do banco: <code>alembic upgrade head</code>.</li>
+      <li>Depois de ligá-la, reinicie o serviço: na partida ele cria as tabelas que faltarem, a partir de <code>app/banco/esquema.sql</code>.</li>
       <li>Na partida seguinte o sistema cria a conta de administrador a partir de <strong>RADAR_ADMIN_SENHA</strong>, se nenhuma existir.</li>
     </ul>
   </div>

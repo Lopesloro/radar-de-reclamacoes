@@ -1,8 +1,9 @@
 """O banco de teste, o cliente autenticado e a lista de telas que todo teste percorre.
 
-O banco é um SQLite num arquivo temporário, criado uma vez por sessão de teste e
-preenchido pelo motor de coleta de verdade (`tests/dados.py`). Duas decisões aqui
-valem explicação:
+O banco é um PostgreSQL novo, criado uma vez por sessão de teste
+(`tests/postgres.py`), com as tabelas do mesmo script que a produção roda e
+preenchido pelo motor de coleta de verdade (`tests/dados.py`). Duas decisões
+aqui valem explicação:
 
 - **`DATABASE_URL` é definida antes de importar `app.web`.** O sistema decide de
   onde lê na primeira chamada, e não no import; definir antes só evita depender
@@ -13,18 +14,20 @@ valem explicação:
   `tests/seguranca/test_ia_segura.py`, com um cliente de mentira.
 """
 
+import atexit
 import os
 import re
-import tempfile
-from pathlib import Path
 
 import pytest
 from starlette.testclient import TestClient
 
+from tests import postgres
+
 SENHA = "senha-de-teste-nao-usar-em-producao"
 
-_pasta = Path(tempfile.mkdtemp(prefix="radar-teste-"))
-os.environ["DATABASE_URL"] = f"sqlite:///{_pasta / 'teste.sqlite3'}"
+_banco_da_sessao = postgres.criar()
+atexit.register(postgres.apagar, _banco_da_sessao)
+os.environ["DATABASE_URL"] = _banco_da_sessao
 os.environ.setdefault("RADAR_CHAVE", "chave-de-teste-nao-usar-em-producao")
 os.environ["RADAR_ADMIN_SENHA"] = SENHA
 os.environ.setdefault("RADAR_COFRE_CHAVE", "")

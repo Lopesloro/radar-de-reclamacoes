@@ -352,20 +352,24 @@ def series(sessao: Session, empresa_id: str, comercio_id: str,
 def series_fechadas(sessao: Session, empresa_id: str) -> tuple[tuple[str, tuple[tuple[date, int], ...]], ...]:
     """Os meses fechados de cada (negócio, assunto). É o que a conferência da
     previsão usa para rodar a origem móvel em cima do dado real da empresa."""
+    # O nome vai para a tela ("Pizzaria Bella Massa, demora"): por isso o nome do
+    # negócio e o do assunto, e não os identificadores internos.
     linhas = sessao.execute(
-        select(modelo.SerieMensal.comercio_id, modelo.SerieMensal.categoria_id,
+        select(modelo.Comercio.nome, modelo.Categoria.nome,
                modelo.SerieMensal.mes, modelo.SerieMensal.quantidade)
+        .join(modelo.Comercio, modelo.Comercio.id == modelo.SerieMensal.comercio_id)
+        .join(modelo.Categoria, modelo.Categoria.id == modelo.SerieMensal.categoria_id)
         .where(modelo.SerieMensal.empresa_id == empresa_id,
                modelo.SerieMensal.fechado.is_(True))
         .order_by(modelo.SerieMensal.comercio_id, modelo.SerieMensal.categoria_id,
                   modelo.SerieMensal.mes)
     ).all()
     agrupadas: dict[tuple[str, str], list[tuple[date, int]]] = {}
-    for comercio_id, categoria, mes, quantidade in linhas:
-        agrupadas.setdefault((comercio_id, categoria), []).append((mes, quantidade))
+    for negocio, assunto, mes, quantidade in linhas:
+        agrupadas.setdefault((negocio, assunto), []).append((mes, quantidade))
     return tuple(
-        (f"{comercio_id} / {categoria}", tuple(meses))
-        for (comercio_id, categoria), meses in agrupadas.items()
+        (f"{negocio}, {assunto}", tuple(meses))
+        for (negocio, assunto), meses in agrupadas.items()
     )
 
 
