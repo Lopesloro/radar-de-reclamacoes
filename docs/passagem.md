@@ -87,6 +87,12 @@ classifica até 120 por envio, acima disso entra o modelo próprio. Reenviar a
 mesma parte não duplica (chave única por negócio e id). A estimativa só aparece
 com 6 meses fechados.
 
+**Montar o CSV do Google sem exportar à mão.** Ferramenta do Nicolas, fora do
+site: `python -m ferramentas.serpapi_para_arquivo "Poco Loco Bar Campinas" --saida dados_reais/poco-loco.csv`.
+Precisa de `SERPAPI_KEY` num `.env` (modelo em `.env.example`). Sai sem autor e
+com a máscara de dados pessoais. Cada página gasta uma busca da cota; limite com
+`--max-paginas`. Instruções no `README.md`.
+
 **Recriar o banco quando vencer.** O Render aceita 1 Postgres grátis por conta.
 1. Apagar o banco velho no painel (Settings → Delete Database). A ferramenta MCP
    do Render não apaga banco. Não tem volta: exporte antes o que importar.
