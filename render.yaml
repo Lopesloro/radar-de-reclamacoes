@@ -40,8 +40,3 @@ services:
       # o modelo próprio e nada quebra.
       - key: RADAR_IA_CHAVE
         sync: false
-      # Credenciais do aplicativo no Google, para a fonte do Perfil da Empresa.
-      - key: RADAR_GOOGLE_CLIENTE_ID
-        sync: false
-      - key: RADAR_GOOGLE_CLIENTE_SEGREDO
-        sync: false

@@ -79,7 +79,7 @@
       <a class="botao botao--primario" href="/conferir" data-principal>Conferir avaliações</a>
     </article>
 
-    <h2 class="titulo-secao">As plataformas que o sistema lê</h2>
+    <h2 class="titulo-secao">De onde as avaliações vêm</h2>
     <ul class="fatos">
       {% for p in plataformas %}
       <li><strong>{{ p.nome }}.</strong> {{ p.como_liga }}{% if p.o_que_trava %} <span class="nota">Hoje depende de: {{ p.o_que_trava }}</span>{% endif %}</li>

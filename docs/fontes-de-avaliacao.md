@@ -1,23 +1,23 @@
 # De onde as avaliações vêm, e o que cada plataforma exige
 
-Pergunta que sustenta este documento: **como o comerciante liga a conta dele para
-o sistema puxar as avaliações sozinho?** A resposta curta é que depende da
-plataforma, e que em duas das três o caminho automático existe mas está atrás de
-uma aprovação que não está na mão da equipe. Por isso existe um terceiro caminho
-que funciona no primeiro dia e não depende de ninguém.
+**Decisão de produto (24/11/2026): as avaliações entram só por arquivo.** O dono
+exporta do painel da plataforma e a equipe envia o CSV ou JSON em `/admin/fontes`.
+É o caminho que funciona no primeiro dia e não depende de ninguém.
 
-A tabela abaixo é a que a área da equipe mostra em `/admin/fontes`, e o código
-que ela descreve está em `app/coleta/`.
+A leitura automática do Google e do iFood **ficou fora do produto**. As duas
+plataformas têm API, mas as duas dependem de uma autorização que não está na mão
+da equipe. As seções 1 e 2 abaixo guardam o que foi pesquisado, para quando essa
+autorização existir; o código de leitura automática foi retirado para não
+oferecer na tela um botão que não funcionaria.
 
-| Plataforma | Caminho automático | O que trava hoje | Código |
+| Plataforma | Caminho automático | O que falta | Hoje |
 |---|---|---|---|
-| Perfil da Empresa no Google | Sim, API v4 de avaliações | Aprovação manual do Google; a cota começa em zero | `app/coleta/google.py` |
-| iFood | Sim, API de parceiro | Liberação do módulo de avaliações para o aplicativo | `app/coleta/ifood.py` |
-| 99Food | Não há API pública | — | exportar do portal e enviar arquivo |
-| Rappi | Não há documentação pública | — | mesmo caminho |
-| Uber Eats | Saiu da operação de refeições no Brasil | — | não há integração a fazer |
-| Reclame Aqui | Não há API aberta | — | mesmo caminho |
-| Arquivo (CSV ou JSON) | Sim, imediato | Nada | `app/coleta/arquivo.py` |
+| Perfil da Empresa no Google | API v4 de avaliações | Aprovação manual do Google; a cota começa em zero | arquivo exportado |
+| iFood | API de parceiro | Liberação do módulo de avaliações para o aplicativo | arquivo exportado |
+| 99Food | Não há API pública | — | arquivo exportado |
+| Rappi | Não há documentação pública | — | arquivo exportado |
+| Reclame Aqui | Não há API aberta | — | arquivo exportado |
+| Arquivo (CSV ou JSON) | — | Nada | `app/coleta/arquivo.py` |
 
 ---
 

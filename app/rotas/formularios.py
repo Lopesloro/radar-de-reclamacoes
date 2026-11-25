@@ -15,7 +15,6 @@ import re
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from app.coleta.fontes import POR_CHAVE
 from app.contratos import CATEGORIAS
 
 # Identificador que vai para a URL: só minúscula, número e hífen. Sem isso, um
@@ -88,20 +87,6 @@ class NovoUsuario(Estrito):
         if " " in minuscula:
             raise ValueError("o nome de entrada não tem espaço")
         return minuscula
-
-
-class NovaFonte(Estrito):
-    comercio_id: str = Field(min_length=3, max_length=60)
-    plataforma: str = Field(min_length=3, max_length=30)
-    identificador_externo: str = Field(default="", max_length=200)
-    segredo: str = Field(default="", max_length=4000)
-
-    @field_validator("plataforma")
-    @classmethod
-    def _plataforma(cls, valor: str) -> str:
-        if valor not in POR_CHAVE:
-            raise ValueError(f"plataforma que o sistema não conhece: {valor}")
-        return valor
 
 
 class Importacao(Estrito):
