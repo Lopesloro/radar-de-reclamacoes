@@ -19,16 +19,15 @@ from app.modelos.causas import AvaliacaoClassificada
 
 def avaliacoes_classificadas(sessao: Session, empresa_id: str,
                              comercio_id: str) -> list[AvaliacaoClassificada]:
-    """Todas as avaliações do negócio, com o assunto da versão do modelo que está no ar."""
-    ativa = (select(modelo.VersaoModelo.id)
-             .where(modelo.VersaoModelo.empresa_id == empresa_id,
-                    modelo.VersaoModelo.tipo == "classificacao",
-                    modelo.VersaoModelo.ativa.is_(True)))
+    """Todas as avaliações do negócio, com o assunto vigente de cada uma
+    (ver `consultas.classificacoes_vigentes`)."""
+    from app.banco.consultas import classificacoes_vigentes
+
     linhas = sessao.execute(
         select(modelo.Avaliacao.data, modelo.Classificacao.categoria_id, modelo.Avaliacao.texto)
         .outerjoin(modelo.Classificacao, and_(
             modelo.Classificacao.avaliacao_id == modelo.Avaliacao.id,
-            modelo.Classificacao.versao_modelo_id.in_(ativa)))
+            modelo.Classificacao.id.in_(classificacoes_vigentes(empresa_id))))
         .where(modelo.Avaliacao.empresa_id == empresa_id,
                modelo.Avaliacao.comercio_id == comercio_id)
     ).all()

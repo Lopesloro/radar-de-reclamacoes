@@ -34,6 +34,7 @@ from sqlalchemy.orm import Session
 
 from app import auditoria
 from app.banco import modelo
+from app.banco.consultas import classificacoes_vigentes
 from app.coleta import AvaliacaoBruta
 from app.coleta.mascara import aplicar as mascarar
 from app.contratos import CATEGORIAS
@@ -222,11 +223,12 @@ def _refazer_series(sessao: Session, empresa_id: str, comercio_id: str, hoje: da
     linhas = sessao.execute(
         select(modelo.Avaliacao.data, modelo.Classificacao.categoria_id)
         .join(modelo.Classificacao, modelo.Classificacao.avaliacao_id == modelo.Avaliacao.id)
-        .join(modelo.VersaoModelo, modelo.VersaoModelo.id == modelo.Classificacao.versao_modelo_id)
         .where(modelo.Avaliacao.empresa_id == empresa_id,
                modelo.Avaliacao.comercio_id == comercio_id,
                modelo.Classificacao.categoria_id.is_not(None),
-               modelo.VersaoModelo.ativa.is_(True))
+               # A vigente, não "só a da versão ativa": com a segunda, trocar de
+               # modelo zerava o histórico (Poço Loco, 25/11/2026).
+               modelo.Classificacao.id.in_(classificacoes_vigentes(empresa_id)))
     ).all()
 
     contagem: Counter[tuple[date, str]] = Counter(

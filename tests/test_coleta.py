@@ -240,3 +240,53 @@ def test_a_frase_do_resultado_diz_quem_separou(negocio_vazio):
         sessao.commit()
     assert "o modelo próprio" in resultado.em_uma_frase()
     assert "4 avaliações novas" in resultado.em_uma_frase()
+
+
+def test_trocar_de_modelo_nao_apaga_o_historico_da_tela_do_cliente(monkeypatch, negocio_vazio):
+    """Defeito real, Poço Loco, 25/11/2026: o histórico entrou pelo modelo local
+    (lote grande) e uma importação pequena depois foi pela IA. A versão nova
+    virou a única ativa, e tudo que lia "só a versão ativa" deixou de ver o
+    histórico: o Resumo ficou vazio, as avaliações sem assunto e o "Por quê?" sem
+    dado, enquanto a área da equipe, que conta as avaliações direto, mostrava tudo.
+    Cada avaliação é classificada uma vez só, quando entra; a troca de modelo não
+    pode tirar o assunto dela."""
+    from app.banco import analises, consultas
+    from app.modelos import ativo
+
+    modelo_da_vez = {"nome": "local:tfidf+regressao (lote grande)"}
+    monkeypatch.setattr(motor, "_escolher_classificador",
+                        lambda quantas: (ativo.local(), modelo_da_vez["nome"]))
+
+    # O histórico: três meses fechados antes de HOJE.
+    historico = [
+        AvaliacaoBruta(id_origem=f"h{i}", data=date(2026, 8, 1) + timedelta(days=i),
+                       estrelas=1, texto="Esperei quase uma hora para ser atendido.")
+        for i in range(60)
+    ]
+    with banco.Sessao() as sessao:
+        primeira = motor.coletar(sessao, negocio_vazio, negocio_vazio, historico, hoje=HOJE)
+        sessao.commit()
+    assert primeira.com_assunto > 0
+
+    # A coleta do dia a dia, pequena, por outro modelo, só no mês corrente.
+    modelo_da_vez["nome"] = "ia:modelo-de-teste"
+    recente = [AvaliacaoBruta(id_origem="r1", data=HOJE, estrelas=2,
+                              texto="Esperei quase uma hora para ser atendido.")]
+    with banco.Sessao() as sessao:
+        motor.coletar(sessao, negocio_vazio, negocio_vazio, recente, hoje=HOJE)
+        sessao.commit()
+
+    with banco.Sessao() as sessao:
+        fechados = sessao.scalar(
+            select(func.sum(modelo.SerieMensal.quantidade)).where(
+                modelo.SerieMensal.comercio_id == negocio_vazio,
+                modelo.SerieMensal.fechado.is_(True))) or 0
+        assert fechados == primeira.com_assunto
+        assert consultas.comercios(sessao, negocio_vazio), "o Resumo do cliente ficou vazio"
+
+        lista = consultas.avaliacoes(sessao, negocio_vazio, negocio_vazio, limite=0)
+        do_historico = [a for a in lista if a.data < date(2026, 11, 1)]
+        assert sum(1 for a in do_historico if a.categoria) == primeira.com_assunto
+
+        para_o_porque = analises.avaliacoes_classificadas(sessao, negocio_vazio, negocio_vazio)
+        assert sum(1 for a in para_o_porque if a.categoria) == primeira.com_assunto + 1

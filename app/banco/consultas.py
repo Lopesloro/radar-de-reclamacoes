@@ -44,6 +44,34 @@ def _fracao_do_mes(hoje: date) -> float:
     return round(hoje.day / calendar.monthrange(hoje.year, hoje.month)[1], 2)
 
 
+def classificacoes_vigentes(empresa_id: str):
+    """Os ids da classificação que vale para cada avaliação da empresa.
+
+    Cada avaliação é classificada uma vez só, quando entra, pelo modelo daquele
+    momento. Filtrar "só a versão ativa" escondia tudo que entrou antes da última
+    troca de modelo: no Poço Loco o histórico entrou pelo modelo local (lote
+    grande), uma importação pequena depois foi pela IA, e o Resumo do cliente
+    ficou vazio com as avaliações todas no banco. A regra agora: entre as
+    classificações de modelo de separação (a conferência do dono fica de fora,
+    ela é régua), vale a da versão ativa e, sem ela, a mais recente.
+    """
+    ordem = func.row_number().over(
+        partition_by=modelo.Classificacao.avaliacao_id,
+        order_by=(modelo.VersaoModelo.ativa.desc(), modelo.VersaoModelo.treinada_em.desc(),
+                  modelo.Classificacao.id.desc()),
+    ).label("ordem")
+    candidatas = (
+        select(modelo.Classificacao.id.label("id"), ordem)
+        .join(modelo.VersaoModelo,
+              modelo.VersaoModelo.id == modelo.Classificacao.versao_modelo_id)
+        .where(modelo.Classificacao.empresa_id == empresa_id,
+               modelo.VersaoModelo.empresa_id == empresa_id,
+               modelo.VersaoModelo.tipo == "classificacao")
+        .subquery()
+    )
+    return select(candidatas.c.id).where(candidatas.c.ordem == 1)
+
+
 def _faixa(linha: modelo.Previsao) -> PrevisaoMes:
     return PrevisaoMes(mes=linha.mes, p10=linha.p10, p50=linha.p50, p90=linha.p90)
 
@@ -120,19 +148,13 @@ def serie(sessao: Session, empresa_id: str, comercio_id: str, categoria: str,
 
 def avaliacoes(sessao: Session, empresa_id: str, comercio_id: str,
                limite: int = 12) -> tuple[AvaliacaoTela, ...]:
-    """As avaliações mais recentes, com o assunto do modelo que está no ar."""
+    """As avaliações mais recentes, com o assunto vigente de cada uma."""
     consulta = (
         select(modelo.Avaliacao, modelo.Classificacao)
         .outerjoin(
             modelo.Classificacao,
             (modelo.Classificacao.avaliacao_id == modelo.Avaliacao.id)
-            & modelo.Classificacao.versao_modelo_id.in_(
-                select(modelo.VersaoModelo.id).where(
-                    modelo.VersaoModelo.empresa_id == empresa_id,
-                    modelo.VersaoModelo.tipo == "classificacao",
-                    modelo.VersaoModelo.ativa.is_(True),
-                )
-            ),
+            & modelo.Classificacao.id.in_(classificacoes_vigentes(empresa_id)),
         )
         .where(modelo.Avaliacao.empresa_id == empresa_id,
                modelo.Avaliacao.comercio_id == comercio_id)
@@ -221,6 +243,7 @@ def comercios(sessao: Session, empresa_id: str) -> tuple[ResumoComercio, ...]:
                    modelo.Avaliacao.comercio_id == comercio.id,
                    modelo.Avaliacao.data >= referencia,
                    modelo.Avaliacao.data < _proximo_mes(referencia),
+                   modelo.Classificacao.id.in_(classificacoes_vigentes(empresa_id)),
                    modelo.Classificacao.categoria_id.is_(None))
         ) or 0
 
