@@ -11,9 +11,17 @@ evidências de segurança que a disciplina pede entregues. O plano e a divisão 
 trabalho (um documento por integrante) ficam fora do git, com a equipe; se
 `plano/` ou `referencia/` existirem na máquina, leia antes de começar.
 
-Comece por `docs/`: `seguranca.md`, `previsao-e-ia.md`,
-`fontes-de-avaliacao.md` e `producao.md` respondem, cada um, a uma das perguntas
-que a banca faz.
+**Acabou de pegar o projeto? Leia `docs/passagem.md` primeiro.** Diz o que está
+no ar (site, banco, IA), quando o banco vence, como cadastrar cliente, importar
+avaliações e recriar o banco, e onde já tropeçamos.
+
+Depois, `docs/`: `seguranca.md`, `previsao-e-ia.md`, `fontes-de-avaliacao.md` e
+`producao.md` respondem, cada um, a uma das perguntas que a banca faz. O material
+da apresentação está em `docs/apresentacao/`.
+
+Os dois repositórios andam juntos: `NicolasML28/PI-VI` (do time) e
+`Lopesloro/radar-de-reclamacoes` (o que o Render publica a cada push na `main`).
+Mudou um, leve o mesmo commit para o outro; as árvores devem ficar idênticas.
 
 ## Quem é dono do quê
 

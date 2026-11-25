@@ -14,6 +14,8 @@ addopts = "-m 'not e2e'"
 [tool.ruff]
 line-length = 110
 target-version = "py312"
+# Material da banca (gerador de PDF cheio de texto longo), não é código do site.
+extend-exclude = ["docs/apresentacao"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP"]

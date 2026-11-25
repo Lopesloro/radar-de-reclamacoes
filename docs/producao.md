@@ -7,9 +7,8 @@
 | `DATABASE_URL` | o Postgres do serviço | nada é guardado e as telas dizem isso |
 | `RADAR_CHAVE` | assina o cookie da sessão | sorteada a cada partida; as sessões caem a cada reinício |
 | `RADAR_ADMIN_SENHA` | a conta do primeiro arranque | **ninguém entra** |
-| `RADAR_COFRE_CHAVE` | cifra o token das fontes | o sistema recusa gravar token; a fonte de arquivo funciona |
+| `RADAR_COFRE_CHAVE` | cifra a ficha do cliente | o cadastro com ficha é recusado; sem ficha, funciona |
 | `RADAR_IA_CHAVE` | a IA que separa por assunto | o modelo próprio assume e nada quebra |
-| `RADAR_GOOGLE_CLIENTE_ID` e `..._SEGREDO` | ligar o Perfil da Empresa | a fonte do Google não liga |
 | `RADAR_ADMIN_USUARIO` | trocar o nome `admin` | fica `admin` |
 
 As três primeiras são obrigatórias. O `render.yaml` gera `RADAR_CHAVE` e
