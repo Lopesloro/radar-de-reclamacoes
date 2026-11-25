@@ -269,3 +269,27 @@ def test_a_medida_nas_conferidas_tem_teto(monkeypatch):
     from app.modelos import conferencia
 
     assert conferencia.MAXIMO_CONFERIDAS_NA_MEDIDA <= 200
+
+
+def test_com_a_ia_no_ar_a_tela_mostra_a_medida_da_ia_e_nao_a_do_modelo_reserva(monkeypatch):
+    """Defeito real: em produção quem separa é a IA, mas "Dá para confiar?" mostrava
+    o acerto do modelo de reserva. A medida da IA é feita fora do site (63 chamadas
+    não cabem num pedido web) e guardada com data e modelo."""
+    from app.contratos import AcuraciaClassificacao, LinhaAcerto
+    from app.modelos import ativo, conferencia, medida_ia
+
+    guardada = AcuraciaClassificacao(
+        linhas=(LinhaAcerto("demora", 0.9, 0.9, 0.9, 100),), acerto_geral=0.88,
+        acerto_regua=0.2, f1_macro=0.87, f1_macro_regua=0.07, amostra=500,
+        categoria_regua="atendimento",
+    )
+    monkeypatch.setattr(ativo, "usando_ia", lambda: True)
+    monkeypatch.setattr(medida_ia, "ler", lambda: (guardada, "gemini-teste", "2026-11-24"))
+    monkeypatch.setattr(conferencia, "conferidas_no_banco", lambda: ())
+
+    assert conferencia.acerto_da_separacao() == guardada
+    assert "IA" in conferencia.origem()
+    assert "24/11/2026" in conferencia.origem()
+
+    monkeypatch.setattr(ativo, "usando_ia", lambda: False)
+    assert conferencia.acerto_da_separacao() != guardada

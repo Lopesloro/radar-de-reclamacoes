@@ -16,9 +16,17 @@ Cinco assuntos: atendimento, demora, preço, qualidade e ambiente.
 ### Dois modelos, e por que os dois existem
 
 **A IA (Gemini).** É o que roda quando há chave configurada. Ela lê gíria, erro
-de digitação e frase com dois assuntos como gente lê. Numa prova de oito
-avaliações reais, acertou as seis que tinham assunto e se absteve nas duas que
-não tinham.
+de digitação e frase com dois assuntos como gente lê. A instrução que ela recebe
+(`app/investigacao/protecao.py`) define o que cabe em cada assunto, como escolher
+quando a avaliação fala de mais de um (a queixa principal; se uma é consequência
+da outra, a causa) e quando responder "nenhum".
+
+Medida em 24/11/2026 nas **500 frases de teste** da equipe, a IA
+(`gemini-flash-lite-latest`) deu **F1 macro de 0,895** e acertou o assunto de
+**88 em cada 100** frases. A medida roda fora do site, por linha de comando
+(`python -m app.modelos.medida_ia`), porque são 63 chamadas à IA, e fica guardada
+em `app/modelos/medida_ia.json` com a data e o modelo. A tela "Dá para confiar?"
+mostra essa medida quando a IA está no ar.
 
 **O modelo próprio (TF-IDF com regressão logística).** Treina num corpus de 90
 frases rotuladas à mão pela equipe, variadas de forma determinística. Ele existe

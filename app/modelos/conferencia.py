@@ -30,7 +30,7 @@ from functools import lru_cache
 from sqlalchemy import select
 
 from app.contratos import AcuraciaClassificacao, AcuraciaPrevisao
-from app.modelos import amostras, ativo, classificador, previsao
+from app.modelos import amostras, ativo, classificador, medida_ia, previsao
 
 MINIMO_CONFERIDAS = 30
 MARCA_DE_CONFERIDA = "conferida pelo dono"
@@ -96,6 +96,13 @@ def acerto_da_separacao() -> AcuraciaClassificacao:
     if len(conferidas) >= MINIMO_CONFERIDAS:
         _origem = ORIGEM_DO_DONO
         return _medir_nas_conferidas(conferidas[:MAXIMO_CONFERIDAS_NA_MEDIDA])
+    guardada = medida_ia.ler() if ativo.usando_ia() else None
+    if guardada is not None:
+        # A IA está no ar: o número que vale é o dela, medido fora do site e guardado.
+        medida, nome, quando = guardada
+        _origem = (f"corpus da equipe, medindo a IA ({nome}), "
+                   f"em {date.fromisoformat(quando):%d/%m/%Y}")
+        return medida
     _origem = ORIGEM_DO_CORPUS
     return _medir_no_corpus()
 

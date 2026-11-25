@@ -128,9 +128,12 @@ class IA:
             for tentativa in range(self._tentativas):
                 self._balde.esperar()
                 try:
+                    # A chave vai no cabeçalho: no endereço (`?key=`) ela ficaria
+                    # gravada em log de proxy e de servidor pelo caminho.
                     resposta = cliente.post(
-                        endereco, params={"key": self._chave}, json=corpo,
-                        headers={"content-type": "application/json"},
+                        endereco, json=corpo,
+                        headers={"content-type": "application/json",
+                                 "x-goog-api-key": self._chave},
                     )
                 except httpx.HTTPError as erro:
                     _log.warning("ia: falha de rede (%s), tentativa %d", type(erro).__name__, tentativa + 1)

@@ -1,0 +1,49 @@
+{
+  "modelo": "gemini-flash-lite-latest",
+  "medida_em": "2026-11-24",
+  "medida": {
+    "linhas": [
+      {
+        "categoria": "atendimento",
+        "precisao": 0.767,
+        "recall": 0.79,
+        "f1": 0.778,
+        "amostra": 100
+      },
+      {
+        "categoria": "demora",
+        "precisao": 0.812,
+        "recall": 0.78,
+        "f1": 0.796,
+        "amostra": 100
+      },
+      {
+        "categoria": "preco",
+        "precisao": 1.0,
+        "recall": 0.92,
+        "f1": 0.958,
+        "amostra": 100
+      },
+      {
+        "categoria": "qualidade",
+        "precisao": 1.0,
+        "recall": 0.94,
+        "f1": 0.969,
+        "amostra": 100
+      },
+      {
+        "categoria": "ambiente",
+        "precisao": 1.0,
+        "recall": 0.95,
+        "f1": 0.974,
+        "amostra": 100
+      }
+    ],
+    "acerto_geral": 0.876,
+    "acerto_regua": 0.2,
+    "f1_macro": 0.895,
+    "f1_macro_regua": 0.067,
+    "amostra": 500,
+    "categoria_regua": "ambiente"
+  }
+}
