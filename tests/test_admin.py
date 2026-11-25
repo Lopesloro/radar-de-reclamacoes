@@ -70,7 +70,7 @@ def test_cadastro_cria_empresa_negocio_e_conta_de_uma_vez(equipe):
         "negocio_nome": "Cantina do Centro", "ramo": "Restaurante",
         "cidade": "Campinas, SP", "entrada": "cantina-teste", "email_aviso": "",
     }, follow_redirects=False)
-    assert resposta.status_code == 303
+    assert resposta.status_code == 200  # a tela com a senha vem na própria resposta
     with banco.Sessao() as sessao:
         empresa = sessao.get(modelo.Empresa, "cantina-teste")
         assert empresa is not None and empresa.plano == "piloto"
@@ -83,19 +83,28 @@ def test_cadastro_cria_empresa_negocio_e_conta_de_uma_vez(equipe):
 
 
 def test_a_senha_sorteada_aparece_uma_vez_e_nao_e_guardada_em_texto(equipe):
+    """A senha aparece no corpo da resposta, nunca no endereço.
+
+    Defeito real: ela ia no `?recado=` do redirecionamento, e endereço fica no
+    histórico do navegador e no log de acesso do Render, em texto.
+    """
     resposta = equipe.post("/admin/clientes", data={
         "csrf": _token(equipe), "identificador": "padaria-teste",
         "nome": "Padaria de Teste", "negocio_nome": "Padaria", "ramo": "Padaria",
         "cidade": "Campinas, SP", "entrada": "padaria-teste",
     }, follow_redirects=False)
-    recado = resposta.headers["location"]
-    achado = re.search(r"senha\+([A-Za-z0-9_%-]+)", recado)
-    assert achado, f"a senha precisa voltar no recado: {recado}"
+    assert resposta.status_code == 200
+    assert "location" not in resposta.headers
+    assert "no-store" in resposta.headers.get("cache-control", "")
+    achado = re.search(r"senha <strong[^>]*>([A-Za-z0-9_-]+)</strong>", resposta.text)
+    assert achado, "a senha precisa aparecer uma vez na tela"
     sorteada = achado.group(1)
+    assert sorteada not in str(resposta.url)
     with banco.Sessao() as sessao:
         conta = sessao.scalar(select(modelo.Usuario).where(
             modelo.Usuario.email == "padaria-teste"))
         assert sorteada not in (conta.senha_hash or "")
+    assert sorteada not in equipe.get("/admin/clientes/padaria-teste").text
 
 
 @pytest.mark.parametrize("mudanca,esperado", [
@@ -176,21 +185,21 @@ def test_importar_arquivo_classifica_e_conta(equipe):
     assert quantas == 12
 
 
-def test_ligar_fonte_sem_chave_de_cofre_recusa_em_vez_de_gravar_em_texto(equipe, monkeypatch):
-    from app.seguranca import cofre
+def test_google_e_ifood_ficam_so_como_ideia_que_depende_de_autorizacao(equipe):
+    """Decisão de produto: a leitura automática do Google e do iFood não entra.
 
-    monkeypatch.delenv(cofre.VARIAVEL_CHAVE, raising=False)
-    resposta = equipe.post("/admin/fontes", data={
-        "csrf": _token(equipe, "/admin/fontes"), "comercio_id": "bella-massa",
-        "plataforma": "google", "identificador_externo": "accounts/1/locations/2",
-        "segredo": "token-que-nao-pode-ser-gravado",
-    }, follow_redirects=False)
-    assert "erro=" in resposta.headers["location"]
-    with banco.Sessao() as sessao:
-        fonte = sessao.scalar(select(modelo.Fonte).where(
-            modelo.Fonte.comercio_id == "bella-massa",
-            modelo.Fonte.plataforma == "google"))
-    assert fonte is None or fonte.segredo_cifrado is None
+    As duas dependem de uma autorização que não está na mão da equipe. A tela diz
+    isso, e não oferece formulário de token nem botão de coletar que não funcionaria.
+    """
+    pagina = equipe.get("/admin/fontes").text
+    assert 'name="segredo"' not in pagina
+    assert "Coletar agora" not in pagina
+    assert "precisa de autorização" in pagina
+    for plataforma in ("Google", "iFood"):
+        assert plataforma in pagina
+    assert equipe.post("/admin/fontes/coletar", data={
+        "csrf": _token(equipe, "/admin/fontes"), "fonte_id": "x",
+    }, follow_redirects=False).status_code in (404, 405)
 
 
 def test_a_trilha_do_cliente_grava_o_identificador_e_nao_o_nome_de_entrada(cliente):
@@ -376,3 +385,29 @@ def test_cliente_novo_le_que_falta_avaliacao_e_nao_que_falta_negocio(equipe, ano
     equipe.post("/admin/clientes/novo-teste/apagar", data={
         "csrf": _token(equipe, "/admin/clientes/novo-teste"), "confirmacao": "novo-teste",
     }, follow_redirects=False)
+
+
+@pytest.mark.parametrize("proximo, destino", [
+    ("/resumo", "/admin"), ("", "/admin"), ("/configuracao", "/admin"),
+    ("/admin/clientes", "/admin/clientes"),
+])
+def test_a_equipe_sempre_cai_na_area_dela_depois_de_entrar(anonimo, proximo, destino):
+    """Defeito real: a tela de entrada manda `proximo=/resumo` por padrão, e o
+    administrador caía em "Ainda não há negócio ligado à sua conta", a tela de
+    cliente vazio. A equipe só segue `proximo` quando ele é da área dela."""
+    from tests.conftest import SENHA
+
+    resposta = anonimo.post("/entrar", data={
+        "usuario": "admin", "senha": SENHA, "proximo": proximo,
+        "csrf": _token(anonimo, "/entrar"),
+    })
+    assert resposta.status_code == 303
+    assert resposta.headers["location"] == destino
+
+
+def test_a_descricao_do_projeto_nao_promete_tela_que_saiu():
+    """As telas "E se?" e "Testes" saíram do produto; o rodapé ainda as prometia."""
+    from app import conteudo
+
+    assert "antes de você gastar" not in conteudo.PROJETO["resumo"]
+    assert "prova se ela funcionou" not in conteudo.PROJETO["resumo"]

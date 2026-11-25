@@ -12,8 +12,8 @@ VERSAO = "0.1.0"
 PROJETO = {
     "nome": "Radar de Reclamações",
     "resumo": (
-        "Descobre por que os clientes do seu negócio reclamam, mostra o efeito de uma "
-        "mudança antes de você gastar e prova se ela funcionou."
+        "Descobre por que os clientes do seu negócio reclamam e avisa qual "
+        "reclamação deve crescer no próximo mês."
     ),
     "disciplina": "Projeto Integrador VI",
     "curso": "Engenharia de Software",
@@ -26,8 +26,8 @@ AUTORIA = (
     {
         "nome": "Gabriel Lopes Londe Rodrigues",
         "frente": "Programa, banco de dados e inteligência artificial",
-        "faz": "As contas: separar as avaliações por assunto, prever o mês seguinte, "
-               "investigar a causa, simular a mudança e analisar o teste na prática.",
+        "faz": "As contas e o banco: separar as avaliações por assunto, prever o mês "
+               "seguinte, medir o acerto de cada parte e guardar tudo no PostgreSQL.",
     },
     {
         "nome": "Matheus Rocafa Moraes",
@@ -85,21 +85,6 @@ ESTADOS = {
     "normal": {"rotulo": "Tudo normal", "icone": "✓", "classe": "normal"},
 }
 
-VEREDITOS = {
-    "sustentada": {"rotulo": "Provável causa", "classe": "provavel"},
-    "inconclusiva": {"rotulo": "Ainda não dá para dizer", "classe": "incerta"},
-    "descartada": {"rotulo": "Não parece ser isso", "classe": "descartada"},
-}
-
-FORCAS = {"forte": 3, "moderada": 2, "fraca": 1}
-
-RESULTADOS_TESTE = {
-    "funcionou": {"rotulo": "Funcionou", "classe": "provavel"},
-    "nao_funcionou": {"rotulo": "Não funcionou", "classe": "descartada"},
-    "ainda_nao_da_para_saber": {"rotulo": "Ainda não dá para saber", "classe": "incerta"},
-}
-
-# Cada termo: o rótulo, duas frases simples e um exemplo. Usado pelo botão "?".
 GLOSSARIO = {
     "avaliacoes_lidas": {
         "rotulo": "Avaliações lidas",
@@ -173,90 +158,6 @@ GLOSSARIO = {
                  "acompanhar.",
         "exemplo": "O preço deve subir de 22 para 24, mas pode ficar em 22.",
     },
-    "possivel_causa": {
-        "rotulo": "Possível causa",
-        "texto": "Uma explicação que o sistema testou com as contas. Vem do seu diário, do "
-                 "calendário, do clima, dos dias da semana ou das palavras que os clientes usam.",
-        "exemplo": "“A demora aumentou depois que entrou o entregador novo.”",
-    },
-    "provavel_causa": {
-        "rotulo": "Provável causa",
-        "texto": "As contas mostram que essa explicação bate com o que aconteceu, e com folga. "
-                 "É por ela que vale começar.",
-        "exemplo": "Antes eram 4 reclamações por semana; depois, 8.",
-    },
-    "ainda_nao_da": {
-        "rotulo": "Ainda não dá para dizer",
-        "texto": "Pode ser, pode não ser. Faltam dados para ter certeza para um lado ou para o "
-                 "outro.",
-        "exemplo": "Com mais algumas semanas de chuva, dá para saber se a chuva pesa.",
-    },
-    "nao_parece": {
-        "rotulo": "Não parece ser isso",
-        "texto": "As contas mostram que essa explicação não muda nada, ou muda muito pouco. "
-                 "Pode deixar de lado.",
-        "exemplo": "O cardápio novo não mexeu na demora.",
-    },
-    "forca": {
-        "rotulo": "Força da evidência",
-        "texto": "O quanto as contas apoiam a explicação. Três barras é forte, uma barra é "
-                 "fraca.",
-        "exemplo": "Forte: a diferença é grande e aparece em quase todas as semanas.",
-    },
-    "ia_sugere": {
-        "rotulo": "Ideia da inteligência artificial",
-        "texto": "A inteligência artificial lê as avaliações, sem nomes nem telefones, e sugere "
-                 "ideias. Quem decide se a ideia vale são as contas, nunca ela.",
-        "exemplo": "Ela sugeriu “pizza saindo mais devagar”; as contas não confirmaram.",
-    },
-    "diario": {
-        "rotulo": "Diário do negócio",
-        "texto": "Onde você anota as mudanças do negócio, com a data. É dele que saem muitas "
-                 "das possíveis causas.",
-        "exemplo": "“2 de junho: entrou um entregador novo para sexta e sábado.”",
-    },
-    "simulador": {
-        "rotulo": "E se?",
-        "texto": "Mostra o que deve acontecer com as reclamações se você mudar quantas pessoas "
-                 "trabalham em cada turno, e quanto isso custa. Nada muda de verdade.",
-        "exemplo": "Um entregador a mais na sexta e no sábado à noite: de 50 para cerca de 36 reclamações.",
-    },
-    "espera": {
-        "rotulo": "Espera média",
-        "texto": "Quanto tempo, em média, o cliente espera para ser atendido ou receber o "
-                 "pedido. É calculada pelo movimento e pela equipe de cada turno.",
-        "exemplo": "Com 2 entregadores para 22 pedidos numa noite, a espera passa de meia hora.",
-    },
-    "custo_por_reclamacao": {
-        "rotulo": "Custo por reclamação evitada",
-        "texto": "Quanto a mudança custa por mês dividido por quantas reclamações ela deve "
-                 "evitar. Ajuda a comparar mudanças diferentes.",
-        "exemplo": "R$ 780 por mês para evitar 14 reclamações: cerca de R$ 56 cada.",
-    },
-    "teste_na_pratica": {
-        "rotulo": "Teste na prática",
-        "texto": "Você faz a mudança só em alguns dias, escolhidos por sorteio, e compara com os "
-                 "outros dias. É o jeito de saber se funcionou de verdade ou foi coincidência.",
-        "exemplo": "Entregador extra em 6 das 12 noites de sexta e sábado.",
-    },
-    "sorteio": {
-        "rotulo": "Por que sortear os dias",
-        "texto": "Se você escolhe os dias, sem querer escolhe os mais fáceis. O sorteio deixa a "
-                 "comparação justa.",
-        "exemplo": "Metade das sextas com a mudança, metade sem, por sorteio.",
-    },
-    "codigo_plano": {
-        "rotulo": "Código do plano",
-        "texto": "Um código que nasce junto com o plano do teste. Se alguém mudar o plano "
-                 "depois de começar, o código deixa de bater e o sistema avisa.",
-        "exemplo": "Anote o código: 3F9A-71C2.",
-    },
-    "seguiu_sorteio": {
-        "rotulo": "Seguiu o sorteio",
-        "texto": "Quantos dias a mudança foi feita exatamente como o sorteio mandou. Quanto mais "
-                 "perto de todos, mais confiável o resultado.",
-        "exemplo": "Seguiu em 11 de 12 dias.",
-    },
     "chute_simples": {
         "rotulo": "O chute mais simples",
         "texto": "O palpite mais bobo possível, que serve de comparação. Se o sistema não ganhar "
@@ -275,12 +176,6 @@ GLOSSARIO = {
                  "prefere deixar sem assunto.",
         "exemplo": "“A pizza chegou fria”: certeza alta de que é demora.",
     },
-    "laboratorio": {
-        "rotulo": "Laboratório",
-        "texto": "Negócios de mentira em que nós sabemos a causa verdadeira. Servem para medir "
-                 "se o sistema acerta antes de usar com negócio de verdade.",
-        "exemplo": "Em 200 negócios de mentira, ele achou a causa certa em 148.",
-    },
     "etapas": {
         "rotulo": "Passos combinados",
         "texto": "O que precisa estar pronto entre o combinado com o negócio e o aviso chegando "
@@ -297,17 +192,8 @@ FAQ = (
      "Das avaliações públicas do seu negócio na internet, lidas só com a sua autorização "
      "assinada. O nome e a foto de quem escreveu nunca são guardados."),
     ("A inteligência artificial decide alguma coisa?",
-     "Não. Ela só sugere ideias de possíveis causas, lendo avaliações sem nomes nem telefones. "
-     "Quem decide se a ideia vale são as contas, e você vê o resultado de cada uma."),
-    ("Por que os dias do teste são sorteados?",
-     "Para a comparação ser justa. Se você escolhesse, sem querer pegaria os dias mais calmos, "
-     "e a mudança pareceria melhor do que é."),
-    ("O simulador muda alguma coisa no meu negócio?",
-     "Não. Ele só mostra o que deve acontecer. Para mudar de verdade, você faz o teste na "
-     "prática."),
-    ("E se eu não souber quantas pessoas trabalham em cada turno?",
-     "Responda “não sei”. O simulador avisa que falta esse dado em vez de inventar um "
-     "número."),
+     "Não. Ela só lê cada avaliação, já sem nomes nem telefones, e diz de qual assunto ela "
+     "reclama. Os números da estimativa e do aviso saem de contas conferidas, nunca da IA."),
     ("Por que algumas avaliações ficam sem assunto?",
      "Elogios, avaliações só com estrelas e frases vagas não dizem do que o cliente reclamou. O "
      "sistema prefere dizer que não sabe a chutar."),
@@ -358,7 +244,7 @@ TECNOLOGIAS = (
     ("O site", ("Python 3.12, FastAPI e Uvicorn", "Jinja2, com as telas montadas no servidor",
                 "Gráficos em SVG desenhados em Python, sem biblioteca de gráfico",
                 "CSS próprio, sem framework", "JavaScript só para melhorar, nunca para funcionar")),
-    ("Dados", ("PostgreSQL 16 no Render, SQLAlchemy 2 e Alembic",
+    ("Dados", ("PostgreSQL 16 no Render e SQLAlchemy 2; as tabelas num script SQL único",
                "Toda tabela de dado operacional chega à empresa por chave estrangeira",
                "Chave única (negócio, id da plataforma) contra contagem dobrada")),
     ("Inteligência artificial", ("Gemini separa a avaliação por assunto, em formato fechado",

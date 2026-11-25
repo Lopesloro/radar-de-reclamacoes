@@ -7,8 +7,7 @@
   <div class="container">
     <div class="topo-pagina">
       <div>
-        {{ m.cabeca("Resumo dos seus negócios",
-                    piorando ~ " de " ~ cartoes | length ~ " negócios têm um assunto que vai piorar em " ~ (mes_corrente | mes_longo) ~ ".") }}
+        {{ m.cabeca("Resumo dos seus negócios", frase_do_topo) }}
       </div>
       <button type="button" class="botao botao--secundario botao--tour so-com-js" data-tour-iniciar>Primeira vez aqui? Faça o tour</button>
     </div>
@@ -36,11 +35,11 @@
         <p class="cartao__frase"{% if loop.first %} data-tour="3"{% endif %}>{{ item.frase }}</p>
         <div class="cartao__grafico">
           {{ item.grafico }}
-          <p class="cartao__legenda">{{ n.vai_crescer | assunto | capitalize }} nos últimos 6 meses</p>
+          <p class="cartao__legenda">{{ item.assunto | assunto | capitalize }} nos últimos 6 meses</p>
         </div>
         <p class="cartao__detalhe">O que mais incomoda: <strong>{{ n.mais_reclamado | assunto }}</strong>, {{ n.mais_reclamado_qtd }} reclamações em {{ n.mes_referencia | mes_longo }}.</p>
         <div class="cartao__acoes">
-          <a class="botao botao--primario" href="/previsao/{{ n.empresa_id }}?categoria={{ n.vai_crescer }}"{% if loop.first %} data-principal data-tour="4"{% endif %}>Ver o que vem por aí</a>
+          <a class="botao botao--primario" href="/previsao/{{ n.empresa_id }}?categoria={{ item.assunto }}"{% if loop.first %} data-principal data-tour="4"{% endif %}>Ver o que vem por aí</a>
           <a class="botao botao--secundario" href="/comercio/{{ n.empresa_id }}">Ver os assuntos</a>
           <a class="botao botao--texto" href="/conferir">Conferir avaliações</a>
         </div>

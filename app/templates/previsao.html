@@ -30,7 +30,9 @@
          "Em " ~ (corrente.mes | mes_longo) ~ ", a parte cinza é o que já chegou até hoje. A parte tracejada é o que ainda deve chegar até o fim do mês.",
          "As colunas da direita são estimativas. O número com ≈ é o mais provável; embaixo dele, o mínimo e o máximo esperados.",
          "A faixa clara em volta da coluna mostra esse mínimo e máximo. Quanto mais longe o mês, mais larga ela fica."],
-        ["Mês", "Reclamações", "Situação"], tabela) }}
+        ["Mês", "Reclamações", "Situação"], tabela,
+        legenda=[("passado", "Já aconteceu"), ("estimativa", "Estimativa (o mais provável)"),
+                 ("faixa", "Mínimo e máximo esperados")]) }}
 
     <div class="numeros">
       {{ m.numero("Último mês fechado", "mes_fechado", serie.ultimo, serie.meses[-1][0] | mes_longo) }}

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Request
 
-from app import conteudo, servicos
+from app import conteudo
 from app.rotas._telas import tela
 from app.seguranca.destino import caminho_interno
 
@@ -17,7 +17,6 @@ def inicio(request: Request):
         entregas=conteudo.ENTREGAS,
         passos=conteudo.PASSOS,
         dispensado=conteudo.DISPENSADO,
-        total_negocios=servicos.quantos_negocios(),
     )
 
 

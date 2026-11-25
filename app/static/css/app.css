@@ -676,7 +676,8 @@ progress::-moz-progress-bar { background: var(--acento); border-radius: 99px; }
 /* Formulário. `forma--grade` para cadastro de várias linhas, `forma--linha`
    para um par de caixas dentro de uma célula de tabela. */
 .forma { display: grid; gap: 14px; margin-top: 16px; }
-.forma--grade { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); align-items: end; }
+.forma--grade { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); align-items: start; }
+.forma--grade .campo { grid-template-rows: auto auto 1fr; }
 .forma--grade > button { grid-column: 1 / -1; justify-self: start; }
 .forma--linha { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 0; }
 .campo--linha { grid-template-columns: auto 1fr; align-items: center; gap: 10px; }
@@ -713,3 +714,13 @@ progress::-moz-progress-bar { background: var(--acento); border-radius: 99px; }
   background: #B4531F; color: #fff; border: 1px solid #93421A;
 }
 .botao--perigo:hover { background: #93421A; }
+
+/* ---------------------------------------------------------------- legenda dos gráficos */
+/* À vista, fora do "Como ler": quem não abre a ajuda ainda sabe o que cada cor é. */
+
+.legenda { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; margin: .75rem 0 0; padding: 0; list-style: none; font-size: .875rem; color: #46535C; }
+.legenda__item { display: inline-flex; align-items: center; gap: .4rem; }
+.legenda__cor { display: inline-block; width: .9rem; height: .9rem; border-radius: 2px; }
+.legenda__cor--passado { background: #7A8790; }
+.legenda__cor--estimativa { background: #0F6E7B; }
+.legenda__cor--faixa { background: #CFE5E7; }

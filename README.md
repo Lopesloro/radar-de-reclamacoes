@@ -16,7 +16,7 @@ em [`docs/`](docs/):
 
 | Documento | Responde a |
 |---|---|
-| [`docs/fontes-de-avaliacao.md`](docs/fontes-de-avaliacao.md) | como o comerciante liga a conta dele, e o que cada plataforma exige |
+| [`docs/fontes-de-avaliacao.md`](docs/fontes-de-avaliacao.md) | de onde as avaliações entram hoje, e o que Google e iFood exigiriam |
 | [`docs/previsao-e-ia.md`](docs/previsao-e-ia.md) | o que o sistema acerta, o que não acerta, e como foi medido |
 | [`docs/seguranca.md`](docs/seguranca.md) | cada item de segurança, onde está e qual teste prova |
 | [`docs/producao.md`](docs/producao.md) | como pôr no ar e atender vinte clientes |
@@ -25,13 +25,14 @@ em [`docs/`](docs/):
 
 | Parte | Estado |
 |---|---|
-| Leitura das avaliações: Google, iFood e arquivo CSV/JSON | Pronta. Google e iFood dependem de liberação da plataforma; o arquivo funciona hoje |
-| Separação por assunto, com IA e com modelo próprio de reserva | Pronta. F1 macro 0,42 contra 0,07 da régua |
+| Entrada das avaliações por arquivo CSV/JSON exportado da plataforma | Pronta. Google e iFood ficaram fora: dependem de autorização da plataforma |
+| Separação por assunto, com IA (Gemini) e modelo próprio de reserva | Pronta. IA: F1 macro 0,895 em 500 frases de teste; modelo próprio 0,419; régua 0,067 |
 | Contagem por mês, estimativa e faixa de mínimo e máximo | Pronta. Faixa cobre 0,82 do que promete 0,80 |
 | Aviso de assunto que vai crescer | Pronto. Acerta 0,59 contra 0,22 da régua de alarme |
 | Área do cliente: resumo, avisos, estimativa, configuração e conferência | Pronta |
-| Área da equipe: cadastro de cliente, fontes, coleta, auditoria | Pronta |
+| Área da equipe: cadastro de cliente, importação de arquivo, coletas, auditoria | Pronta |
 | Entrada com senha Argon2id, isolamento por empresa e auditoria | Prontos |
+| Banco PostgreSQL com as tabelas num script SQL único (`app/banco/esquema.sql`) | Pronto. Testes rodam no mesmo PostgreSQL |
 | Coleta rodando sozinha, aviso por e-mail, sessão revogável | Faltam. Ver `docs/producao.md` |
 | Por que o assunto cresceu, "E se eu mudar?" e teste na prática | Faltam. Saíram do produto quando o gerador de dados fictícios foi removido |
 
@@ -72,6 +73,12 @@ Abre em <http://localhost:8000>.
 
 ## Testes
 
+Os testes usam um PostgreSQL de verdade, onde criam e apagam bancos de teste:
+
+```bash
+export RADAR_TESTE_POSTGRES=postgresql://usuario@127.0.0.1:5432/postgres
+```
+
 Testes do código e das telas (rápidos):
 
 ```bash
@@ -100,11 +107,10 @@ Os prints de cada tela ficam em `docs/evidencias/telas/`, só na máquina (fora 
 | `/comercio/{negócio}` | Do que reclamaram no mês e as últimas avaliações |
 | `/previsao/{negócio}` | O mês corrente e o seguinte, com mínimo e máximo |
 | `/avisos` | Assuntos que devem crescer |
-| `/investigacao/{negócio}/{assunto}` | **Por quê?** As possíveis causas, testadas |
-| `/simulador/{negócio}` | **E se?** O efeito e o custo de mudar a equipe |
-| `/experimentos` | **Testes na prática**, com os dias sorteados e o resultado |
+| `/configuracao`, `/conferir` | De onde vêm as avaliações, canal de aviso e conferência dos assuntos pelo dono |
 | `/confianca` | Dá para confiar? Cada parte comparada com o chute mais simples |
-| `/o-que-falta`, `/ajuda`, `/sobre` | O que falta, glossário e a área da banca |
+| `/o-que-falta`, `/ajuda` | Os passos que faltam em cada negócio, e o glossário |
+| `/admin/...` | Área da equipe: clientes, fontes, coletas, auditoria e ficha do sistema |
 | `/saude` | Estado do serviço, em JSON |
 
 ## Pastas
@@ -114,15 +120,17 @@ app/
   web.py            cria o site e liga as rotas
   contratos.py      os tipos combinados entre os três
   servicos.py       a única porta das telas para os dados
-  falsos.py         dados de mentira com o formato dos contratos
   conteudo.py       textos fixos e glossário dos botões "?"
   formatos.py       número, dinheiro e data em português
   graficos/         gráficos em SVG e as frases que os explicam
   rotas/            uma área de telas por arquivo
   templates/        o HTML de cada tela
   static/           CSS e JavaScript
-  banco/ modelos/ mundo/ investigacao/ decisao/ experimento/ coleta/   (Gabriel)
-  seguranca/                                                           (Matheus)
+  banco/            esquema.sql (as tabelas), modelo.py e as consultas  (Gabriel)
+  modelos/          classificador, previsão e medida do acerto           (Gabriel)
+  coleta/           leitura do arquivo e o motor que classifica e conta  (Gabriel)
+  investigacao/     cliente da IA e a defesa contra injeção              (Matheus)
+  seguranca/        entrada, sessão, isolamento, cofre                   (Matheus)
 tests/              testes do código e das telas
 tests/e2e/          testes no navegador
 ```

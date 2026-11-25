@@ -16,10 +16,10 @@ from app.seguranca.limite import origem_do_pedido
 
 rotas = APIRouter()
 
-# Cada conferência de senha aloca 16 MiB de scrypt, de propósito: é o que torna
-# a força bruta cara. Mas a rota é síncrona e roda no threadpool de 40 do AnyIO,
-# e 40 scrypt ao mesmo tempo passam de 600 MiB — acima dos 512 MB do plano em
-# que o site roda. O portão abaixo limita quantas conferências acontecem juntas.
+# Cada conferência de senha aloca ~19 MiB de Argon2id (m=19456 KiB), de
+# propósito: é o que torna a força bruta cara. Mas a rota roda no threadpool de
+# 40 do AnyIO, e 40 conferências ao mesmo tempo passam de 700 MiB — acima dos
+# 512 MB do plano em que o site roda. O portão abaixo limita quantas conferências acontecem juntas.
 # Quem espera, espera; o serviço não morre.
 _CONFERENCIAS_SIMULTANEAS = anyio.Semaphore(2)
 
@@ -48,10 +48,12 @@ async def fazer_entrada(
     sessao.iniciar(request, conta.usuario, conta.empresa_id, conta.papel,
                    conta.usuario_id or None)
     _anotar(conta, "entrou", origem)
-    # Administrador cai na área dele; cliente, na tela que pediu.
-    if conta.e_admin and not proximo:
+    destino = caminho_interno(proximo)
+    # Administrador cai na área dele: as telas de cliente não têm o que mostrar a
+    # quem não é dono de negócio. Só segue o pedido se ele for da área da equipe.
+    if conta.e_admin and not (destino == "/admin" or destino.startswith("/admin/")):
         return _para("/admin")
-    return _para(caminho_interno(proximo))
+    return _para(destino)
 
 
 @rotas.post("/sair")

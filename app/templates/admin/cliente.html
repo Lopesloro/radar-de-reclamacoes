@@ -5,7 +5,9 @@
 <section class="secao secao--topo">
   <div class="container">
     {{ m.cabeca(empresa.nome, "Plano " ~ empresa.plano ~ ". Identificador " ~ empresa.id ~ ".") }}
-    {% if recado %}<div class="aviso aviso--normal"><p>{{ recado }}</p><p class="nota">A senha aparece uma vez só. Copie agora.</p></div>{% endif %}
+    {% if recado %}<div class="aviso aviso--normal"><p>{{ recado }}</p>
+      {% if senha_nova %}<p>Entrada <strong>{{ senha_nova.entrada }}</strong>, senha <strong class="senha-nova">{{ senha_nova.senha }}</strong></p>
+      <p class="nota">A senha aparece uma vez só, e não fica guardada em lugar nenhum. Copie agora.</p>{% endif %}</div>{% endif %}
     {% if erro %}<div class="aviso aviso--piorar"><p>{{ erro }}</p></div>{% endif %}
 
     <h2 class="titulo-secao">Negócios</h2>

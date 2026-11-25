@@ -173,13 +173,31 @@ def criar_cliente(request: Request, identificador: str = Form(""), nome: str = F
         )
         sessao.commit()
     # A senha vai na volta porque é a única vez que ela existe em texto.
-    return _voltar(f"/admin/clientes/{dados.identificador}",
-                   recado=f"Cliente criado. Entrada {dados.entrada}, senha {chave}")
+    return _com_senha_nova(request, dados.identificador, "Cliente criado.",
+                           dados.entrada, chave)
 
 
 @rotas.get("/clientes/{empresa}")
 def cliente(request: Request, empresa: str, recado: str = "", erro: str = ""):
     exigir_admin(request)
+    return _tela_do_cliente(request, empresa, recado=recado, erro=erro)
+
+
+def _com_senha_nova(request: Request, empresa: str, recado: str, entrada: str, chave: str):
+    """A tela do cliente com a senha sorteada, na resposta do próprio POST.
+
+    Nunca num redirecionamento: a senha iria no endereço (`?recado=`), e endereço
+    fica no histórico do navegador e no log de acesso do servidor. `no-store`
+    impede o navegador de guardar a página com a senha no cache.
+    """
+    resposta = _tela_do_cliente(request, empresa, recado=recado,
+                                senha_nova={"entrada": entrada, "senha": chave})
+    resposta.headers["cache-control"] = "no-store"
+    return resposta
+
+
+def _tela_do_cliente(request: Request, empresa: str, *, recado: str = "", erro: str = "",
+                     senha_nova: dict | None = None):
     if not banco.usar_banco():
         return _sem_banco(request)
     with banco.Sessao() as sessao:
@@ -201,7 +219,7 @@ def cliente(request: Request, empresa: str, recado: str = "", erro: str = ""):
             request, "admin/cliente.html", "admin-clientes",
             empresa=linha, negocios=negocios, usuarios=usuarios, fontes=suas_fontes,
             contagem=contagem, plataformas=fontes.PLATAFORMAS,
-            recado=recado, erro=erro,
+            recado=recado, erro=erro, senha_nova=senha_nova,
         )
 
 
@@ -254,7 +272,7 @@ def criar_usuario(request: Request, empresa: str, entrada: str = Form(""),
         auditoria.registrar(sessao, empresa_id=empresa, usuario_id=usuario.identificador,
                             acao="usuario_criado", objeto=dados.entrada)
         sessao.commit()
-    return _voltar(destino, recado=f"Conta criada. Entrada {dados.entrada}, senha {chave}")
+    return _com_senha_nova(request, empresa, "Conta criada.", dados.entrada, chave)
 
 
 @rotas.post("/clientes/{empresa}/desligar")
@@ -364,82 +382,10 @@ def listar_fontes(request: Request, recado: str = "", erro: str = ""):
             select(modelo.Comercio).order_by(modelo.Comercio.nome)).all())
         return tela(
             request, "admin/fontes.html", "admin-fontes",
-            linhas=linhas, negocios=negocios, plataformas=fontes.PLATAFORMAS,
-            sem_api=fontes.SEM_API, cofre_ligado=cofre.disponivel(),
+            linhas=linhas, negocios=negocios, futuras=fontes.FUTURAS,
+            sem_api=fontes.SEM_API,
             recado=recado, erro=erro,
         )
-
-
-@rotas.post("/fontes")
-def ligar_fonte(request: Request, comercio_id: str = Form(""), plataforma: str = Form(""),
-                identificador_externo: str = Form(""), segredo: str = Form(""),
-                csrf: str = Form("")):
-    usuario = exigir_admin(request)
-    try:
-        dados = formularios.NovaFonte(
-            comercio_id=comercio_id, plataforma=plataforma,
-            identificador_externo=identificador_externo, segredo=segredo,
-        )
-    except ValidationError as erro:
-        return _voltar("/admin/fontes", erro=erro.errors()[0]["msg"])
-
-    cifrado = None
-    if dados.segredo:
-        if not cofre.disponivel():
-            # Recusa em vez de gravar em texto. É a regra do cofre.
-            return _voltar("/admin/fontes", erro=(
-                "RADAR_COFRE_CHAVE não está configurada: sem ela o token não é gravado."
-            ))
-        cifrado = cofre.cifrar(dados.segredo)
-
-    with banco.Sessao() as sessao:
-        negocio = sessao.get(modelo.Comercio, dados.comercio_id)
-        if negocio is None:
-            return _voltar("/admin/fontes", erro="esse negócio não existe.")
-        achada = sessao.scalar(select(modelo.Fonte).where(
-            modelo.Fonte.comercio_id == dados.comercio_id,
-            modelo.Fonte.plataforma == dados.plataforma))
-        if achada is None:
-            achada = modelo.Fonte(
-                id=f"f-{uuid.uuid4().hex[:16]}", empresa_id=negocio.empresa_id,
-                comercio_id=dados.comercio_id, plataforma=dados.plataforma,
-            )
-            sessao.add(achada)
-        achada.identificador_externo = dados.identificador_externo
-        if cifrado is not None:
-            achada.segredo_cifrado = cifrado
-        achada.estado = "ligada" if (dados.plataforma == fontes.ARQUIVO or cifrado) else "pendente"
-        achada.erro = None
-        auditoria.registrar(
-            sessao, empresa_id=negocio.empresa_id, usuario_id=usuario.identificador,
-            acao="fonte_ligada", objeto=f"{dados.comercio_id}/{dados.plataforma}",
-            # O segredo não entra na trilha. Só o fato de haver um.
-            detalhe="com segredo" if cifrado else "sem segredo",
-        )
-        sessao.commit()
-    return _voltar("/admin/fontes", recado="Fonte salva.")
-
-
-@rotas.post("/fontes/coletar")
-def coletar_fonte(request: Request, fonte_id: str = Form(""), csrf: str = Form("")):
-    usuario = exigir_admin(request)
-    with banco.Sessao() as sessao:
-        fonte = sessao.get(modelo.Fonte, fonte_id)
-        if fonte is None:
-            return _voltar("/admin/fontes", erro="essa fonte não existe.")
-        empresa_id, comercio_id = fonte.empresa_id, fonte.comercio_id
-        try:
-            brutas = list(fontes.ler_de(sessao, fonte_id))
-        except ErroDeFonte as erro:
-            motor.marcar_erro(sessao, fonte_id, str(erro))
-            sessao.commit()
-            return _voltar("/admin/fontes", erro=str(erro))
-        resultado = motor.coletar(
-            sessao, empresa_id, comercio_id, brutas,
-            fonte_id=fonte_id, usuario_id=usuario.identificador,
-        )
-        sessao.commit()
-    return _voltar("/admin/fontes", recado=resultado.em_uma_frase())
 
 
 @rotas.post("/importar")

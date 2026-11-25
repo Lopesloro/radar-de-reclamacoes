@@ -47,13 +47,15 @@ def resumo(request: Request):
 
     cartoes = []
     for c in negocios:
-        serie = servicos.serie(empresa, c.empresa_id, c.vai_crescer)
+        assunto = frases.assunto_do_cartao(c)
+        serie = servicos.serie(empresa, c.empresa_id, assunto)
         cartoes.append({
             "negocio": c,
+            "assunto": assunto,
             "frase": frases.cartao(c),
             "grafico": svg.mini_colunas(
                 serie.meses[-6:] if serie else (),
-                f"Reclamações de {frases.nome(c.vai_crescer)} nos últimos 6 meses",
+                f"Reclamações de {frases.nome(assunto)} nos últimos 6 meses",
             ),
         })
     return tela(
@@ -64,7 +66,9 @@ def resumo(request: Request):
         lidas=sum(c.avaliacoes_lidas for c in negocios),
         reclamacoes=sum(c.reclamacoes for c in negocios),
         avisos=servicos.alertas(empresa),
-        piorando=sum(1 for c in negocios if c.estado == "vai_piorar"),
+        frase_do_topo=frases.resumo(
+            sum(1 for c in negocios if c.estado == "vai_piorar"), len(negocios),
+            negocios[0].vai_crescer_para.mes),
     )
 
 

@@ -345,8 +345,8 @@ def _previsto_realizado(pontos, titulo, largura, fonte, classe) -> Markup:
 # ------------------------------------------------------------ cartão do Resumo
 
 def mini_colunas(pontos: Sequence[tuple[date, int]], titulo: str) -> Markup:
-    """Seis colunas pequenas, com o primeiro e o último mês escritos. Tamanho fixo."""
-    largura, altura, chao = 240, 74, 50
+    """Seis colunas pequenas, com o número de cada mês em cima e o primeiro e o último mês embaixo."""
+    largura, altura, chao = 240, 90, 66
     vao = largura / len(pontos)
     maior = max(v for _, v in pontos) or 1
     corpo = []
@@ -356,6 +356,8 @@ def mini_colunas(pontos: Sequence[tuple[date, int]], titulo: str) -> Markup:
         corpo.append(_retangulo(i * vao + vao * 0.2, topo, vao * 0.6, chao - topo,
                                 TINTA if ultimo else PASSADO, raio=2,
                                 dica=f"{_nome_mes(mes)}: {valor}"))
+        corpo.append(_texto(i * vao + vao / 2, topo - 4, str(valor), tamanho=12,
+                            cor=TINTA if ultimo else MUDO, peso=700 if ultimo else 400))
         if i in (0, len(pontos) - 1):
             corpo.append(_texto(i * vao + vao / 2, altura - 6, MESES_CURTOS[mes.month - 1],
                                 tamanho=12, cor=MUDO))

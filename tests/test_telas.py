@@ -257,14 +257,16 @@ def test_o_mes_corrente_estourado_aparece_na_tela(cliente, monkeypatch):
     assert "variação normal" not in estourado
 
     no_meio = frases.leitura_da_faixa(_serie(parcial=20, p10=16, p50=19, p90=21, fracao=0.4))
-    assert "40% do mês passado" in no_meio
+    # "40% do mês passado" lia como "o mês anterior". A frase diz dias.
+    assert "40% dos dias deste mês" in no_meio
+    assert "do mês passado" not in no_meio
     # Nada de extrapolar: o total projetado seria 50, um número que o sistema não
     # consegue defender, porque avaliação não chega em ritmo constante.
     assert "50" not in no_meio
 
     # No começo do mês a regra não vale: poucos dias não dizem nada sobre o mês.
     cedo = frases.leitura_da_faixa(_serie(parcial=19, p10=16, p50=19, p90=21, fracao=0.1))
-    assert "do mês passado, e o esperado" not in cedo
+    assert "dos dias deste mês" not in cedo
 
     tranquilo = frases.leitura_da_faixa(_serie(parcial=8, p10=16, p50=19, p90=21))
     assert "já passou do esperado" not in tranquilo
@@ -297,24 +299,93 @@ def test_a_frase_da_ia_nunca_contradiz_a_frase_propria(monkeypatch):
     assert propria in leitura._pergunta("Cantina do Centro", "demora", serie)
 
 
-def test_a_pagina_publica_so_fala_em_demonstracao_se_houver(cliente, monkeypatch):
-    """Frase que fala de dado que não existe mais é frase que mente.
-
-    A página dizia "São 1 negócios de demonstração" com erro de concordância, e
-    continuaria dizendo isso com zero negócios no ar.
+def test_a_pagina_publica_nunca_chama_cliente_de_demonstracao(cliente, monkeypatch):
+    """Defeito real: a página contava todo negócio do banco como "de demonstração,
+    com avaliações escritas pela nossa equipe". Com o primeiro cliente de verdade,
+    a frase passaria a mentir sobre ele. Não existe mais dado de demonstração.
     """
     from app import servicos
 
-    monkeypatch.setattr(servicos, "quantos_negocios", lambda: 1)
-    um = cliente.get("/").text
-    assert "Há um negócio de demonstração" in um
-    assert "1 negócios" not in um
+    for quantos in (0, 1, 3):
+        monkeypatch.setattr(servicos, "quantos_negocios", lambda q=quantos: q)
+        pagina = cliente.get("/").text
+        assert "demonstração" not in pagina
+        assert "escritas pela nossa equipe" not in pagina
+        assert "Peça um acesso" in pagina
 
-    monkeypatch.setattr(servicos, "quantos_negocios", lambda: 0)
-    nenhum = cliente.get("/").text
-    assert "demonstração" not in nenhum
-    assert "Peça um acesso" in nenhum
 
-    monkeypatch.setattr(servicos, "quantos_negocios", lambda: 3)
-    varios = cliente.get("/").text
-    assert "São 3 negócios de demonstração" in varios
+def test_o_grafico_do_cartao_mostra_o_assunto_de_que_a_frase_fala(cliente):
+    """Defeito real: com tudo normal, a frase dizia "a demora continua sendo o que
+    mais aparece" e o gráfico logo abaixo mostrava "Ambiente nos últimos 6 meses".
+    Quem lê junta as duas coisas e entende errado.
+    """
+    from app import servicos
+    from app.graficos import frases
+
+    negocio = servicos.comercios("bella-massa")[0]
+    assunto = frases.assunto_do_cartao(negocio)
+    if negocio.estado == "normal":
+        assert assunto == negocio.mais_reclamado
+    else:
+        assert assunto == negocio.vai_crescer
+    pagina = cliente.get("/resumo").text
+    assert f"{frases.nome(assunto).capitalize()} nos últimos 6 meses" in pagina
+
+
+@pytest.mark.parametrize("piorando, total, esperado", [
+    (0, 1, "Nenhum assunto deve piorar em novembro."),
+    (1, 1, "Um assunto deve piorar em novembro. Veja abaixo."),
+    (0, 3, "Nenhum dos seus 3 negócios tem assunto que deve piorar em novembro."),
+    (2, 3, "2 dos seus 3 negócios têm assunto que deve piorar em novembro."),
+    (1, 3, "1 dos seus 3 negócios tem assunto que deve piorar em novembro."),
+])
+def test_a_frase_do_resumo_tem_concordancia(piorando, total, esperado):
+    """Defeito real: "0 de 1 negócios têm um assunto que vai piorar"."""
+    from datetime import date
+
+    from app.graficos import frases
+
+    assert frases.resumo(piorando, total, date(2026, 11, 1)) == esperado
+
+
+def test_o_mini_grafico_escreve_o_numero_de_cada_mes():
+    """Para quem não lê gráfico: a altura da coluna sozinha não diz quantas foram."""
+    from datetime import date
+
+    from app.graficos import svg
+
+    pontos = [(date(2026, m, 1), v) for m, v in zip(range(5, 11), (7, 9, 4, 3, 6, 17), strict=True)]
+    desenho = str(svg.mini_colunas(pontos, "teste"))
+    for valor in (7, 9, 4, 3, 6, 17):
+        assert f">{valor}</text>" in desenho
+
+
+def test_o_grafico_da_estimativa_tem_legenda_a_vista(cliente):
+    """Para leigo: cinza, faixa clara e coluna escura precisam de nome sem abrir nada.
+    O "Como ler" fica dobrado e quase ninguém abre."""
+    pagina = cliente.get("/previsao/bella-massa?categoria=demora").text
+    assert 'class="legenda"' in pagina
+    for texto in ("Já aconteceu", "Estimativa", "Mínimo e máximo esperados"):
+        assert texto in pagina
+
+
+def test_a_tela_de_confianca_fala_nome_de_gente_e_numero_com_virgula(cliente):
+    """Defeitos reais: o gráfico dizia "bella-massa / ambiente" (o código interno)
+    e o erro saía "1.2" com ponto, que em português se lê como mil e duzentos."""
+    import re
+
+    pagina = cliente.get("/confianca").text
+    assert "bella-massa /" not in pagina
+    assert "Pizzaria Bella Massa, " in pagina
+    assert not re.search(r"<strong>\d+\.\d+</strong>", pagina)
+    assert not re.search(r"empata com repetir o mês passado: \d+\.\d", pagina)
+
+
+def test_a_ajuda_nao_explica_tela_que_saiu_do_produto(cliente):
+    """As telas "Por quê?", "E se?" e "Testes" saíram com os dados fictícios, mas a
+    Ajuda continuava explicando simulador, sorteio de dias e teste na prática, e
+    dizia que a IA "sugere causas" quando ela só separa por assunto."""
+    pagina = cliente.get("/ajuda").text
+    for sumido in ("E se?", "Teste na prática", "sorteio", "simulador", "Possível causa",
+                   "Laboratório", "sugere ideias de possíveis causas"):
+        assert sumido not in pagina, sumido

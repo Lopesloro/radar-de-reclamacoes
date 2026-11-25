@@ -55,7 +55,7 @@
     </ul>
 
     {% call m.tecnico("Detalhes técnicos da separação") %}
-    <p>F1 macro de <strong>{{ classificacao.f1_macro }}</strong> contra <strong>{{ classificacao.f1_macro_regua }}</strong> da régua de responder sempre "{{ classificacao.categoria_regua | assunto }}". A abstenção entra como erro na medida.</p>
+    <p>F1 macro de <strong>{{ classificacao.f1_macro | decimal(3) }}</strong> contra <strong>{{ classificacao.f1_macro_regua | decimal(3) }}</strong> da régua de responder sempre "{{ classificacao.categoria_regua | assunto }}". A abstenção entra como erro na medida.</p>
     <p>Amostra de {{ classificacao.amostra }} avaliações. Conjunto: {{ origem_da_medida }}.</p>
     {% endcall %}
 
@@ -67,14 +67,14 @@
          "Quanto mais perto os dois, melhor a estimativa foi."],
         ["Mês", "Estimado", "Aconteceu", "Diferença"], linhas_previsao) }}
     <ul class="fatos">
-      <li>Em média o sistema erra <strong>{{ previsao.erro_medio }}</strong> reclamações por mês, contra <strong>{{ previsao.erro_medio_regua }}</strong> de simplesmente repetir o mês anterior. Medido em {{ previsao.janelas }} meses do seu próprio dado.</li>
+      <li>Em média o sistema erra <strong>{{ previsao.erro_medio | decimal }}</strong> reclamações por mês, contra <strong>{{ previsao.erro_medio_regua | decimal }}</strong> de simplesmente repetir o mês anterior. Medido em {{ previsao.janelas }} meses do seu próprio dado.</li>
       <li>O que de fato aconteceu caiu dentro do mínimo e do máximo em <strong>{{ (previsao.cobertura * 10) | round | int }} de cada 10</strong> meses.</li>
     </ul>
     {% else %}
     {{ m.estado_vazio("Ainda não há seis meses fechados no seu negócio para medir a estimativa. O número abaixo é o do nosso teste, não o do seu dado.") }}
     {% endif %}
     <div class="aviso aviso--olho">
-      <p><strong>O que o sistema não faz melhor que o chute.</strong> Para acertar o número do meio, a conta empata com repetir o mês passado: {{ referencia.erro_medio }} contra {{ referencia.erro_medio_regua }} em {{ referencia.janelas }} meses de teste. Está escrito aqui porque é verdade, e porque o que o sistema acrescenta é outra coisa: a faixa de mínimo e máximo, que acerta {{ (referencia.cobertura * 100) | round | int }} vezes em 100 quando promete 80, e o aviso da seção 1.</p>
+      <p><strong>O que o sistema não faz melhor que o chute.</strong> Para acertar o número do meio, a conta empata com repetir o mês passado: {{ referencia.erro_medio | decimal(2) }} contra {{ referencia.erro_medio_regua | decimal(2) }} em {{ referencia.janelas }} meses de teste. Está escrito aqui porque é verdade, e porque o que o sistema acrescenta é outra coisa: a faixa de mínimo e máximo, que acerta {{ (referencia.cobertura * 100) | round | int }} vezes em 100 quando promete 80, e o aviso da seção 1.</p>
     </div>
 
     {{ m.proximo_passo([{"rotulo": "Conferir avaliações do meu negócio", "href": "/conferir"},

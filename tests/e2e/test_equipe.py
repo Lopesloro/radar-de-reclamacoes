@@ -43,12 +43,17 @@ def test_a_equipe_cadastra_cliente_e_importa_avaliacoes(abrir, largura):
     pagina.fill("input[name=cidade]", "Campinas, SP")
     pagina.fill("input[name=entrada]", identificador)
     pagina.get_by_role("button", name="Cadastrar").click()
-    pagina.wait_for_url(f"**/admin/clientes/{identificador}**")
+    # A tela com a senha é a resposta do próprio envio: o endereço não muda, porque
+    # senha no endereço fica no histórico do navegador e no log do servidor.
+    pagina.wait_for_load_state()
+    assert identificador not in pagina.url
 
     recado = pagina.locator(".aviso").first.inner_text()
     assert "Cliente criado" in recado
     # A senha aparece uma vez só: é o único momento em que ela existe em texto.
-    assert re.search(r"senha \S{8,}", recado), recado
+    achado = re.search(r"senha (\S{8,})", recado)
+    assert achado, recado
+    assert achado.group(1) not in pagina.url
     assert "A senha aparece uma vez só" in pagina.locator(".aviso").first.inner_text()
 
     pagina.get_by_role("link", name="Fontes e coleta").click()

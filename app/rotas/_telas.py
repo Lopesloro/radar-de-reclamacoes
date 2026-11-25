@@ -56,9 +56,6 @@ paginas.env.globals.update(
     menu_admin=conteudo.MENU_ADMIN,
     glossario=conteudo.GLOSSARIO,
     estados=conteudo.ESTADOS,
-    vereditos=conteudo.VEREDITOS,
-    forcas=conteudo.FORCAS,
-    resultados_teste=conteudo.RESULTADOS_TESTE,
     categorias=conteudo.NOMES_CATEGORIA,
     impressao=_impressao_dos_estaticos(),
 )

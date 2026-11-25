@@ -62,6 +62,27 @@ def previsao(serie) -> str:
     )
 
 
+def assunto_do_cartao(resumo) -> str:
+    """O assunto que o cartão mostra no gráfico: o mesmo de que a frase fala.
+
+    Com tudo normal, a frase fala do que mais aparece; com aviso, do que vai crescer.
+    """
+    return resumo.mais_reclamado if resumo.estado == "normal" else resumo.vai_crescer
+
+
+def resumo(piorando: int, total: int, mes) -> str:
+    """A frase do topo do Resumo, com a concordância certa para 0, 1 ou vários."""
+    quando = mes_longo(mes)
+    if total == 1:
+        if piorando == 0:
+            return f"Nenhum assunto deve piorar em {quando}."
+        return f"Um assunto deve piorar em {quando}. Veja abaixo."
+    if piorando == 0:
+        return f"Nenhum dos seus {total} negócios tem assunto que deve piorar em {quando}."
+    verbo = "tem" if piorando == 1 else "têm"
+    return f"{piorando} dos seus {total} negócios {verbo} assunto que deve piorar em {quando}."
+
+
 def cartao(resumo) -> str:
     para = resumo.vai_crescer_para
     if resumo.estado == "normal":
@@ -119,8 +140,9 @@ def ritmo_do_mes(serie) -> str:
     if fracao >= 0.33 and ja_chegou >= corrente.p50:
         passou_do_mes = round(fracao * 100)
         return (
-            f"Já chegaram {ja_chegou} com {passou_do_mes}% do mês passado, e o esperado para "
-            f"o mês inteiro era {corrente.p50}. Vale olhar o que mudou nos últimos dias."
+            f"Passaram {passou_do_mes}% dos dias deste mês e já chegaram {ja_chegou}, "
+            f"o que se esperava para o mês inteiro ({corrente.p50}). "
+            "Vale olhar o que mudou nos últimos dias."
         )
     return ""
 

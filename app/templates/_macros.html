@@ -51,10 +51,15 @@
 </details>
 {%- endmacro %}
 
-{% macro grafico(frase, desenho, passos, cabecalho, linhas, id=None, tour=None) %}
+{% macro grafico(frase, desenho, passos, cabecalho, linhas, id=None, tour=None, legenda=None) %}
 <figure class="grafico"{% if id %} id="{{ id }}"{% endif %}{% if tour %} data-tour="{{ tour }}"{% endif %}>
   <figcaption class="grafico__frase">{{ frase }}</figcaption>
   <div class="grafico__desenho">{{ desenho }}</div>
+  {% if legenda %}
+  <ul class="legenda">
+    {% for cor, texto in legenda %}<li class="legenda__item"><span class="legenda__cor legenda__cor--{{ cor }}" aria-hidden="true"></span>{{ texto }}</li>{% endfor %}
+  </ul>
+  {% endif %}
   <div class="grafico__ajudas">
     {{ como_ler(passos) }}
     {{ numeros_em_tabela(cabecalho, linhas, frase) }}
@@ -83,19 +88,6 @@
 {% macro semaforo(estado) %}
 {%- set e = estados[estado] -%}
 <span class="semaforo semaforo--{{ e.classe }}"><span class="semaforo__icone" aria-hidden="true">{{ e.icone }}</span>{{ e.rotulo }}</span>
-{%- endmacro %}
-
-{% macro etiqueta_veredito(veredito) %}
-{%- set v = vereditos[veredito] -%}
-<span class="etiqueta etiqueta--{{ v.classe }}">{{ v.rotulo }}</span>
-{%- endmacro %}
-
-{% macro forca(nivel) %}
-{%- set n = forcas[nivel] -%}
-<span class="forca forca--{{ n }}">
-  <span class="forca__barras" aria-hidden="true"><span></span><span></span><span></span></span>
-  <span class="forca__texto">evidência {{ nivel }}</span>
-</span>
 {%- endmacro %}
 
 {% macro tecnico(titulo="Detalhes técnicos") %}
