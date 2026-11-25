@@ -98,6 +98,24 @@ python -m pytest -m e2e -q
 No Windows dá para usar o Edge, sem baixar nada: `python -m pytest -m e2e --browser-channel msedge`.
 Os prints de cada tela ficam em `docs/evidencias/telas/`, só na máquina (fora do git).
 
+## Montar o arquivo do Google com a SerpApi
+
+Para o negócio que **autorizou** a leitura mas não consegue exportar as avaliações
+do painel. A ferramenta não faz parte do site: ela só monta o CSV, e o arquivo
+entra pelo caminho de sempre, na tela **Fontes** da área da equipe.
+
+1. Crie o arquivo `.env` na raiz (ele não vai para o git) com a chave da SerpApi,
+   como no `.env.example`.
+2. Rode, com o nome do lugar como aparece no Google Maps:
+
+```bash
+python -m ferramentas.serpapi_para_arquivo "Poco Loco Bar Campinas" --saida dados_reais/poco-loco.csv
+```
+
+O CSV sai sem o nome de quem escreveu e com a mesma máscara de dados pessoais do
+sistema. Cada página de avaliações gasta uma busca da cota da SerpApi; use
+`--max-paginas` para limitar. A pasta `dados_reais/` fica fora do git.
+
 ## Telas
 
 | Endereço | O que mostra |

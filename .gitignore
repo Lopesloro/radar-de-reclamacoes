@@ -29,3 +29,6 @@ plano/
 referencia/
 # `docs/` ENTRA no repositório: é onde ficam as evidências de segurança e a
 # documentação das fontes de avaliação, que a disciplina pede entregues.
+
+# Avaliações reais geradas pela ferramenta da SerpApi: dado de parceiro, fora do git
+dados_reais/
