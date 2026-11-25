@@ -82,6 +82,10 @@ class ResumoComercio:
     vai_crescer_para: PrevisaoMes           # estimativa do mês corrente
     etapas_concluidas: int
     etapas_total: int
+    # Quantos meses os números do cartão somam (lidas, reclamações, sem assunto,
+    # nota, o que mais incomoda). 1 é o mês de referência; 12 quando o mês de
+    # referência não teve avaliação nenhuma (ver consultas.JANELA_SEM_AVALIACAO).
+    janela_meses: int = 1
 
 
 @dataclass(frozen=True)

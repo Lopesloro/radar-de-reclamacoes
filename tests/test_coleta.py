@@ -290,3 +290,32 @@ def test_trocar_de_modelo_nao_apaga_o_historico_da_tela_do_cliente(monkeypatch, 
 
         para_o_porque = analises.avaliacoes_classificadas(sessao, negocio_vazio, negocio_vazio)
         assert sum(1 for a in para_o_porque if a.categoria) == primeira.com_assunto + 1
+
+
+def test_mes_sem_avaliacao_nao_zera_o_resumo(negocio_vazio):
+    """Defeito real, Poço Loco, 25/11/2026: o bar recebe poucas avaliações e
+    outubro não teve nenhuma. O Resumo e a ficha só olhavam o último mês fechado
+    e mostravam tudo zero, com 357 avaliações no banco. Mês sem avaliação
+    nenhuma não é medida de "zero reclamação": o cartão passa a somar os
+    últimos 12 meses fechados e diz isso."""
+    from app.banco import consultas
+
+    # Reclamações de janeiro a agosto; setembro e outubro sem avaliação nenhuma.
+    historico = [
+        AvaliacaoBruta(id_origem=f"j{i}", data=date(2026, 1, 5) + timedelta(days=7 * i),
+                       estrelas=1, texto="Esperei quase uma hora para ser atendido.")
+        for i in range(30)
+    ]
+    assert max(b.data for b in historico) < date(2026, 9, 1)
+    with banco.Sessao() as sessao:
+        resultado = motor.coletar(sessao, negocio_vazio, negocio_vazio, historico, hoje=HOJE)
+        sessao.commit()
+    assert resultado.com_assunto > 0
+
+    with banco.Sessao() as sessao:
+        cartao = consultas.comercio(sessao, negocio_vazio, negocio_vazio)
+    assert cartao.mes_referencia == date(2026, 10, 1)
+    assert cartao.janela_meses == 12
+    assert cartao.avaliacoes_lidas == 30
+    assert cartao.reclamacoes == resultado.com_assunto
+    assert cartao.mais_reclamado_qtd > 0

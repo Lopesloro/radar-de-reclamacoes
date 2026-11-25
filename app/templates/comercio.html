@@ -6,7 +6,8 @@
 <section class="secao secao--topo">
   <div class="container">
     {{ m.seletor(negocios, negocio.empresa_id, "/comercio") }}
-    {{ m.cabeca(negocio.nome, "Do que os clientes reclamaram em " ~ (negocio.mes_referencia | mes_longo) ~ ", assunto por assunto.") }}
+    {{ m.cabeca(negocio.nome, "Do que os clientes reclamaram " ~ (negocio | janela) ~ ", assunto por assunto.") }}
+    {% if negocio | aviso_da_janela %}<p class="nota">{{ negocio | aviso_da_janela }}</p>{% endif %}
 
     <div class="numeros">
       {{ m.numero("Avaliações lidas", "avaliacoes_lidas", negocio.avaliacoes_lidas | inteiro, "com e sem texto escrito") }}
@@ -16,10 +17,10 @@
     </div>
 
     {{ m.grafico(frase, grafico,
-        ["Cada barra é um assunto. Quanto mais comprida, mais reclamações em " ~ (negocio.mes_referencia | mes_longo) ~ ".",
-         "O número ao lado é quantas reclamações chegaram. A seta diz quantas a mais (▲) ou a menos (▼) que em " ~ mes_anterior ~ ".",
+        ["Cada barra é um assunto. Quanto mais comprida, mais reclamações " ~ (negocio | janela) ~ ".",
+         "O número ao lado é quantas reclamações chegaram. A seta diz quantas a mais (▲) ou a menos (▼) que " ~ ("em " if negocio.janela_meses == 1 else "") ~ mes_anterior ~ ".",
          "Barra laranja é assunto que cresceu. Barra cinza ficou igual ou caiu."],
-        ["Assunto", negocio.mes_referencia | mes_longo, mes_anterior, "Diferença"],
+        ["Assunto", rotulo_periodo, mes_anterior, "Diferença"],
         tabela) }}
 
     <h2 class="titulo-secao">Últimas avaliações lidas</h2>

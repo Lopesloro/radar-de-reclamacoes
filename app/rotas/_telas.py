@@ -47,6 +47,8 @@ paginas.env.filters.update(
     estrelas=formatos.estrelas,
     assunto=frases.nome,
     com_artigo=frases.com_artigo,
+    janela=frases.janela,
+    aviso_da_janela=frases.aviso_da_janela,
 )
 paginas.env.globals.update(
     projeto=conteudo.PROJETO,

@@ -35,6 +35,18 @@ from app.modelos.previsao import CRESCIMENTO_QUE_IMPORTA
 # `etapas()`, no fim deste arquivo.
 ETAPAS_TOTAL = 7
 
+# Quando o mês de referência não teve avaliação nenhuma, o cartão soma este
+# tanto de meses fechados. Negócio pequeno recebe três avaliações por mês, e um
+# mês vazio no fim mostrava tudo zero com centenas de avaliações no banco
+# (Poço Loco, 25/11/2026). Mês sem avaliação não é "zero reclamação": é falta
+# de leitura, e a tela diz que está somando o ano.
+JANELA_SEM_AVALIACAO = 12
+
+
+def _meses_antes(mes: date, quantos: int) -> date:
+    indice = mes.year * 12 + (mes.month - 1) - quantos
+    return date(indice // 12, indice % 12 + 1, 1)
+
 
 def _mes_de(dia: date) -> date:
     return date(dia.year, dia.month, 1)
@@ -227,27 +239,51 @@ def comercios(sessao: Session, empresa_id: str) -> tuple[ResumoComercio, ...]:
         ).all():
             previstas.setdefault(linha.categoria_id, _faixa(linha))
 
-        lidas, nota = sessao.execute(
-            select(func.count(modelo.Avaliacao.id), func.avg(modelo.Avaliacao.estrelas)).where(
-                modelo.Avaliacao.empresa_id == empresa_id,
-                modelo.Avaliacao.comercio_id == comercio.id,
-                modelo.Avaliacao.data >= referencia,
-                modelo.Avaliacao.data < _proximo_mes(referencia),
-            )
-        ).one()
+        fim_da_janela = _proximo_mes(referencia)
+
+        def _lidas_e_nota(inicio: date, comercio_id=comercio.id, fim=fim_da_janela):
+            return sessao.execute(
+                select(func.count(modelo.Avaliacao.id), func.avg(modelo.Avaliacao.estrelas)).where(
+                    modelo.Avaliacao.empresa_id == empresa_id,
+                    modelo.Avaliacao.comercio_id == comercio_id,
+                    modelo.Avaliacao.data >= inicio,
+                    modelo.Avaliacao.data < fim,
+                )
+            ).one()
+
+        janela = 1
+        inicio = referencia
+        lidas, nota = _lidas_e_nota(inicio)
+        contagem = fechado
+        if lidas == 0:
+            janela = JANELA_SEM_AVALIACAO
+            inicio = _meses_antes(referencia, janela - 1)
+            lidas, nota = _lidas_e_nota(inicio)
+            contagem = {
+                categoria: int(total or 0)
+                for categoria, total in sessao.execute(
+                    select(modelo.SerieMensal.categoria_id, func.sum(modelo.SerieMensal.quantidade))
+                    .where(modelo.SerieMensal.empresa_id == empresa_id,
+                           modelo.SerieMensal.comercio_id == comercio.id,
+                           modelo.SerieMensal.fechado.is_(True),
+                           modelo.SerieMensal.mes >= inicio,
+                           modelo.SerieMensal.mes <= referencia)
+                    .group_by(modelo.SerieMensal.categoria_id)
+                ).all()
+            } or fechado
         sem_assunto = sessao.scalar(
             select(func.count(modelo.Avaliacao.id))
             .join(modelo.Classificacao,
                   modelo.Classificacao.avaliacao_id == modelo.Avaliacao.id)
             .where(modelo.Avaliacao.empresa_id == empresa_id,
                    modelo.Avaliacao.comercio_id == comercio.id,
-                   modelo.Avaliacao.data >= referencia,
+                   modelo.Avaliacao.data >= inicio,
                    modelo.Avaliacao.data < _proximo_mes(referencia),
                    modelo.Classificacao.id.in_(classificacoes_vigentes(empresa_id)),
                    modelo.Classificacao.categoria_id.is_(None))
         ) or 0
 
-        mais_reclamado = max(fechado, key=lambda c: (fechado[c], c))
+        mais_reclamado = max(contagem, key=lambda c: (contagem[c], c))
 
         def _quanto_cresce(categoria: str, fechado=fechado,
                            previstas=previstas) -> tuple[int, int, str]:
@@ -273,11 +309,11 @@ def comercios(sessao: Session, empresa_id: str) -> tuple[ResumoComercio, ...]:
             estado=_estado(fechado[em_alta], previstas.get(em_alta)),
             mes_referencia=referencia,
             avaliacoes_lidas=lidas,
-            reclamacoes=sum(fechado.values()),
+            reclamacoes=sum(contagem.values()),
             sem_assunto=sem_assunto,
             nota_media=round(nota, 1) if nota is not None else 0.0,
             mais_reclamado=mais_reclamado,
-            mais_reclamado_qtd=fechado[mais_reclamado],
+            mais_reclamado_qtd=contagem[mais_reclamado],
             vai_crescer=em_alta,
             vai_crescer_de=fechado[em_alta],
             vai_crescer_para=previstas.get(
@@ -290,6 +326,7 @@ def comercios(sessao: Session, empresa_id: str) -> tuple[ResumoComercio, ...]:
                 1 for e in etapas(sessao, empresa_id, comercio.id) if e.estado == "feito"
             ),
             etapas_total=ETAPAS_TOTAL,
+            janela_meses=janela,
         ))
     return tuple(cartoes)
 

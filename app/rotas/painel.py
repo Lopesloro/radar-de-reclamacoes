@@ -65,6 +65,7 @@ def resumo(request: Request):
         mes_corrente=negocios[0].vai_crescer_para.mes,
         lidas=sum(c.avaliacoes_lidas for c in negocios),
         reclamacoes=sum(c.reclamacoes for c in negocios),
+        janela_maior=any(c.janela_meses > 1 for c in negocios),
         avisos=servicos.alertas(empresa),
         frase_do_topo=frases.resumo(
             sum(1 for c in negocios if c.estado == "vai_piorar"), len(negocios),
@@ -82,15 +83,31 @@ def comercio(request: Request, comercio: str):
     if not todas:
         return _vazio(request, "resumo", negocio_sem_mes=comercio)
 
-    mes_anterior = mes_longo(todas[0].meses[-2][0]) if len(todas[0].meses) > 1 else ""
-    itens = [(frases.nome(s.categoria), s.ultimo, s.variacao) for s in todas]
+    meses = negocio.janela_meses
+    if meses > 1:
+        # O mês de referência veio sem avaliação: a ficha soma os últimos meses e
+        # compara com o mesmo tanto de meses antes, como os números do topo.
+        mes_anterior = f"os {meses} meses anteriores"
+        rotulo = f"últimos {meses} meses"
+        itens = []
+        for s in todas:
+            agora = sum(q for _, q in s.meses[-meses:])
+            itens.append((frases.nome(s.categoria), agora,
+                          agora - sum(q for _, q in s.meses[-2 * meses:-meses])))
+        frase = frases.assuntos_da_janela(todas, meses, negocio.mes_referencia)
+    else:
+        mes_anterior = mes_longo(todas[0].meses[-2][0]) if len(todas[0].meses) > 1 else ""
+        rotulo = mes_longo(negocio.mes_referencia)
+        itens = [(frases.nome(s.categoria), s.ultimo, s.variacao) for s in todas]
+        frase = frases.assuntos_do_mes(todas, negocio.mes_referencia)
     return tela(
         request, "comercio.html", "resumo",
         negocio=negocio,
         negocios=servicos.comercios(empresa),
         series=todas,
         mes_anterior=mes_anterior,
-        frase=frases.assuntos_do_mes(todas, negocio.mes_referencia),
+        rotulo_periodo=rotulo,
+        frase=frase,
         grafico=svg.barras_assuntos(
             itens, f"Reclamações por assunto em {negocio.nome}", mes_anterior),
         tabela=[(nome, valor, valor - variacao, formatos.diferenca(variacao))

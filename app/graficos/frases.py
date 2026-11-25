@@ -26,6 +26,35 @@ def _mudanca(valor: int) -> str:
     return "o mesmo número"
 
 
+def janela(resumo) -> str:
+    """De quando são os números do cartão: "em outubro" ou "nos últimos 12 meses"."""
+    if getattr(resumo, "janela_meses", 1) > 1:
+        return f"nos últimos {resumo.janela_meses} meses, até {mes_longo(resumo.mes_referencia)}"
+    return f"em {mes_longo(resumo.mes_referencia)}"
+
+
+def aviso_da_janela(resumo) -> str:
+    """A frase que explica por que o cartão soma o ano, ou vazio."""
+    if getattr(resumo, "janela_meses", 1) <= 1:
+        return ""
+    return (f"{mes_longo(resumo.mes_referencia).capitalize()} não teve nenhuma avaliação. "
+            f"Os números somam os últimos {resumo.janela_meses} meses.")
+
+
+def assuntos_da_janela(series, meses: int, mes_ref) -> str:
+    """A frase da ficha quando os números somam vários meses."""
+    dominante = max(series, key=lambda s: (sum(q for _, q in s.meses[-meses:]), s.categoria))
+    total = sum(q for _, q in dominante.meses[-meses:])
+    antes = sum(q for _, q in dominante.meses[-2 * meses:-meses])
+    variacao = total - antes
+    comparacao = (f"{_mudanca(variacao)} que nos {meses} meses anteriores"
+                  if variacao else f"o mesmo número dos {meses} meses anteriores")
+    return (
+        f"{com_artigo(dominante.categoria).capitalize()} é o que mais incomoda: "
+        f"{total} reclamações nos últimos {meses} meses, até {mes_longo(mes_ref)}, {comparacao}."
+    )
+
+
 def assuntos_do_mes(series, mes_ref) -> str:
     dominante = max(series, key=lambda s: s.ultimo)
     variacao = dominante.variacao
