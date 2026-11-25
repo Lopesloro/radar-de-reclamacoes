@@ -239,6 +239,85 @@ CREATE TABLE IF NOT EXISTS classificacao (
 CREATE INDEX IF NOT EXISTS ix_classificacao_avaliacao_id ON classificacao (avaliacao_id);
 CREATE INDEX IF NOT EXISTS ix_classificacao_empresa_id ON classificacao (empresa_id);
 
+-- As três tabelas de "Por quê?", "E se?" e "Testes". Tudo o que entra nelas é
+-- digitado pelo dono (ou gerado pela conta de demonstração, marcada como tal):
+-- o diário de mudanças, os turnos da operação e o plano do teste com o sorteio.
+
+CREATE TABLE IF NOT EXISTS evento_diario (
+	id VARCHAR(60) NOT NULL,
+	empresa_id VARCHAR(60) NOT NULL,
+	comercio_id VARCHAR(60) NOT NULL,
+	data DATE NOT NULL,
+	tipo VARCHAR(20) NOT NULL,
+	descricao VARCHAR(200) NOT NULL,
+	criado_em TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+	PRIMARY KEY (id),
+	FOREIGN KEY(empresa_id) REFERENCES empresa (id) ON DELETE CASCADE,
+	FOREIGN KEY(comercio_id) REFERENCES comercio (id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS ix_evento_diario_comercio_id ON evento_diario (comercio_id);
+CREATE INDEX IF NOT EXISTS ix_evento_diario_empresa_id ON evento_diario (empresa_id);
+
+CREATE TABLE IF NOT EXISTS turno (
+	id VARCHAR(60) NOT NULL,
+	empresa_id VARCHAR(60) NOT NULL,
+	comercio_id VARCHAR(60) NOT NULL,
+	dia_semana INTEGER NOT NULL,
+	periodo VARCHAR(10) NOT NULL,
+	equipe INTEGER NOT NULL,
+	clientes FLOAT NOT NULL,
+	minutos_atendimento FLOAT NOT NULL,
+	custo_hora FLOAT NOT NULL,
+	PRIMARY KEY (id),
+	CONSTRAINT uq_turno_comercio_dia_periodo UNIQUE (comercio_id, dia_semana, periodo),
+	CONSTRAINT ck_turno_valores CHECK (dia_semana BETWEEN 0 AND 6 AND equipe >= 0 AND clientes >= 0 AND minutos_atendimento > 0 AND custo_hora >= 0),
+	FOREIGN KEY(empresa_id) REFERENCES empresa (id) ON DELETE CASCADE,
+	FOREIGN KEY(comercio_id) REFERENCES comercio (id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS ix_turno_comercio_id ON turno (comercio_id);
+CREATE INDEX IF NOT EXISTS ix_turno_empresa_id ON turno (empresa_id);
+
+CREATE TABLE IF NOT EXISTS experimento (
+	id VARCHAR(60) NOT NULL,
+	empresa_id VARCHAR(60) NOT NULL,
+	comercio_id VARCHAR(60) NOT NULL,
+	categoria_id VARCHAR(30) NOT NULL,
+	acao VARCHAR(200) NOT NULL,
+	inicio DATE NOT NULL,
+	fim DATE NOT NULL,
+	dias_com_acao TEXT NOT NULL,
+	menor_efeito FLOAT NOT NULL,
+	selo VARCHAR(64) NOT NULL,
+	selado_em TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+	estado VARCHAR(20) NOT NULL,
+	PRIMARY KEY (id),
+	CONSTRAINT ck_experimento_periodo CHECK (inicio <= fim),
+	FOREIGN KEY(empresa_id) REFERENCES empresa (id) ON DELETE CASCADE,
+	FOREIGN KEY(comercio_id) REFERENCES comercio (id) ON DELETE CASCADE,
+	FOREIGN KEY(categoria_id) REFERENCES categoria (id)
+);
+
+CREATE INDEX IF NOT EXISTS ix_experimento_comercio_id ON experimento (comercio_id);
+CREATE INDEX IF NOT EXISTS ix_experimento_empresa_id ON experimento (empresa_id);
+
+CREATE TABLE IF NOT EXISTS marcacao_dia (
+	id SERIAL NOT NULL,
+	empresa_id VARCHAR(60) NOT NULL,
+	experimento_id VARCHAR(60) NOT NULL,
+	data DATE NOT NULL,
+	seguiu BOOLEAN NOT NULL,
+	marcado_em TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+	PRIMARY KEY (id),
+	CONSTRAINT uq_marcacao_experimento_data UNIQUE (experimento_id, data),
+	FOREIGN KEY(empresa_id) REFERENCES empresa (id) ON DELETE CASCADE,
+	FOREIGN KEY(experimento_id) REFERENCES experimento (id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS ix_marcacao_dia_empresa_id ON marcacao_dia (empresa_id);
+CREATE INDEX IF NOT EXISTS ix_marcacao_dia_experimento_id ON marcacao_dia (experimento_id);
+
 -- Os cinco assuntos. O id é o que o código usa; o nome é o que a tela mostra.
 INSERT INTO categoria (id, nome, ordem) VALUES
 	('atendimento', 'atendimento', 0),

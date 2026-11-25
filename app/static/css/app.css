@@ -346,7 +346,8 @@ main:focus { outline: none; }
 
 /* ---------------------------------------------------------------- tabelas */
 
-.tabela-rolagem { overflow-x: auto; margin-bottom: 12px; }
+/* `position: relative` segura dentro da rolagem o texto escondido para leitor de tela (que é absoluto). */
+.tabela-rolagem { position: relative; overflow-x: auto; margin-bottom: 12px; }
 .tabela { width: 100%; border-collapse: collapse; font-size: 15px; }
 .tabela th, .tabela td { padding: 10px 12px 10px 0; border-bottom: 1px solid var(--filete); text-align: left; vertical-align: top; }
 .tabela thead th { font: 700 13px/1.3 var(--ui); text-transform: uppercase; letter-spacing: .06em; color: var(--texto-3); border-bottom: 2px solid var(--tinta); }
@@ -732,3 +733,13 @@ progress::-moz-progress-bar { background: var(--acento); border-radius: 99px; }
 .legenda__cor--faixa { background: #CFE5E7; }
 
 .forma__separador { grid-column: 1 / -1; margin: 8px 0 0; padding-top: 12px; border-top: 1px solid var(--filete-forte); font-weight: 600; }
+
+/* Conta de demonstração: a faixa fica em toda tela, para ninguém confundir com dado real. */
+.faixa-demonstracao { background: var(--olho-claro); border-bottom: 1px solid var(--filete); }
+.faixa-demonstracao .container { padding-top: 10px; padding-bottom: 10px; }
+.faixa-demonstracao p { margin: 0; color: var(--tinta); font-size: 15px; }
+
+/* Diário, turnos e dias do teste: o botão de apagar ou marcar fica ao lado do item. */
+.diario__item { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; }
+.dia__acoes { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 4px; }
+.campo--largo { grid-column: 1 / -1; }

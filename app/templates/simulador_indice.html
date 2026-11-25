@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}E se?, {{ projeto.nome }}{% endblock %}
+
+{% block conteudo %}
+<section class="secao secao--topo">
+  <div class="container">
+    {{ m.cabeca("E se eu mudar a equipe?",
+                "Cadastre os turnos do negócio, mude quantas pessoas trabalham em cada um e veja o que deve acontecer com a espera e com as reclamações de demora.") }}
+    <div class="com-ajuda com-ajuda--linha"><p class="nota">Nada muda no seu negócio: é só uma conta.</p>{{ m.ajuda("simulador") }}</div>
+
+    {% if negocios %}
+    <ul class="cartoes cartoes--compactos">
+      {% for n in negocios %}
+      <li class="cartao">
+        <h2 class="cartao__titulo">{{ n.nome }}</h2>
+        <p class="cartao__meta">{{ n.ramo }} · {{ n.cidade }}</p>
+        <div class="cartao__acoes">
+          <a class="botao botao--primario" href="/simulador/{{ n.empresa_id }}"{% if loop.first %} data-principal{% endif %}>Abrir o simulador</a>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    {{ m.estado_vazio("Ainda não há negócio nesta conta.") }}
+    {% endif %}
+
+    {{ m.proximo_passo([{"rotulo": "Ver as causas", "href": "/investigacao"}, {"rotulo": "Voltar ao resumo", "href": "/resumo"}]) }}
+  </div>
+</section>
+{% endblock %}

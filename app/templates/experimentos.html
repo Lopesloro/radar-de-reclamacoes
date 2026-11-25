@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}Testes na prática, {{ projeto.nome }}{% endblock %}
+
+{% block conteudo %}
+<section class="secao secao--topo">
+  <div class="container">
+    {{ m.cabeca("Testes na prática",
+                "Você faz a mudança só em alguns dias, sorteados pelo sistema, e no fim ele compara com os outros dias. Assim dá para saber se funcionou de verdade.") }}
+    <div class="com-ajuda com-ajuda--linha"><p class="nota">Por que sortear os dias?</p>{{ m.ajuda("sorteio") }}</div>
+
+    {% if recado %}<div class="aviso aviso--normal"><p>{{ recado }}</p></div>{% endif %}
+    {% if erro %}<div class="aviso aviso--piorar"><p>{{ erro }}</p></div>{% endif %}
+
+    {% if itens %}
+    <ul class="cartoes">
+      {% for item in itens %}
+      {% set p = item.plano %}
+      <li class="cartao">
+        <div class="cartao__cabeca">
+          <div>
+            <h2 class="cartao__titulo">{{ p.acao }}</h2>
+            <p class="cartao__meta">{{ item.negocio.nome if item.negocio else "" }} · reclamações de {{ p.categoria | assunto }}</p>
+          </div>
+          <span class="etiqueta etiqueta--{{ 'incerta' if p.estado == 'em_andamento' else 'neutra' }}">{{ "Em andamento" if p.estado == "em_andamento" else "Terminado" }}</span>
+        </div>
+        <p class="cartao__detalhe">De {{ p.inicio | data_longa }} a {{ p.fim | data_longa }}.</p>
+        <div class="progresso">
+          <label class="progresso__rotulo" for="progresso-{{ p.id }}">{{ item.marcados }} de {{ item.total }} dias marcados</label>
+          <progress id="progresso-{{ p.id }}" max="{{ item.total }}" value="{{ item.marcados }}">{{ item.marcados }} de {{ item.total }}</progress>
+        </div>
+        <div class="cartao__acoes">
+          <a class="botao botao--primario" href="/experimentos/{{ p.id }}"{% if loop.first %} data-principal{% endif %}>Ver o teste</a>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="nota">Nenhum teste ainda.</p>
+    {% endif %}
+
+    {% if negocios %}
+    <h2 class="titulo-secao" id="novo">Começar um teste</h2>
+    <form class="forma forma--grade cartao" method="post" action="/experimentos">
+      <input type="hidden" name="csrf" value="{{ request.state.csrf }}">
+      <label class="campo"><span class="campo__rotulo">Negócio</span>
+        <select class="campo__entrada" name="comercio_id" required>
+          {% for n in negocios %}<option value="{{ n.empresa_id }}">{{ n.nome }}</option>{% endfor %}
+        </select></label>
+      <label class="campo"><span class="campo__rotulo">Assunto que a mudança deve melhorar</span>
+        <select class="campo__entrada" name="categoria" required>
+          {% for c in categorias_disponiveis %}<option value="{{ c }}"{% if c == "demora" %} selected{% endif %}>{{ c | assunto }}</option>{% endfor %}
+        </select></label>
+      <label class="campo campo--largo"><span class="campo__rotulo">A mudança</span>
+        <input class="campo__entrada" type="text" name="acao" required minlength="3" maxlength="200" placeholder="Ex.: uma pessoa a mais no caixa na hora do almoço"></label>
+      <label class="campo"><span class="campo__rotulo">Começa em</span>
+        <input class="campo__entrada" type="date" name="inicio" required min="{{ hoje.isoformat() }}" value="{{ amanha.isoformat() }}"></label>
+      <label class="campo"><span class="campo__rotulo">Quantos dias</span>
+        <input class="campo__entrada" type="number" name="dias" required min="{{ dias_minimo }}" max="{{ dias_maximo }}" value="28" inputmode="numeric"></label>
+      <button class="botao botao--primario" type="submit">Sortear os dias e começar</button>
+    </form>
+    <p class="nota">Depois de sorteados, os dias não mudam: o plano ganha um código, e qualquer alteração nele aparece.</p>
+    {% endif %}
+
+    <details class="dobra dobra--bloco">
+      <summary class="dobra__botao">Como funciona um teste na prática</summary>
+      <ol class="dobra__passos">
+        <li>Você escolhe a mudança, como uma pessoa a mais no almoço, e por quantos dias testar.</li>
+        <li>O sistema sorteia em quais dias você faz a mudança e em quais não faz, e guarda o plano com um código.</li>
+        <li>Todo dia você marca se seguiu o sorteio. No fim, o sistema compara as reclamações dos dois grupos de dias e diz se funcionou.</li>
+      </ol>
+    </details>
+
+    {{ m.proximo_passo([
+      {"rotulo": "Simular uma mudança antes", "href": "/simulador"},
+      {"rotulo": "Voltar ao resumo", "href": "/resumo"},
+    ]) }}
+  </div>
+</section>
+{% endblock %}

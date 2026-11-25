@@ -381,11 +381,12 @@ def test_a_tela_de_confianca_fala_nome_de_gente_e_numero_com_virgula(cliente):
     assert not re.search(r"empata com repetir o mês passado: \d+\.\d", pagina)
 
 
-def test_a_ajuda_nao_explica_tela_que_saiu_do_produto(cliente):
-    """As telas "Por quê?", "E se?" e "Testes" saíram com os dados fictícios, mas a
-    Ajuda continuava explicando simulador, sorteio de dias e teste na prática, e
-    dizia que a IA "sugere causas" quando ela só separa por assunto."""
+def test_a_ajuda_explica_o_que_existe_e_nao_o_que_nao_existe(cliente):
+    """"Por quê?", "E se?" e "Testes" voltaram com motor de verdade, e a Ajuda
+    explica as três. O que continua fora: o laboratório, e a IA "sugerindo causas"
+    (as causas saem da estatística; a IA só separa por assunto)."""
     pagina = cliente.get("/ajuda").text
-    for sumido in ("E se?", "Teste na prática", "sorteio", "simulador", "Possível causa",
-                   "Laboratório", "sugere ideias de possíveis causas"):
+    for presente in ("E se?", "Teste na prática", "sorteio", "Diário do negócio"):
+        assert presente in pagina, presente
+    for sumido in ("Laboratório", "sugere ideias de possíveis causas"):
         assert sumido not in pagina, sumido

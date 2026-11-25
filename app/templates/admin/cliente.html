@@ -47,6 +47,19 @@
       </form>
     </article>
 
+    {% if empresa.plano == "demonstracao" %}
+    <article class="cartao">
+      <h3 class="cartao__titulo">Dados simulados</h3>
+      <p class="cartao__texto">Esta é uma conta de demonstração. O botão preenche o negócio escolhido com 15 meses de avaliações simuladas (com semente fixa), um diário com três mudanças, os turnos da semana e um teste já terminado. As avaliações passam pelo mesmo motor das reais, e toda tela do cliente avisa que os dados são simulados. Só entra em negócio sem avaliações.</p>
+      <form class="forma forma--linha" method="post" action="/admin/clientes/{{ empresa.id }}/simular">
+        <input type="hidden" name="csrf" value="{{ request.state.csrf }}">
+        <label class="campo"><span class="campo__rotulo">Negócio</span>
+          <select class="campo__entrada" name="comercio_id">{% for n in negocios %}<option value="{{ n.id }}">{{ n.nome }}</option>{% endfor %}</select></label>
+        <button class="botao botao--secundario" type="submit">Preencher com dados simulados</button>
+      </form>
+    </article>
+    {% endif %}
+
     <h2 class="titulo-secao">Contas de entrada</h2>
     <div class="tabela-rolagem">
       <table class="tabela">

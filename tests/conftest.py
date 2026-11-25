@@ -45,6 +45,8 @@ from tests import dados  # noqa: E402
 TELAS_DO_DONO = [
     "/", "/entrar", "/resumo", "/comercio/bella-massa", "/previsao/bella-massa",
     "/previsao/bella-massa?categoria=preco", "/avisos",
+    "/investigacao", "/investigacao/bella-massa/demora", "/simulador", "/simulador/bella-massa",
+    "/experimentos",
     "/configuracao", "/conferir", "/confianca", "/o-que-falta", "/ajuda",
 ]
 # A área da equipe pode ter termo técnico: quem lê é quem opera o sistema.

@@ -295,6 +295,25 @@ def _tela_do_cliente(request: Request, empresa: str, *, recado: str = "", erro: 
         )
 
 
+@rotas.post("/clientes/{empresa}/simular")
+def simular_dados(request: Request, empresa: str, comercio_id: str = Form(""), csrf: str = Form("")):
+    """Preenche um negócio de uma conta de demonstração com dados simulados."""
+    from app.coleta import simulado
+
+    usuario = exigir_admin(request)
+    volta = f"/admin/clientes/{empresa}"
+    with banco.Sessao() as sessao:
+        try:
+            resultado = simulado.preencher(sessao, empresa, comercio_id, usuario_id=usuario.identificador)
+        except (ValueError, simulado.JaTemDados) as erro:
+            return _voltar(volta, erro=str(erro))
+        auditoria.registrar(sessao, empresa_id=empresa, usuario_id=usuario.identificador,
+                            acao="dados_simulados", objeto=comercio_id,
+                            detalhe=f"{resultado.novas} avaliações simuladas")
+        sessao.commit()
+    return _voltar(volta, recado=f"Demonstração pronta: {resultado.em_uma_frase()}")
+
+
 @rotas.post("/clientes/{empresa}/negocio")
 def criar_negocio(request: Request, empresa: str, identificador: str = Form(""),
                   nome: str = Form(""), ramo: str = Form(""), cidade: str = Form(""),

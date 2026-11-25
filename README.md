@@ -33,11 +33,24 @@ em [`docs/`](docs/):
 | Área da equipe: cadastro de cliente, importação de arquivo, coletas, auditoria | Pronta |
 | Entrada com senha Argon2id, isolamento por empresa e auditoria | Prontos |
 | Banco PostgreSQL com as tabelas num script SQL único (`app/banco/esquema.sql`) | Pronto. Testes rodam no mesmo PostgreSQL |
+| Por quê?: cada mudança do diário do negócio e o fim de semana testados como causa | Pronta. Razão de taxas de Poisson e Fisher, com correção de Benjamini-Hochberg |
+| E se?: a fila de cada turno cadastrado e o efeito na demora | Pronta. Simulação com SimPy, conferida contra a fórmula de Erlang C |
+| Testes na prática: sorteio dos dias, plano selado e comparação no fim | Pronta. Sorteio equilibrado por dia da semana, selo SHA-256, intenção de tratar |
+| Conta de demonstração com dados simulados | Pronta. Só em cliente com o plano demonstração, com aviso em toda tela |
 | Coleta rodando sozinha, aviso por e-mail, sessão revogável | Faltam. Ver `docs/producao.md` |
-| Por que o assunto cresceu, "E se eu mudar?" e teste na prática | Faltam. Saíram do produto quando o gerador de dados fictícios foi removido |
 
-Nenhuma tela mostra dado de demonstração: o gerador de avaliações fictícias foi
-removido. Quando não há dado, a tela diz isso em uma frase.
+Só a conta de demonstração tem dado simulado, e toda tela dela avisa. Nas
+outras, o que aparece veio de avaliação pública ou do que o dono cadastrou;
+quando não há dado, a tela diz isso em uma frase.
+
+### Duas contas para mostrar
+
+- **Poco Loco Bar**: avaliações reais do Google, montadas com a SerpApi (ver abaixo)
+  e importadas na tela Fontes.
+- **Demonstração**: área da equipe → Clientes → cadastrar com o plano
+  "demonstração" → na tela do cliente, "Preencher com dados simulados". Entram 15
+  meses de avaliações simuladas (semente fixa), um diário com três mudanças, os
+  turnos da semana e um teste já terminado, tudo pelo mesmo motor das reais.
 
 ## Rodar na sua máquina
 
@@ -125,6 +138,9 @@ sistema. Cada página de avaliações gasta uma busca da cota da SerpApi; use
 | `/comercio/{negócio}` | Do que reclamaram no mês e as últimas avaliações |
 | `/previsao/{negócio}` | O mês corrente e o seguinte, com mínimo e máximo |
 | `/avisos` | Assuntos que devem crescer |
+| `/investigacao/{negócio}/{assunto}` | Por quê?: as possíveis causas testadas, e o diário do negócio |
+| `/simulador/{negócio}` | E se?: os turnos, a mudança de equipe e o efeito na espera e na demora |
+| `/experimentos`, `/experimentos/{plano}` | Testes na prática: criar, ver os dias sorteados, marcar e ler o resultado |
 | `/configuracao`, `/conferir` | De onde vêm as avaliações, canal de aviso e conferência dos assuntos pelo dono |
 | `/confianca` | Dá para confiar? Cada parte comparada com o chute mais simples |
 | `/o-que-falta`, `/ajuda` | Os passos que faltam em cada negócio, e o glossário |
@@ -145,8 +161,10 @@ app/
   templates/        o HTML de cada tela
   static/           CSS e JavaScript
   banco/            esquema.sql (as tabelas), modelo.py e as consultas  (Gabriel)
-  modelos/          classificador, previsão e medida do acerto           (Gabriel)
-  coleta/           leitura do arquivo e o motor que classifica e conta  (Gabriel)
+  modelos/          classificador, previsão, medida do acerto, e as contas de
+                    Por quê? (causas.py), E se? (fila.py) e Testes (experimento.py)
+  coleta/           leitura do arquivo, o motor que classifica e conta, e o
+                    gerador da conta de demonstração (simulado.py)
   investigacao/     cliente da IA e a defesa contra injeção              (Matheus)
   seguranca/        entrada, sessão, isolamento, cofre                   (Matheus)
 tests/              testes do código e das telas

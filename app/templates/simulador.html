@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}E se?, {{ negocio.nome }}{% endblock %}
+
+{% macro linha_turno(item) %}
+{% set t = item.turno %}
+<li class="turno{% if item.valor != t.equipe %} turno--mudou{% endif %}">
+  <label class="turno__rotulo" for="{{ item.campo }}">{{ t.dia_semana | dia_semana | capitalize }}, {{ nomes_periodo[t.periodo] }}</label>
+  <input class="turno__campo" type="number" id="{{ item.campo }}" name="{{ item.campo }}" value="{{ item.valor }}" min="1" max="{{ equipe_maxima }}" inputmode="numeric">
+  <span class="turno__hoje">hoje: {{ t.equipe }} {{ "pessoa" if t.equipe == 1 else "pessoas" }}</span>
+</li>
+{% endmacro %}
+
+{% block conteudo %}
+{% set r = resultado %}
+<section class="secao secao--topo">
+  <div class="container">
+    {{ m.seletor(negocios, negocio.empresa_id, "/simulador") }}
+    {{ m.cabeca("E se eu mudar a equipe?",
+                negocio.nome ~ ": mude quantas pessoas trabalham em cada turno e veja o que deve acontecer com a espera e com as reclamações de demora.") }}
+    <div class="com-ajuda com-ajuda--linha"><p class="nota">Nada muda no seu negócio: é só uma conta.</p>{{ m.ajuda("simulador") }}</div>
+
+    {% if recado %}<div class="aviso aviso--normal"><p>{{ recado }}</p></div>{% endif %}
+    {% if erro %}<div class="aviso aviso--piorar"><p>{{ erro }}</p></div>{% endif %}
+
+    {% if r %}
+    <div class="simulador">
+      <form class="simulador__formulario cartao" method="get" action="/simulador/{{ negocio.empresa_id }}">
+        <h2 class="cartao__titulo">A mudança</h2>
+        <p class="nota">Mude o número de pessoas de um ou mais turnos.</p>
+        <ul class="turnos">{% for item in turnos %}{{ linha_turno(item) }}{% endfor %}</ul>
+        <button class="botao botao--primario botao--largo" type="submit" data-principal>Ver o que acontece</button>
+      </form>
+
+      <div class="simulador__resultado">
+        {% if not r.confiavel %}
+        <div class="aviso aviso--olho"><p><strong>Ainda não dá para estimar as reclamações.</strong> {{ r.motivo }}</p></div>
+        {% endif %}
+
+        {{ m.grafico(frase, grafico,
+            ["A coluna cinza é quantas reclamações de demora chegam por mês hoje, pela média dos últimos três meses.",
+             "A coluna azul é a estimativa com a mudança. O número com ≈ é o mais provável.",
+             "A faixa clara em volta mostra o mínimo e o máximo esperados."],
+            ["Situação", "Reclamações de demora por mês", "Espera média"],
+            [["hoje", r.reclamacoes_atual | decimal, (r.espera_atual_min | decimal) ~ " min"],
+             ["com a mudança", "≈ " ~ (r.reclamacoes_cenario | decimal) ~ " (entre " ~ (r.minimo | decimal) ~ " e " ~ (r.maximo | decimal) ~ ")", (r.espera_cenario_min | decimal) ~ " min"]]) }}
+
+        <div class="numeros numeros--dois">
+          {{ m.numero("Espera média", "espera", (r.espera_cenario_min | decimal) ~ " min", "hoje: " ~ (r.espera_atual_min | decimal) ~ " min") }}
+          {{ m.numero("Custo a mais por mês", "simulador", r.custo_extra_mes | moeda, "pelas horas a mais de trabalho") }}
+          {% if r.custo_por_reclamacao_evitada %}
+          {{ m.numero("Por reclamação evitada", "custo_por_reclamacao", r.custo_por_reclamacao_evitada | moeda, "custo dividido pelas reclamações a menos") }}
+          {% endif %}
+        </div>
+        <p class="nota">A conta supõe que as reclamações de demora acompanham os clientes que esperam mais de {{ espera_longa }} minutos. Cada turno conta como {{ horas_do_turno }} horas.</p>
+      </div>
+    </div>
+
+    {% call m.tecnico() %}
+    <p>Simulação de eventos discretos (SimPy) de cada turno: chegadas de Poisson, atendimento exponencial, fila única por ordem de chegada, {{ horas_do_turno }} horas por turno, 60 repetições com semente fixa e as mesmas chegadas nos dois cenários. Reclamações do cenário: média dos últimos três meses fechados vezes a razão entre os clientes com espera acima de {{ espera_longa }} minutos (com mudança / hoje). Faixa: percentis 10 e 90 por reamostragem das repetições. A simulação é conferida contra a fórmula de Erlang C nos testes.</p>
+    {% endcall %}
+    {% else %}
+    {{ m.estado_vazio("Cadastre os turnos do negócio para o simulador calcular a fila. Basta um turno para começar.") }}
+    {% endif %}
+
+    <h2 class="titulo-secao" id="turnos">Turnos do negócio</h2>
+    <div class="com-ajuda com-ajuda--linha"><p class="nota">Para cada turno: quantas pessoas atendem, quantos clientes chegam e quanto tempo leva cada atendimento.</p>{{ m.ajuda("turnos") }}</div>
+    {% if cadastrados %}
+    <div class="tabela-rolagem">
+      <table class="tabela">
+        <caption class="visualmente-oculto">Turnos cadastrados</caption>
+        <thead><tr><th scope="col">Turno</th><th scope="col" class="num">Pessoas</th><th scope="col" class="num">Clientes</th><th scope="col" class="num">Minutos por cliente</th><th scope="col" class="num">Custo por hora</th><th scope="col"><span class="visualmente-oculto">Apagar</span></th></tr></thead>
+        <tbody>
+          {% for t in cadastrados %}
+          <tr>
+            <th scope="row">{{ t.dia_semana | dia_semana | capitalize }}, {{ nomes_periodo[t.periodo] }}</th>
+            <td class="num">{{ t.equipe }}</td><td class="num">{{ t.clientes | decimal }}</td>
+            <td class="num">{{ t.minutos_atendimento | decimal }}</td><td class="num">{{ t.custo_hora | moeda }}</td>
+            <td>
+              <form method="post" action="/simulador/{{ negocio.empresa_id }}/turno/apagar" class="forma--linha">
+                <input type="hidden" name="csrf" value="{{ request.state.csrf }}">
+                <input type="hidden" name="dia_semana" value="{{ t.dia_semana }}">
+                <input type="hidden" name="periodo" value="{{ t.periodo }}">
+                <button class="botao botao--texto" type="submit">Apagar</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+    <form class="forma forma--grade cartao" method="post" action="/simulador/{{ negocio.empresa_id }}/turno">
+      <input type="hidden" name="csrf" value="{{ request.state.csrf }}">
+      <label class="campo"><span class="campo__rotulo">Dia da semana</span>
+        <select class="campo__entrada" name="dia_semana" required>
+          {% for d in range(7) %}<option value="{{ d }}">{{ d | dia_semana | capitalize }}</option>{% endfor %}
+        </select></label>
+      <label class="campo"><span class="campo__rotulo">Período</span>
+        <select class="campo__entrada" name="periodo" required>
+          {% for chave, rotulo in nomes_periodo.items() %}<option value="{{ chave }}">{{ rotulo }}</option>{% endfor %}
+        </select></label>
+      <label class="campo"><span class="campo__rotulo">Pessoas atendendo</span>
+        <input class="campo__entrada" type="number" name="equipe" required min="0" max="50" inputmode="numeric"></label>
+      <label class="campo"><span class="campo__rotulo">Clientes no turno</span>
+        <input class="campo__entrada" type="number" name="clientes" required min="0" max="2000" step="any" inputmode="decimal"></label>
+      <label class="campo"><span class="campo__rotulo">Minutos por cliente</span>
+        <input class="campo__entrada" type="number" name="minutos_atendimento" required min="0.5" max="240" step="any" inputmode="decimal"></label>
+      <label class="campo"><span class="campo__rotulo">Custo de uma pessoa por hora (R$)</span>
+        <input class="campo__entrada" type="number" name="custo_hora" min="0" max="1000" step="any" value="0" inputmode="decimal"></label>
+      <button class="botao botao--primario" type="submit">Salvar turno</button>
+    </form>
+    <p class="nota">Salvar um turno que já existe troca os números dele.</p>
+
+    {{ m.proximo_passo([
+      {"rotulo": "Testar na prática", "href": "/experimentos"},
+      {"rotulo": "Ver as causas da demora", "href": "/investigacao/" ~ negocio.empresa_id ~ "/demora"},
+    ]) }}
+  </div>
+</section>
+{% endblock %}

@@ -95,6 +95,18 @@ Precisa de `SERPAPI_KEY` num `.env` (modelo em `.env.example`). Sai sem autor e
 com a máscara de dados pessoais. Cada página gasta uma busca da cota; limite com
 `--max-paginas`. Instruções no `README.md`.
 
+**Conta de demonstração (dados simulados).** Área da equipe → Clientes →
+cadastrar com o plano "demonstração" → na tela do cliente, "Preencher com dados
+simulados" (só entra em negócio sem avaliações). Toda tela dessa conta mostra a
+faixa "Conta de demonstração". Na banca: uma conta com a API (Poco Loco) e outra
+simulada, para Por quê?, E se? e Testes terem volume.
+
+**Por quê?, E se? e Testes.** Voltaram com motor de verdade. Por quê? testa as
+mudanças anotadas no diário (tela do próprio Por quê?) e o fim de semana; E se?
+precisa dos turnos cadastrados na própria tela; Testes sorteia os dias de um
+plano novo, que começa hoje ou depois. Num negócio com pouca reclamação (o Poco
+Loco tem 36 em nove anos), Por quê? diz que ainda não dá, em vez de inventar.
+
 **Recriar o banco quando vencer.** O Render aceita 1 Postgres grátis por conta.
 1. Apagar o banco velho no painel (Settings → Delete Database). A ferramenta MCP
    do Render não apaga banco. Não tem volta: exporte antes o que importar.

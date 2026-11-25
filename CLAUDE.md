@@ -52,11 +52,13 @@ em PR aprovado pelos três.
   atributo `style=`. JavaScript e CSS só em arquivos de `app/static/`.
 - **Teste é determinístico.** Mesma semente, mesmos números. Teste nunca depende
   de sorte, e nunca fala com a internet (a IA é testada com cliente de mentira).
-- **Não existe dado de demonstração.** O gerador de avaliações fictícias foi
-  removido. Toda tela lê o banco, e quando não há dado ela diz isso em uma frase.
-  Tela com número inventado é pior que tela vazia, porque o dono decide em cima
-  dela. Frase inventada em tela também não: se uma tela não tem motor atrás, ela
-  sai do produto e entra na lista de "O que falta".
+- **Dado simulado só na conta de demonstração.** Toda tela lê o banco, e quando
+  não há dado ela diz isso em uma frase. Tela com número inventado é pior que
+  tela vazia, porque o dono decide em cima dela. A única exceção é a empresa com
+  plano `demonstracao`: o gerador `app/coleta/simulado.py` preenche o banco dela
+  pelo mesmo motor das avaliações reais, e toda tela dessa empresa mostra a
+  faixa "Conta de demonstração". Frase inventada em tela também não: se uma tela
+  não tem motor atrás, ela sai do produto e entra na lista de "O que falta".
 - **Dado pessoal é apagado antes do banco**, nunca na hora de mostrar. O que não
   foi gravado não vaza depois em dump, backup nem log.
 - **Nenhum número vem de modelo de linguagem.** A IA separa texto por assunto e

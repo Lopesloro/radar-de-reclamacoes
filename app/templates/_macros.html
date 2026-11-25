@@ -90,6 +90,19 @@
 <span class="semaforo semaforo--{{ e.classe }}"><span class="semaforo__icone" aria-hidden="true">{{ e.icone }}</span>{{ e.rotulo }}</span>
 {%- endmacro %}
 
+{% macro etiqueta_veredito(veredito) %}
+{%- set v = vereditos[veredito] -%}
+<span class="etiqueta etiqueta--{{ v.classe }}">{{ v.rotulo }}</span>
+{%- endmacro %}
+
+{% macro forca(nivel) %}
+{%- set n = forcas[nivel] -%}
+<span class="forca forca--{{ n }}">
+  <span class="forca__barras" aria-hidden="true"><span></span><span></span><span></span></span>
+  <span class="forca__texto">evidência {{ nivel }}</span>
+</span>
+{%- endmacro %}
+
 {% macro tecnico(titulo="Detalhes técnicos") %}
 <details class="tecnico">
   <summary class="tecnico__botao">{{ titulo }}</summary>

@@ -319,3 +319,90 @@ class Auditoria(Base):
     acao: Mapped[str] = mapped_column(String(60), nullable=False)
     objeto: Mapped[str] = mapped_column(String(120), nullable=False)
     detalhe: Mapped[str | None] = mapped_column(Text)
+
+
+# ------------------------------------------------------------ Por quê?, E se? e Testes
+#
+# O que entra aqui é digitado pelo dono: as mudanças do negócio, os turnos da
+# operação e o plano do teste. As contas que leem estas tabelas estão em
+# app/modelos/causas.py, fila.py e experimento.py.
+
+class EventoDiario(Base):
+    """Uma mudança que o dono anotou no diário do negócio. Vira possível causa no "Por quê?"."""
+
+    __tablename__ = "evento_diario"
+
+    id: Mapped[str] = mapped_column(String(60), primary_key=True)
+    empresa_id: Mapped[str] = _empresa_id()
+    comercio_id: Mapped[str] = mapped_column(String(60), _para_comercio(), nullable=False, index=True)
+    data: Mapped[date] = mapped_column(Date, nullable=False)
+    tipo: Mapped[str] = mapped_column(String(20), nullable=False)
+    descricao: Mapped[str] = mapped_column(String(200), nullable=False)
+    criado_em: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.now)
+
+
+class Turno(Base):
+    """Um turno da operação: quantas pessoas, quantos clientes e quanto tempo cada atendimento leva."""
+
+    __tablename__ = "turno"
+    __table_args__ = (
+        UniqueConstraint("comercio_id", "dia_semana", "periodo", name="uq_turno_comercio_dia_periodo"),
+        CheckConstraint(
+            "dia_semana BETWEEN 0 AND 6 AND equipe >= 0 AND clientes >= 0 "
+            "AND minutos_atendimento > 0 AND custo_hora >= 0",
+            name="ck_turno_valores",
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(String(60), primary_key=True)
+    empresa_id: Mapped[str] = _empresa_id()
+    comercio_id: Mapped[str] = mapped_column(String(60), _para_comercio(), nullable=False, index=True)
+    dia_semana: Mapped[int] = mapped_column(Integer, nullable=False)
+    periodo: Mapped[str] = mapped_column(String(10), nullable=False)
+    equipe: Mapped[int] = mapped_column(Integer, nullable=False)
+    clientes: Mapped[float] = mapped_column(Float, nullable=False)
+    minutos_atendimento: Mapped[float] = mapped_column(Float, nullable=False)
+    custo_hora: Mapped[float] = mapped_column(Float, nullable=False)
+
+
+class Experimento(Base):
+    """O plano do teste na prática, selado na criação.
+
+    `dias_com_acao` guarda as datas sorteadas (ISO, separadas por vírgula). Os
+    dias sem a mudança são o resto do período. `selo` é o SHA-256 do plano: se
+    alguém mexer nas datas depois, o selo deixa de bater e a tela avisa.
+    """
+
+    __tablename__ = "experimento"
+    __table_args__ = (CheckConstraint("inicio <= fim", name="ck_experimento_periodo"),)
+
+    id: Mapped[str] = mapped_column(String(60), primary_key=True)
+    empresa_id: Mapped[str] = _empresa_id()
+    comercio_id: Mapped[str] = mapped_column(String(60), _para_comercio(), nullable=False, index=True)
+    categoria_id: Mapped[str] = mapped_column(String(30), _para_categoria(), nullable=False)
+    acao: Mapped[str] = mapped_column(String(200), nullable=False)
+    inicio: Mapped[date] = mapped_column(Date, nullable=False)
+    fim: Mapped[date] = mapped_column(Date, nullable=False)
+    dias_com_acao: Mapped[str] = mapped_column(Text, nullable=False)
+    menor_efeito: Mapped[float] = mapped_column(Float, nullable=False)
+    selo: Mapped[str] = mapped_column(String(64), nullable=False)
+    selado_em: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    estado: Mapped[str] = mapped_column(String(20), nullable=False, default="em_andamento")
+
+
+class MarcacaoDia(Base):
+    """O que o dono marcou num dia do teste: seguiu ou não o sorteio."""
+
+    __tablename__ = "marcacao_dia"
+    __table_args__ = (
+        UniqueConstraint("experimento_id", "data", name="uq_marcacao_experimento_data"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    empresa_id: Mapped[str] = _empresa_id()
+    experimento_id: Mapped[str] = mapped_column(
+        String(60), ForeignKey("experimento.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    data: Mapped[date] = mapped_column(Date, nullable=False)
+    seguiu: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    marcado_em: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.now)

@@ -1,10 +1,11 @@
 """A única porta que as telas usam para pedir dados.
 
-Tudo vem do banco. Não existe mais dado de demonstração: a versão anterior do
-projeto tinha um gerador de avaliações fictícias (`app/falsos.py`) para as telas
-poderem nascer antes do motor, e ele foi removido. O que a tela mostra agora ou
-veio de uma avaliação pública lida de uma plataforma, ou não existe — e quando
-não existe, a tela diz isso em uma frase, em vez de mostrar número inventado.
+Tudo vem do banco. A versão anterior do projeto tinha um gerador de avaliações
+fictícias (`app/falsos.py`) que as telas liam direto, e ele foi removido. O que a
+tela mostra agora veio de uma avaliação pública lida de uma plataforma, do que o
+dono cadastrou, ou não existe — e quando não existe, a tela diz isso em uma
+frase. A única exceção é a conta de demonstração: o banco dela é preenchido por
+`app/coleta/simulado.py`, pelo mesmo motor, e toda tela dela avisa.
 
 Três estados possíveis, e cada tela sabe diferenciá-los:
 
@@ -154,3 +155,113 @@ def acuracia_previsao(empresa_id: str) -> AcuraciaPrevisao | None:
         if sessao is None:
             return None
         return conferencia.acerto_da_estimativa(consultas.series_fechadas(sessao, empresa_id))
+
+
+# ------------------------------------------------------------ Por quê?, E se? e Testes
+#
+# As três telas que saíram com o gerador de dados fictícios e voltaram com motor
+# de verdade. O que elas leem é o que o dono cadastrou (diário, turnos, plano do
+# teste) e as avaliações já classificadas. As contas estão em app/modelos/.
+
+def e_demonstracao(empresa_id: str) -> bool:
+    """Conta de demonstração: as avaliações e os cadastros dela foram simulados."""
+    from app.banco import modelo
+
+    with _aberta() as sessao:
+        if sessao is None:
+            return False
+        empresa = sessao.get(modelo.Empresa, empresa_id)
+        return bool(empresa and empresa.plano == "demonstracao")
+
+
+def eventos_diario(empresa_id: str, comercio_id: str):
+    from app.banco import analises
+
+    with _aberta() as sessao:
+        return () if sessao is None else analises.eventos(sessao, empresa_id, comercio_id)
+
+
+def investigar(empresa_id: str, comercio_id: str, categoria: str):
+    from app.banco import analises
+    from app.modelos import causas
+
+    with _aberta() as sessao:
+        avaliacoes = ([] if sessao is None
+                      else analises.avaliacoes_classificadas(sessao, empresa_id, comercio_id))
+        eventos = () if sessao is None else analises.eventos(sessao, empresa_id, comercio_id)
+    return causas.investigar(avaliacoes, eventos, categoria, hoje(), empresa_id=empresa_id)
+
+
+def turnos(empresa_id: str, comercio_id: str):
+    from app.banco import analises
+
+    with _aberta() as sessao:
+        return () if sessao is None else analises.turnos(sessao, empresa_id, comercio_id)
+
+
+def simular(empresa_id: str, comercio_id: str, cenario):
+    from app.banco import analises
+    from app.modelos import fila
+
+    with _aberta() as sessao:
+        lista = () if sessao is None else analises.turnos(sessao, empresa_id, comercio_id)
+        reclamacoes = 0.0 if sessao is None else analises.reclamacoes_por_mes(
+            sessao, empresa_id, comercio_id, cenario.categoria)
+    return fila.simular(lista, cenario, reclamacoes)
+
+
+def experimentos(empresa_id: str):
+    """Os testes da empresa: tuplas (plano, negócio)."""
+    from app.banco import analises
+
+    with _aberta() as sessao:
+        return () if sessao is None else analises.planos(sessao, empresa_id, hoje())
+
+
+def experimento(empresa_id: str, plano_id: str):
+    """(plano, negócio) ou None. Plano de outra empresa também é None."""
+    from app.banco import analises
+
+    with _aberta() as sessao:
+        return None if sessao is None else analises.plano(sessao, empresa_id, plano_id, hoje())
+
+
+def marcacoes(empresa_id: str, plano_id: str):
+    from app.banco import analises
+    from app.modelos import experimento as teste
+
+    with _aberta() as sessao:
+        if sessao is None:
+            return ()
+        achado = analises.plano(sessao, empresa_id, plano_id, hoje())
+        if achado is None:
+            return ()
+        return teste.marcacoes(achado[0], analises.marcadas(sessao, empresa_id, plano_id))
+
+
+def analisar(empresa_id: str, plano_id: str):
+    """O resultado do teste até hoje, e o p-valor para o bloco técnico. (None, None) se ainda não há dias."""
+    from app.banco import analises
+    from app.modelos import experimento as teste
+
+    with _aberta() as sessao:
+        if sessao is None:
+            return None, None
+        achado = analises.plano(sessao, empresa_id, plano_id, hoje())
+        if achado is None:
+            return None, None
+        plano, comercio_id = achado
+        datas = analises.datas_das_reclamacoes(sessao, empresa_id, comercio_id, plano.categoria,
+                                               plano.inicio, plano.fim)
+        marcadas = analises.marcadas(sessao, empresa_id, plano_id)
+    return (teste.analisar(plano, marcadas, datas, hoje()), teste.p_valor(plano, datas, hoje()))
+
+
+def reclamacoes_por_dia(empresa_id: str, comercio_id: str, categoria: str) -> float:
+    """Média de reclamações do assunto por dia nos últimos três meses fechados."""
+    from app.banco import analises
+
+    with _aberta() as sessao:
+        if sessao is None:
+            return 0.0
+        return analises.reclamacoes_por_mes(sessao, empresa_id, comercio_id, categoria) / 30

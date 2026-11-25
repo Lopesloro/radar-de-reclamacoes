@@ -43,13 +43,16 @@ AUTORIA = (
     },
 )
 
-# O menu do cliente. Só tela que lê dado do banco dele: as telas "Por quê?",
-# "E se?" e "Testes" saíram quando o gerador de dados fictícios foi removido, e
-# voltam quando tiverem motor de verdade. A lista do que falta para cada uma
-# está em `PROXIMAS_ETAPAS`, e aparece na tela "O que falta".
+# O menu do cliente. Só tela que lê dado do banco dele. "Por quê?", "E se?" e
+# "Testes" saíram quando o gerador de dados fictícios foi removido e voltaram
+# com motor de verdade: leem as avaliações classificadas e o que o dono
+# cadastra (diário, turnos, plano do teste). As contas estão em app/modelos/.
 MENU = (
     {"id": "resumo", "rotulo": "Resumo", "href": "/resumo"},
     {"id": "avisos", "rotulo": "Avisos", "href": "/avisos"},
+    {"id": "investigacao", "rotulo": "Por quê?", "href": "/investigacao"},
+    {"id": "simulador", "rotulo": "E se?", "href": "/simulador"},
+    {"id": "experimentos", "rotulo": "Testes", "href": "/experimentos"},
     {"id": "configuracao", "rotulo": "Configuração", "href": "/configuracao"},
     {"id": "ajuda", "rotulo": "Ajuda", "href": "/ajuda"},
 )
@@ -79,6 +82,32 @@ NOMES_CATEGORIA = {
 }
 ARTIGO = {"atendimento": "o", "demora": "a", "preco": "o", "qualidade": "a", "ambiente": "o"}
 
+VEREDITOS = {
+    "sustentada": {"rotulo": "Provável causa", "classe": "provavel"},
+    "inconclusiva": {"rotulo": "Ainda não dá para dizer", "classe": "incerta"},
+    "descartada": {"rotulo": "Não parece ser isso", "classe": "descartada"},
+}
+
+FORCAS = {"forte": 3, "moderada": 2, "fraca": 1}
+
+RESULTADOS_TESTE = {
+    "funcionou": {"rotulo": "Funcionou", "classe": "provavel"},
+    "nao_funcionou": {"rotulo": "Não funcionou", "classe": "descartada"},
+    "ainda_nao_da_para_saber": {"rotulo": "Ainda não dá para saber", "classe": "incerta"},
+}
+
+TIPOS_EVENTO = {
+    "equipe": "Equipe (entrou ou saiu alguém)",
+    "produto": "Produto ou cardápio",
+    "preco": "Preço ou taxa",
+    "horario": "Horário de funcionamento",
+    "canal_venda": "Canal de venda (aplicativo, entrega)",
+    "estrutura": "Espaço ou estrutura",
+    "outro": "Outra mudança",
+}
+
+PERIODOS = {"manha": "manhã", "tarde": "tarde", "noite": "noite"}
+
 ESTADOS = {
     "vai_piorar": {"rotulo": "Vai piorar", "icone": "▲", "classe": "piorar"},
     "fique_de_olho": {"rotulo": "Fique de olho", "icone": "●", "classe": "olho"},
@@ -86,6 +115,93 @@ ESTADOS = {
 }
 
 GLOSSARIO = {
+    "provavel_causa": {
+        "rotulo": "Provável causa",
+        "texto": "As contas mostram que essa explicação bate com o que aconteceu, e com folga. "
+                 "É por ela que vale começar.",
+        "exemplo": "Antes eram 4 reclamações por semana; depois, 8.",
+    },
+    "ainda_nao_da": {
+        "rotulo": "Ainda não dá para dizer",
+        "texto": "Pode ser, pode não ser. Faltam dados para ter certeza para um lado ou para o "
+                 "outro.",
+        "exemplo": "Com mais algumas semanas de avaliações, dá para saber.",
+    },
+    "nao_parece": {
+        "rotulo": "Não parece ser isso",
+        "texto": "As contas mostram que essa explicação não muda nada, ou muda muito pouco. "
+                 "Pode deixar de lado.",
+        "exemplo": "O cardápio novo não mexeu na demora.",
+    },
+    "forca": {
+        "rotulo": "Força da evidência",
+        "texto": "O quanto as contas apoiam a explicação. Três barras é forte, uma barra é "
+                 "fraca.",
+        "exemplo": "Forte: a diferença é grande demais para ser sorte.",
+    },
+    "diario": {
+        "rotulo": "Diário do negócio",
+        "texto": "Onde você anota as mudanças do negócio, com a data. Cada mudança anotada vira "
+                 "uma possível causa, e o sistema confere se as reclamações mudaram depois dela.",
+        "exemplo": "“2 de junho: entrou um entregador novo para sexta e sábado.”",
+    },
+    "simulador": {
+        "rotulo": "E se?",
+        "texto": "Mostra o que deve acontecer com as reclamações de demora se você mudar quantas "
+                 "pessoas trabalham em cada turno, e quanto isso custa. Nada muda de verdade.",
+        "exemplo": "Uma pessoa a mais na sexta à noite: a espera cai e as reclamações também.",
+    },
+    "turnos": {
+        "rotulo": "Turnos",
+        "texto": "Cada turno é um dia da semana e um período (manhã, tarde ou noite), com quantas "
+                 "pessoas atendem, quantos clientes chegam e quanto tempo leva cada atendimento. "
+                 "É com isso que o sistema calcula a fila.",
+        "exemplo": "Sexta à noite: 3 pessoas, 70 clientes, 5 minutos por cliente.",
+    },
+    "espera": {
+        "rotulo": "Espera média",
+        "texto": "Quanto tempo, em média, o cliente espera para ser atendido. É calculada pelo "
+                 "movimento e pela equipe de cada turno que você cadastrou.",
+        "exemplo": "Com 2 pessoas para 70 clientes numa noite, a espera passa de meia hora.",
+    },
+    "custo_por_reclamacao": {
+        "rotulo": "Custo por reclamação evitada",
+        "texto": "Quanto a mudança custa por mês dividido por quantas reclamações ela deve "
+                 "evitar. Ajuda a comparar mudanças diferentes.",
+        "exemplo": "R$ 780 por mês para evitar 14 reclamações: cerca de R$ 56 cada.",
+    },
+    "teste_na_pratica": {
+        "rotulo": "Teste na prática",
+        "texto": "Você faz a mudança só em alguns dias, escolhidos por sorteio, e compara com os "
+                 "outros dias. É o jeito de saber se funcionou de verdade ou foi coincidência.",
+        "exemplo": "Atendente a mais em 14 dos 28 dias do mês.",
+    },
+    "sorteio": {
+        "rotulo": "Por que sortear os dias",
+        "texto": "Se você escolhe os dias, sem querer escolhe os mais fáceis. O sorteio deixa a "
+                 "comparação justa, e é feito dentro de cada dia da semana: cada grupo recebe "
+                 "a sua parte de sábados.",
+        "exemplo": "Metade das sextas com a mudança, metade sem, por sorteio.",
+    },
+    "codigo_plano": {
+        "rotulo": "Código do plano",
+        "texto": "Um código que nasce junto com o plano do teste. Se alguém mudar o plano "
+                 "depois de começar, o código deixa de bater e o sistema avisa.",
+        "exemplo": "Anote o código: 3F9A-71C2.",
+    },
+    "seguiu_sorteio": {
+        "rotulo": "Seguiu o sorteio",
+        "texto": "Em quantos dias a mudança foi feita exatamente como o sorteio mandou. Quanto "
+                 "mais perto de todos, mais confiável o resultado.",
+        "exemplo": "Seguiu em 11 de 12 dias.",
+    },
+    "demonstracao": {
+        "rotulo": "Conta de demonstração",
+        "texto": "Nesta conta as avaliações, o diário, os turnos e o teste foram simulados por "
+                 "computador, para mostrar o sistema funcionando. As contas e as telas são as "
+                 "mesmas de um cliente de verdade.",
+        "exemplo": "A outra conta, a do Poco Loco Bar, usa as avaliações reais do Google.",
+    },
     "avaliacoes_lidas": {
         "rotulo": "Avaliações lidas",
         "texto": "Todas as avaliações que os clientes escreveram sobre o negócio no mês, "
@@ -258,27 +374,27 @@ TECNOLOGIAS = (
                                "Isolamento entre empresas provado por teste que tenta vazar")),
 )
 
-# O que falta para cada tela que saiu, e o que ela precisa para voltar sendo
+# O que ainda falta em "Por quê?", "E se?" e "Testes", que voltaram com motor de
 # verdade. A tela "O que falta" lista isto para o cliente, sem termo técnico.
 PROXIMAS_ETAPAS = (
     {
         "titulo": "Por que o assunto cresceu",
-        "texto": "Hoje o sistema diz qual assunto cresce. Dizer o motivo exige o diário de "
-                 "mudanças do negócio (troca de equipe, de preço, de horário) e teste "
-                 "estatístico comparando antes e depois, com correção para quem testa muitas "
-                 "hipóteses.",
-        "falta": "O diário do negócio e o teste de hipótese.",
+        "texto": "Hoje o sistema compara as reclamações antes e depois de cada mudança do diário "
+                 "e confere se elas se concentram no fim de semana. Ainda não olha clima nem "
+                 "feriados.",
+        "falta": "Clima e feriados como possíveis causas.",
     },
     {
         "titulo": "E se eu mudar?",
-        "texto": "Simular o efeito de contratar alguém ou mudar a escala exige saber a operação "
-                 "do negócio: turnos, equipe por turno e tempo de atendimento.",
-        "falta": "O cadastro dos turnos e o modelo de fila.",
+        "texto": "Hoje o sistema simula a fila dos turnos que você cadastra e liga a espera às "
+                 "reclamações de demora. Ainda não confere a simulação com a espera medida no "
+                 "balcão.",
+        "falta": "Medir a espera de verdade em alguns dias, para conferir a simulação.",
     },
     {
         "titulo": "Testar na prática",
-        "texto": "Provar que a mudança funcionou exige sortear os dias com e sem a mudança antes "
-                 "de começar, e o dono marcar o que de fato fez em cada dia.",
-        "falta": "O sorteio selado e a marcação diária.",
+        "texto": "Hoje o sistema sorteia os dias, guarda o plano com um código e compara no fim. "
+                 "Ainda não lembra você de marcar o dia.",
+        "falta": "Lembrete diário por e-mail ou WhatsApp.",
     },
 )

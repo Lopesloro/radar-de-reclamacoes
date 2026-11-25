@@ -12,6 +12,7 @@ toca no banco; erro de conferência volta para a tela como frase em português.
 from __future__ import annotations
 
 import re
+from datetime import date
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -52,8 +53,8 @@ class NovoCliente(Estrito):
     @field_validator("plano")
     @classmethod
     def _plano(cls, valor: str) -> str:
-        if valor not in ("piloto", "mensal", "interno"):
-            raise ValueError("o plano é piloto, mensal ou interno")
+        if valor not in ("piloto", "mensal", "interno", "demonstracao"):
+            raise ValueError("o plano é piloto, mensal, interno ou demonstração")
         return valor
 
     @field_validator("email_aviso")
@@ -150,3 +151,81 @@ class Conferencia(Estrito):
         if valor and valor not in CATEGORIAS:
             raise ValueError("assunto fora dos cinco combinados")
         return valor
+
+
+# ------------------------------------------------------------ Por quê?, E se? e Testes
+
+_TIPOS_EVENTO = ("equipe", "produto", "canal_venda", "horario", "preco", "estrutura", "outro")
+_PERIODOS = ("manha", "tarde", "noite")
+
+
+class EventoNovo(Estrito):
+    """Uma mudança anotada no diário do negócio."""
+
+    data: date
+    tipo: str = Field(max_length=20)
+    descricao: str = Field(min_length=3, max_length=200)
+
+    @field_validator("tipo")
+    @classmethod
+    def _tipo(cls, valor: str) -> str:
+        if valor not in _TIPOS_EVENTO:
+            raise ValueError("escolha o tipo da mudança na lista")
+        return valor
+
+    @field_validator("data")
+    @classmethod
+    def _data(cls, valor: date) -> date:
+        if valor > date.today():
+            raise ValueError("o diário guarda o que já mudou: a data não pode ser no futuro")
+        if valor.year < 2000:
+            raise ValueError("confira o ano da mudança")
+        return valor
+
+
+class TurnoNovo(Estrito):
+    """Um turno da operação, para o "E se?"."""
+
+    dia_semana: int = Field(ge=0, le=6)
+    periodo: str = Field(max_length=10)
+    equipe: int = Field(ge=0, le=50)
+    clientes: float = Field(ge=0, le=2000)
+    minutos_atendimento: float = Field(ge=0.5, le=240)
+    custo_hora: float = Field(ge=0, le=1000)
+
+    @field_validator("periodo")
+    @classmethod
+    def _periodo(cls, valor: str) -> str:
+        if valor not in _PERIODOS:
+            raise ValueError("o período é manhã, tarde ou noite")
+        return valor
+
+
+class ExperimentoNovo(Estrito):
+    """O plano de um teste na prática, antes do sorteio."""
+
+    comercio_id: str = Field(min_length=3, max_length=60)
+    categoria: str = Field(max_length=30)
+    acao: str = Field(min_length=3, max_length=200)
+    inicio: date
+    dias: int = Field(ge=14, le=56)
+
+    @field_validator("categoria")
+    @classmethod
+    def _categoria(cls, valor: str) -> str:
+        if valor not in CATEGORIAS:
+            raise ValueError("assunto fora dos cinco combinados")
+        return valor
+
+    @field_validator("inicio")
+    @classmethod
+    def _inicio(cls, valor: date) -> date:
+        # Começar no passado deixaria escolher o sorteio depois de ver o resultado.
+        if valor < date.today():
+            raise ValueError("o teste começa hoje ou depois: o sorteio vem antes dos dias")
+        return valor
+
+
+class Marcacao(Estrito):
+    data: date
+    seguiu: bool

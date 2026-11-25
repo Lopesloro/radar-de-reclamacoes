@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}{{ plano.acao }}, {{ projeto.nome }}{% endblock %}
+
+{% block conteudo %}
+<section class="secao secao--topo">
+  <div class="container">
+    <p class="voltar"><a href="/experimentos">← Todos os testes</a></p>
+    {{ m.cabeca(plano.acao, (negocio.nome if negocio else "") ~ " · reclamações de " ~ (plano.categoria | assunto) ~ ", de " ~ (plano.inicio | data_longa) ~ " a " ~ (plano.fim | data_longa) ~ ".") }}
+
+    {% if recado %}<div class="aviso aviso--normal"><p>{{ recado }}</p></div>{% endif %}
+    {% if erro %}<div class="aviso aviso--piorar"><p>{{ erro }}</p></div>{% endif %}
+    {% if not selo_confere %}
+    <div class="aviso aviso--piorar"><p><strong>O plano foi alterado depois do sorteio.</strong> O código não bate mais com as datas, e o resultado deixa de ser confiável.</p></div>
+    {% endif %}
+
+    <div class="numeros">
+      {{ m.numero("Código do plano", "codigo_plano", codigo, "guardado em " ~ (plano.selado_em.date() | data_longa)) }}
+      {{ m.numero("Seguiu o sorteio", "seguiu_sorteio", seguiu ~ " de " ~ marcados, "dos dias já marcados") }}
+      {{ m.numero("Dias do teste", "teste_na_pratica", total, (plano.dias_com_acao | length) ~ " com a mudança e " ~ (plano.dias_sem_acao | length) ~ " sem") }}
+    </div>
+
+    {% if resultado %}
+    {% set rt = resultados_teste[resultado.veredito] %}
+    <div class="veredito veredito--{{ rt.classe }}">
+      <p class="veredito__rotulo">{{ rt.rotulo }}</p>
+      <p class="veredito__frase">{{ resultado.frase }}</p>
+    </div>
+    {{ m.grafico("Reclamações por dia: " ~ (resultado.media_sem | decimal) ~ " nos dias sem a mudança e " ~ (resultado.media_com | decimal) ~ " nos dias com.",
+        grafico,
+        ["A coluna cinza é a média de reclamações por dia nos dias sorteados para ficar como sempre.",
+         "A coluna colorida é a média nos dias sorteados para ter a mudança.",
+         "Como os dias foram sorteados, uma diferença grande entre as duas é efeito da mudança, não sorte."],
+        ["Dias", "Reclamações por dia"],
+        [["sem a mudança", resultado.media_sem | decimal], ["com a mudança", resultado.media_com | decimal]]) }}
+    {% call m.tecnico() %}
+    <p>Efeito por mês: {{ resultado.efeito_mes | decimal }} (faixa de 80%: {{ resultado.efeito_min | decimal }} a {{ resultado.efeito_max | decimal }}). Teste: binomial condicional das reclamações dos dias com a mudança, dado o total, contra a fração de dias com a mudança (bilateral){% if p_valor is not none %}, p-valor {{ p_valor | decimal(3) }}{% endif %}. Sorteio equilibrado por dia da semana. Análise por intenção de tratar: vale o que o sorteio mandou. Adesão: {{ (resultado.adesao * 100) | round | int }}%. Menor efeito perceptível no plano: {{ plano.menor_efeito_detectavel | decimal }} por mês (5% de erro, 80% de poder). Selo SHA-256: <code>{{ plano.selo }}</code>.</p>
+    {% endcall %}
+    {% else %}
+    <div class="aviso aviso--neutro">
+      <p><strong>O resultado começa a sair depois do primeiro dia do teste, e fica completo em {{ plano.fim | data_longa }}.</strong> Com esse prazo, dá para perceber uma mudança de {{ plano.menor_efeito_detectavel | decimal }} reclamações por mês ou mais.</p>
+    </div>
+    {% endif %}
+
+    <h2 class="titulo-secao" id="dias">Os dias sorteados</h2>
+    <p class="nota">Cada quadrado é um dia do teste. O sorteio diz se é dia com ou sem a mudança; embaixo, você marca o que aconteceu.</p>
+    <ul class="calendario">
+      {% for d in marcacoes %}
+      <li class="dia dia--{{ 'com' if d.com_acao else 'sem' }}{% if d.data == hoje %} dia--hoje{% endif %}">
+        <span class="dia__data">{{ d.data.weekday() | dia_semana }} {{ d.data | data_curta }}</span>
+        <span class="dia__tipo">{{ "com a mudança" if d.com_acao else "sem a mudança" }}</span>
+        <span class="dia__marca">
+          {% if d.seguiu is none %}{{ "ainda não chegou" if d.data > hoje else "falta marcar" }}
+          {% elif d.seguiu %}✓ seguiu
+          {% else %}✗ não seguiu{% endif %}
+        </span>
+        {% if d.data <= hoje %}
+        <form method="post" action="/experimentos/{{ plano.id }}/marcar" class="dia__acoes">
+          <input type="hidden" name="csrf" value="{{ request.state.csrf }}">
+          <input type="hidden" name="data" value="{{ d.data.isoformat() }}">
+          <button class="botao botao--texto" type="submit" name="seguiu" value="true">Seguiu</button>
+          <button class="botao botao--texto" type="submit" name="seguiu" value="false">Não seguiu</button>
+        </form>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+
+    {{ m.proximo_passo([
+      {"rotulo": "Ver todos os testes", "href": "/experimentos"},
+      {"rotulo": "Voltar ao resumo", "href": "/resumo"},
+    ]) }}
+  </div>
+</section>
+{% endblock %}

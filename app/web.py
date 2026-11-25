@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.conteudo import PROJETO, VERSAO
-from app.rotas import admin, configuracao, paginas, painel, publico
+from app.rotas import admin, configuracao, experimentos, investigacao, paginas, painel, publico, simulador
 from app.rotas._telas import RAIZ, tela
 from app.seguranca import instalar
 
@@ -51,7 +51,7 @@ app.mount("/static", StaticFiles(directory=RAIZ / "static"), name="static")
 # registro da rota. Depois, ela levanta na partida em vez de falhar calada.
 instalar(app)
 
-for modulo in (publico, painel, configuracao, paginas, admin):
+for modulo in (publico, painel, investigacao, simulador, experimentos, configuracao, paginas, admin):
     app.include_router(modulo.rotas)
 
 

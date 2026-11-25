@@ -56,6 +56,11 @@ paginas.env.globals.update(
     menu_admin=conteudo.MENU_ADMIN,
     glossario=conteudo.GLOSSARIO,
     estados=conteudo.ESTADOS,
+    vereditos=conteudo.VEREDITOS,
+    forcas=conteudo.FORCAS,
+    resultados_teste=conteudo.RESULTADOS_TESTE,
+    tipos_evento=conteudo.TIPOS_EVENTO,
+    nomes_periodo=conteudo.PERIODOS,
     categorias=conteudo.NOMES_CATEGORIA,
     impressao=_impressao_dos_estaticos(),
 )
@@ -63,9 +68,16 @@ paginas.env.globals.update(
 
 def tela(request: Request, nome: str, ativo: str, *, publica: bool = False,
          status_code: int = 200, **contexto) -> HTMLResponse:
+    usuario = None if publica else usuario_atual(request)
+    # A conta de demonstração avisa em toda tela que os dados dela são simulados.
+    demonstracao = False
+    if usuario is not None and not usuario.e_admin:
+        from app import servicos
+
+        demonstracao = servicos.e_demonstracao(usuario.empresa_id)
     return paginas.TemplateResponse(
         request,
         nome,
-        {"ativo": ativo, "usuario": None if publica else usuario_atual(request), **contexto},
+        {"ativo": ativo, "usuario": usuario, "demonstracao": demonstracao, **contexto},
         status_code=status_code,
     )

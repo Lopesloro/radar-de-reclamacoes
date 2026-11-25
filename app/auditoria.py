@@ -37,6 +37,13 @@ ACOES = (
     "coleta_rodada",
     "ia_consultada",
     "dados_exportados",
+    "diario_anotado",
+    "diario_apagado",
+    "turno_salvo",
+    "turno_apagado",
+    "teste_criado",
+    "dia_marcado",
+    "dados_simulados",
 )
 
 TAMANHO_MAXIMO_DO_DETALHE = 500

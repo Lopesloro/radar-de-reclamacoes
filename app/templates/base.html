@@ -68,6 +68,14 @@
     </div>
   </header>
 
+  {% if demonstracao %}
+  <div class="faixa-demonstracao" role="note">
+    <div class="container com-ajuda com-ajuda--linha">
+      <p><strong>Conta de demonstração.</strong> As avaliações, o diário, os turnos e o teste desta conta foram simulados por computador.</p>
+      {% import "_macros.html" as mb %}{{ mb.ajuda("demonstracao") }}
+    </div>
+  </div>
+  {% endif %}
   <main id="conteudo" tabindex="-1">
     {% block conteudo %}{% endblock %}
   </main>
